@@ -15,3 +15,6 @@ tnoremap <a-j> <c-\><c-N><c-w>j
 tnoremap <a-k> <c-\><c-N><c-w>k
 tnoremap <a-l> <c-\><c-N><c-w>l
 tnoremap <c-w> <c-\><c-n>
+
+noremap H ^
+noremap L $

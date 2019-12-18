@@ -1,0 +1,41 @@
+Before (Move to the middle of line):
+  call cursor(1, 7)
+  
+Given (Text in buffer):
+  Line of text
+
+Do (Normal mode - move to the beginning of line):
+  H
+
+Then (Cursor is in the first column):
+  AssertEqual 1, getcurpos()[2]
+
+Do (Normal mode - move to the end of line):
+  L
+
+Then (Cursor is in the last column):
+  AssertEqual 12, getcurpos()[2]
+
+Do (Operator mode - move to the beginning of line):
+  dH
+
+Expect:
+  f text
+
+Do (Operator mode - move to the end of line):
+  dL
+
+Expect:
+  Line o
+
+Do (Visual mode - move to the beginning of line):
+  vH"ay
+
+Then (First part of line is visually selected):
+  AssertEqual "Line of", @a
+  
+Do (Visual mode - move to the end of line):
+  vL"ay
+
+Then (Second part of line is visually selected):
+  AssertEqual "f text", @a
