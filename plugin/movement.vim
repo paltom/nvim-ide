@@ -19,7 +19,10 @@ tnoremap <c-w> <c-\><c-n>
 noremap H ^
 noremap L $
 
-nnoremap [t :tabprevious<cr>
-nnoremap ]t :tabnext<cr>
-nnoremap <c-t>t :tabnext<cr>
-nnoremap <c-t><c-t> :tabnext<cr>
+nnoremap <silent> [t :tabprevious<cr>
+nnoremap <silent> ]t :tabnext<cr>
+nnoremap <silent> <c-t>t :tabnext<cr>
+nnoremap <silent> <c-t><c-t> :tabnext<cr>
+
+nnoremap <silent> ]s :silent! cnext<cr>
+nnoremap <silent> [s :silent! cprevious<cr>
