@@ -17,25 +17,31 @@ Then (Cursor is in the last column):
   AssertEqual 12, getcurpos()[2]
 
 Do (Operator mode - move to the beginning of line):
-  dH
+  d
+  H
 
 Expect:
   f text
 
 Do (Operator mode - move to the end of line):
-  dL
+  d
+  L
 
 Expect:
   Line o
 
 Do (Visual mode - move to the beginning of line):
-  vH"ay
+  v
+  H
+  "ay
 
 Then (First part of line is visually selected):
   AssertEqual "Line of", @a
   
 Do (Visual mode - move to the end of line):
-  vL"ay
+  v
+  L
+  "ay
 
 Then (Second part of line is visually selected):
   AssertEqual "f text", @a

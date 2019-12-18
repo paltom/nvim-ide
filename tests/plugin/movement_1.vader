@@ -37,51 +37,59 @@ Then (In right window):
   AssertEqual 6, winnr()
 
 Do (Insert mode - move down):
-  i\<a-j>
+  i
+  \<a-j>
 
 Then (In below window): 
   AssertEqual 8, winnr()
 
 Do (Insert mode - move up):
-  i\<a-k>
+  i
+  \<a-k>
 
 Then (In above window): 
   AssertEqual 2, winnr()
 
 Do (Insert mode - move right):
-  i\<a-l>
+  i
+  \<a-l>
 
 Then (In right window): 
   AssertEqual 6, winnr()
 
 Do (Insert mode - move left):
-  i\<a-h>
+  i
+  \<a-h>
 
 Then (In left window): 
   AssertEqual 4, winnr()
 
 Do (Visual mode - move down):
-  v\<a-j>
+  v
+  \<a-j>
 
 Then (In below window): 
   AssertEqual 8, winnr()
 
 Do (Visual mode - move up):
-  v\<a-k>
+  v
+  \<a-k>
 
 Then (In above window): 
   AssertEqual 2, winnr()
 
 Do (Visual mode - move right):
-  v\<a-l>
+  v
+  \<a-l>
 
 Then (In right window): 
   AssertEqual 6, winnr()
 
 Do (Visual mode - move left):
-  v\<a-h>
+  v
+  \<a-h>
 
 Then (In left window): 
   AssertEqual 4, winnr()
 
-# Terminal mode tests are very hard to make properly - skippin them
+# Terminal mode tests are very hard to make properly - skipping them
