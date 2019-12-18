@@ -18,3 +18,6 @@ tnoremap <c-w> <c-\><c-n>
 
 noremap H ^
 noremap L $
+
+nnoremap <c-t><c-h> :tabprevious<cr>
+nnoremap <c-t><c-l> :tabnext<cr>
