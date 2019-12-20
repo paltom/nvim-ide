@@ -20,5 +20,15 @@ Do (Go to the previous item in list):
 Then (Cursor is positioned in the first line):
   AssertEqual 1, getcurpos()[1]
 
+Execute (Clear quickfix list):
+  call setqflist([], ' ', {'items': []})
+
+Do (Populate location list and go to next item):
+  :call setloclist(0, [], ' ', {'items': [{'bufnr': bufnr(), 'lnum': 1}, {'bufnr': bufnr(), 'lnum': 2}]})\<cr>
+  ]s
+
+Then (Cursor is in the second line):
+  AssertEqual 2, getcurpos()[1]
+
 Execute (Cleanup):
   set cmdheight=1
