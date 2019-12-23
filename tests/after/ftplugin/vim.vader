@@ -61,8 +61,8 @@ Execute (Change filetype):
   set filetype=text
 
 Then (Settings are restored):
-  AssertEqual &expandtab, expandtab
-  AssertEqual &tabstop, tabstop
-  AssertEqual &softtabstop, softtabstop
-  AssertEqual &shiftwidth, shiftwidth
-  AssertEqual &shiftround, shiftround
+  AssertEqual expandtab, &expandtab
+  AssertEqual tabstop, &tabstop
+  AssertEqual softtabstop, &softtabstop
+  AssertEqual shiftwidth, &shiftwidth
+  AssertEqual shiftround, &shiftround

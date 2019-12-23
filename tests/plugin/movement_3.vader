@@ -1,0 +1,23 @@
+Do (Move to previous tabpage):
+  [t
+
+Then (In the second tabpage):
+  AssertEqual 2, tabpagenr()
+
+Do (Move to next tabpage):
+  ]t
+
+Then (In the first tabpage (wrapped around)):
+  AssertEqual 1, tabpagenr()
+
+Do (Move to next tabpage):
+  \<c-t>t
+
+Then (In the first tabpage):
+  AssertEqual 1, tabpagenr()
+
+Do (Move to next tabpage again):
+  \<c-t>\<c-t>
+
+Then (In the first tabpage):
+  AssertEqual 1, tabpagenr()
