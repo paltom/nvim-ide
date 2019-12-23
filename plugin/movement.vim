@@ -24,5 +24,5 @@ nnoremap <silent> ]t :tabnext<cr>
 nnoremap <silent> <c-t>t :tabnext<cr>
 nnoremap <silent> <c-t><c-t> :tabnext<cr>
 
-nnoremap <silent> ]s :if len(getloclist(0)) >0\|lnext\|else\|cnext\|endif<cr>
-nnoremap <silent> [s :silent! cprevious<cr>
+nnoremap <silent> ]s :if len(getloclist(0)) > 0\|lnext\|else\|cnext\|endif<cr>
+nnoremap <silent> [s :if len(getloclist(0)) > 0\|lprevious\|else\|cprevious\|endif<cr>
