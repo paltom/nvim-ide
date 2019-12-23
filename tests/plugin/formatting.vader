@@ -86,6 +86,7 @@ Expect (Text is formatted with spaces):
       Line 1
 
 Do (Add trailing spaces and tab characters and write):
+  :let g:remove_trailing_whitespaces = 1\<cr>
   :setlocal noexpandtab\<cr>
   A\<space>\<tab>\<esc>
   :setlocal expandtab\<cr>
@@ -96,11 +97,46 @@ Expect (Trailing whitespaces are removed):
 
 Do (Disable removing trailing spaces and write):
   :let g:remove_trailing_whitespaces = 0\<cr>
-  :setlocal noexpandtab\<cr>
   A\<space>\<esc>
-  :setlocal expandtab\<cr>
   :doautocmd BufWrite\<cr>
   :let g:remove_trailing_whitespaces = 1\<cr>
+  Ax
 
 Expect (Trailing whitespaces are not removed):
-  Line 1 
+  Line 1 x
+
+Given (Two lines of text in buffer):
+  Line 1
+  Line 2
+
+Do (Insert empty lines before and after first line):
+  gg0e
+  2[\<space>
+  3]\<space>
+
+Then (Cursor position is maintained):
+  AssertEqual [3, 4], getcurpos()[1:2]
+
+Expect (Empty lines are inserted):
+
+
+  Line 1
+
+
+
+  Line 2
+
+Do (Insert empty lines after last line):
+  G0e
+  2]\<space>
+  Goxxx\<esc>``
+
+Then (Cursor position is maintained):
+  AssertEqual [2, 4], getcurpos()[1:2]
+
+Expect (Empty lines are inserted):
+  Line 1
+  Line 2
+
+
+  xxx
