@@ -41,3 +41,5 @@ if has("nvim-0.4.2")
   cnoremap <expr> <c-k>   wildmenumode() ? "\<left>"  : "\<c-k>"
   cnoremap <expr> <c-j>   wildmenumode() ? "\<right>" : "\<c-j>"
 endif
+
+nnoremap <backspace> <c-^>
