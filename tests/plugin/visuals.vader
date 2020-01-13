@@ -1,0 +1,4 @@
+Execute (Check colorscheme settings):
+  AssertEqual 1, g:one_allow_italics
+  AssertEqual 1, &termguicolors
+  AssertEqual "one", trim(execute("colorscheme"))

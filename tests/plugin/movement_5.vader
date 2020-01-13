@@ -89,6 +89,3 @@ Do (Search directories in cmdline mode):
 
 Then ("LICENSE" file was opened):
   AssertEqual bufname(), "LICENSE"
-
-Execute (Cleanup):
-  3tabdo tabclose
