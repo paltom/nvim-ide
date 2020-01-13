@@ -2,3 +2,25 @@ Execute (Check colorscheme settings):
   AssertEqual 1, g:one_allow_italics
   AssertEqual 1, &termguicolors
   AssertEqual "one", trim(execute("colorscheme"))
+
+Execute (Scroll up with full window of text):
+  for i in range(winheight(0)*2 + 10)
+    call append(0, "xxx")
+  endfor
+  execute "normal! 50%"
+  execute "normal! M"
+  execute "normal! ".winheight(0)/2."k"
+
+Then (Cursor is in line below scrolloff value):
+  AssertEqual 4, winline()
+
+Execute (Scroll down with full window of text):
+  for i in range(winheight(0)*2 + 10)
+    call append(0, "xxx")
+  endfor
+  execute "normal! 50%"
+  execute "normal! M"
+  execute "normal! ".winheight(0)/2."j"
+
+Then (Cursor is in line below scrolloff value):
+  AssertEqual winheight(0)-3, winline()

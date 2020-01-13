@@ -9,3 +9,5 @@ let g:one_allow_italics = 1
 set termguicolors
 call ext#plugins#load([s:colorscheme_plugin])
 colorscheme one
+
+set scrolloff=3
