@@ -13,3 +13,6 @@ colorscheme one
 set scrolloff=3
 
 set number relativenumber numberwidth=5
+
+let &listchars = "tab:\u00bb "
+set list

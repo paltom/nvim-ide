@@ -32,3 +32,7 @@ Execute (Line number settings are correct):
   AssertEqual 1, &number, "Lines are not numbered"
   AssertEqual 1, &relativenumber, "Lines are not numbered relatively to current one"
   AssertEqual 5, &numberwidth, "Number column has wrong width (should be 5)"
+
+Execute (Whitespace characters are displayed):
+  AssertEqual 1, &list, "Whitespace characters displaying disabled"
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["tab", "» "]) >= 0
