@@ -11,3 +11,5 @@ call ext#plugins#load([s:colorscheme_plugin])
 colorscheme one
 
 set scrolloff=3
+
+set number relativenumber numberwidth=5

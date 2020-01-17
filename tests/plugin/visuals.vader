@@ -24,3 +24,11 @@ Execute (Scroll down with full window of text):
 
 Then (Cursor is in line below scrolloff value):
   AssertEqual winheight(0)-3, winline()
+
+Given (Some buffer):
+  Line 1
+
+Execute (Line number settings are correct):
+  AssertEqual 1, &number, "Lines are not numbered"
+  AssertEqual 1, &relativenumber, "Lines are not numbered relatively to current one"
+  AssertEqual 5, &numberwidth, "Number column has wrong width (should be 5)"
