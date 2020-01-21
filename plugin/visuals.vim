@@ -1,5 +1,6 @@
 let s:colorscheme_plugin = "vim-one"
 
+" Load guard for one-time loading of plugins (colorscheme)
 if exists("g:loaded_visuals")
   finish
 endif
@@ -14,5 +15,5 @@ set scrolloff=3
 
 set number relativenumber numberwidth=5
 
-let &listchars = "tab:\u00bb "
+let &listchars = "tab:\u00bb ,trail:\u2423"
 set list

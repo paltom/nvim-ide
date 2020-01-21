@@ -36,3 +36,5 @@ Execute (Line number settings are correct):
 Execute (Whitespace characters are displayed):
   AssertEqual 1, &list, "Whitespace characters displaying disabled"
   Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["tab", "» "]) >= 0
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["trail", "␣"]) >= 0
+
