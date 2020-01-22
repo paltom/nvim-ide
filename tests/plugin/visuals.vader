@@ -38,3 +38,13 @@ Execute (Whitespace characters are displayed):
   Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["tab", "» "]) >= 0
   Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["trail", "␣"]) >= 0
 
+Execute (Long lines are not wrapped):
+  AssertEqual 0, &wrap
+
+Execute (Long lines are scrolled horizontally in chunks):
+  AssertEqual 35, &sidescroll
+
+Execute (Long lines are marked at the end of screen):
+  AssertEqual 1, &list
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["precedes", "⟪"]) >= 0
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["extends", "⟫"]) >= 0
