@@ -8,6 +8,7 @@ let s:colorscheme_plugin = "vim-one"
 
 let g:one_allow_italics = 1
 set termguicolors
+set background=dark
 call ext#plugins#load([s:colorscheme_plugin])
 colorscheme one
 
@@ -19,3 +20,7 @@ let &listchars = "tab:\u00bb ,trail:\u2423"
 set list
 set nowrap sidescroll=35
 let &listchars .= ",precedes:\u27ea,extends:\u27eb"
+
+highlight! link Folded FoldColumn
+highlight! link VertSplit StatusLineNC
+let &fillchars = "vert: "

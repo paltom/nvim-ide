@@ -48,3 +48,10 @@ Execute (Long lines are marked at the end of screen):
   AssertEqual 1, &list
   Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["precedes", "⟪"]) >= 0
   Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["extends", "⟫"]) >= 0
+
+Execute (Vertical split is nicely visible):
+  Assert index(map(split(&fillchars, ","), 'split(v:val, ":")'), ["vert", " "]) >= 0
+  Assert trim(execute("highlight VertSplit")) =~? "links to StatusLineNC"
+
+Execute (Folded lines are nicely rendered):
+  Assert trim(execute("highlight Folded")) =~? "links to FoldColumn"
