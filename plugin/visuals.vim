@@ -24,3 +24,13 @@ let &listchars .= ",precedes:\u27ea,extends:\u27eb"
 highlight! link Folded FoldColumn
 highlight! link VertSplit StatusLineNC
 let &fillchars = "vert: "
+
+function! VisualPercentage()
+  let l:curline = getcurpos()[1]
+  let l:file_lines = line("$")
+  let l:block_nr = float2nr(floor((l:curline-1)/0.111111/l:file_lines))
+  let l:blocks = ["\u2588", "\u2587", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", "\u2581", " "]
+  return l:blocks[l:block_nr]
+endfunction
+
+set statusline=%3.3(%{&modifiable&&!&readonly?\(&modified?'\ *\ ':''\):'\ -\ '}%)%<%{expand('%')==''?'[No\ Name]':pathshorten(expand('%:~:h')).expand('/').expand('%:t')}%=%(%y%q%w%)\ %#TermCursor#%{VisualPercentage()}%#Statusline#\ [%{winnr()}]
