@@ -47,7 +47,20 @@ endfunction
 function! s:stl_file_info()
   " Group %(%) is needed for correct field size when flags are empty
   " :help 'statusline'
-  let l:flags = "%-3.3(%{&modifiable && !&readonly ? (&modified ? ' \u274b ' : '___') : '\U1f512 '}%)"
+  if &modifiable && !&readonly
+    if &modified
+      let l:flag = " \u274b"
+    else
+      let l:flag = ""
+    endif
+  else
+    let l:flag = "\U1f512"
+  endif
+  if empty(l:flag)
+    let l:flags = "   "
+  else
+    let l:flags = s:highlight_stl_part(l:flag, "STLWarning").s:stl_sep
+  endif
   let l:trunc = "%<"
   let l:path_disabled_ft = ['help']
   if index(l:path_disabled_ft, &filetype) >= 0
@@ -55,7 +68,7 @@ function! s:stl_file_info()
   else
     let l:filename = "%{expand('%') == '' ? '[No Name]' : pathshorten(expand('%:.:h')).expand('/').expand('%:t')}"
   endif
-  return s:highlight_stl_part(l:flags, "STLWarning").l:trunc.l:filename.s:stl_sep
+  return l:flags.l:trunc.l:filename.s:stl_sep
 endfunction
 function! s:stl_type()
   return "%(%y%q%w%)"
@@ -76,6 +89,7 @@ function! Stl()
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
   let l:stl .= s:stl_file_info()
   let l:stl .= "%="
+  let l:stl .= s:stl_sep
   let l:stl .= s:stl_type()
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part(s:stl_location(), "STLLocation")
@@ -85,3 +99,4 @@ function! Stl()
 endfunction
 
 set statusline=%!Stl()
+let &fillchars .= ",stl:~"
