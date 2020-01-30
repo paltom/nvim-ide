@@ -33,9 +33,10 @@ function! s:get_hi_color(group_name, attribute) abort
   return l:color
 endfunction
 let s:stl_bg = s:get_hi_color("StatusLine", "guibg")
-execute "highlight STLWarning guibg=".s:stl_bg." guifg=".s:get_hi_color("ALEWarningSign", "guifg")
+execute "highlight STLFlags guibg=".s:stl_bg." guifg=".s:get_hi_color("ALEWarningSign", "guifg")
 execute "highlight STLLocation guifg=".s:stl_bg." guibg=".s:get_hi_color("StatusLine", "guifg")
 execute "highlight STLCWD guifg=".s:get_hi_color("String", "guifg")." gui=inverse"
+execute "highlight! link STLEmpty StatusLineNC"
 function! s:highlight_stl_part(part, highlight_group)
   return "%#".a:highlight_group."#".a:part."%#StatusLine#"
 endfunction
@@ -59,7 +60,7 @@ function! s:stl_file_info()
   if empty(l:flag)
     let l:flags = "   "
   else
-    let l:flags = s:highlight_stl_part(l:flag, "STLWarning").s:stl_sep
+    let l:flags = s:highlight_stl_part(l:flag, "STLFlags").s:stl_sep
   endif
   let l:trunc = "%<"
   let l:path_disabled_ft = ['help']
@@ -76,7 +77,7 @@ endfunction
 function! s:stl_location()
   let l:curline = getcurpos()[1]
   let l:file_lines = line("$")
-  let l:block_nr = float2nr(floor((l:curline-1)/0.111111/l:file_lines))
+  let l:block_nr = float2nr(floor((l:curline-1)/0.111111/l:file_lines)) " 0.111111 = 1/9
   let l:blocks = ["\u2588", "\u2587", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", "\u2581", " "]
   return l:blocks[l:block_nr]
 endfunction
@@ -88,7 +89,7 @@ function! Stl()
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
   let l:stl .= s:stl_file_info()
-  let l:stl .= "%="
+  let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
   let l:stl .= s:stl_type()
   let l:stl .= s:stl_sep
@@ -98,5 +99,14 @@ function! Stl()
   return l:stl
 endfunction
 
+function! StlNC()
+  let l:stl = ""
+  let l:stl .= s:stl_file_info()
+  return l:stl
+endfunction
+
 set statusline=%!Stl()
-let &fillchars .= ",stl:~"
+augroup statusline_update
+  autocmd!
+  autocmd WinEnter * for n in range(1, winnr('$'))|echomsg "setting statusline for win ".n|if n == winnr()|echomsg "active"|call setwinvar(n, '&statusline', '!%Stl()')|else|echomsg "inactive"|call setwinvar(n, '&statusline', '!%StlNC()')|endif|endfor
+augroup end
