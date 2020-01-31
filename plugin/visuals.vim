@@ -18,7 +18,7 @@ set number relativenumber numberwidth=5
 
 let &listchars = "tab:\u00bb ,trail:\u2423"
 set list
-set nowrap sidescroll=35 sidescrolloff=15
+set nowrap sidescroll=1 sidescrolloff=10
 let &listchars .= ",precedes:\u27ea,extends:\u27eb"
 
 highlight! link Folded FoldColumn
