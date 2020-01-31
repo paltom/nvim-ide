@@ -93,7 +93,7 @@ function! s:stl_win_id()
   return "[%{winnr()}]"
 endfunction
 
-function! Stl()
+function! s:stl()
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
   let l:stl .= s:highlight_stl_part(s:stl_file_flags(0), "STLFlags")
@@ -111,7 +111,7 @@ function! Stl()
   return l:stl
 endfunction
 
-function! StlNC(winnr)
+function! s:stlnc(winnr)
   let l:stl = ""
   let l:stl .= s:stl_cwd()
   let l:stl .= s:stl_file_flags(a:winnr)
@@ -123,8 +123,18 @@ function! StlNC(winnr)
   return l:stl
 endfunction
 
-setlocal statusline=%!Stl()
+function s:SID()
+  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+endfun
+
+execute "setlocal statusline=%!<SNR>".s:SID()."_stl()"
 augroup statusline_update
   autocmd!
-  autocmd WinEnter,BufWinEnter * for n in range(1, winnr('$'))|if n == winnr()|call setwinvar(n, '&statusline', '%!Stl()')|else|call setwinvar(n, '&statusline', '%!StlNC('.n.')')|endif|endfor
+  autocmd WinEnter,BufWinEnter * for n in range(1, winnr('$'))|
+        \if n == winnr()|
+        \call setwinvar(n, '&statusline', '%!<SNR>'.s:SID().'_stl()')|
+        \else|
+        \call setwinvar(n, '&statusline', '%!<SNR>'.s:SID().'_stlnc('.n.')')|
+        \endif|
+        \endfor
 augroup end
