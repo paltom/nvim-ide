@@ -25,7 +25,6 @@ highlight! link Folded FoldColumn
 highlight! link VertSplit StatusLineNC
 let &fillchars = "vert: "
 
- " NOT TESTED
 function! s:get_hi_color(group_name, attribute) abort
   let l:highlight_group = execute("highlight ".a:group_name)
   let l:attributes = filter(split(l:highlight_group), 'v:val =~ "="')
@@ -45,7 +44,7 @@ let s:stl_sep = " "
 function! s:stl_cwd()
   return "%{pathshorten(fnamemodify(getcwd(), ':~'))}:"
 endfunction
-function! s:stl_file_info()
+function! s:stl_file_flags()
   " Group %(%) is needed for correct field size when flags are empty
   " :help 'statusline'
   if &modifiable && !&readonly
@@ -58,10 +57,13 @@ function! s:stl_file_info()
     let l:flag = "\U1f512"
   endif
   if empty(l:flag)
-    let l:flags = "   "
+    let l:flags = "  "
   else
-    let l:flags = s:highlight_stl_part(l:flag, "STLFlags").s:stl_sep
+    let l:flags = s:highlight_stl_part(l:flag, "STLFlags")
   endif
+  return l:flags
+endfunction
+function! s:stl_file_name()
   let l:trunc = "%<"
   let l:path_disabled_ft = ['help']
   if index(l:path_disabled_ft, &filetype) >= 0
@@ -69,7 +71,7 @@ function! s:stl_file_info()
   else
     let l:filename = "%{expand('%') == '' ? '[No Name]' : pathshorten(expand('%:.:h')).expand('/').expand('%:t')}"
   endif
-  return l:flags.l:trunc.l:filename.s:stl_sep
+  return l:trunc.l:filename.s:stl_sep
 endfunction
 function! s:stl_type()
   return "%(%y%q%w%)"
@@ -88,7 +90,9 @@ endfunction
 function! Stl()
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
-  let l:stl .= s:stl_file_info()
+  let l:stl .= s:stl_file_flags()
+  let l:stl .= s:stl_sep
+  let l:stl .= s:stl_file_name()
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
   let l:stl .= s:stl_type()
