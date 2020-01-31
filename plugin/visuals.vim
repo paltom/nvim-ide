@@ -18,7 +18,7 @@ set number relativenumber numberwidth=5
 
 let &listchars = "tab:\u00bb ,trail:\u2423"
 set list
-set nowrap sidescroll=35
+set nowrap sidescroll=35 sidescrolloff=15
 let &listchars .= ",precedes:\u27ea,extends:\u27eb"
 
 highlight! link Folded FoldColumn
@@ -59,7 +59,7 @@ function! s:stl_file_flags()
   if empty(l:flag)
     let l:flags = "  "
   else
-    let l:flags = s:highlight_stl_part(l:flag, "STLFlags")
+    let l:flags = l:flag
   endif
   return l:flags
 endfunction
@@ -71,7 +71,7 @@ function! s:stl_file_name()
   else
     let l:filename = "%{expand('%') == '' ? '[No Name]' : pathshorten(expand('%:.:h')).expand('/').expand('%:t')}"
   endif
-  return l:trunc.l:filename.s:stl_sep
+  return l:trunc.l:filename
 endfunction
 function! s:stl_type()
   return "%(%y%q%w%)"
@@ -90,9 +90,10 @@ endfunction
 function! Stl()
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
-  let l:stl .= s:stl_file_flags()
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= s:stl_file_name()
+  let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
   let l:stl .= s:stl_type()
@@ -105,12 +106,15 @@ endfunction
 
 function! StlNC()
   let l:stl = ""
-  let l:stl .= s:stl_file_info()
+  let l:stl .= s:stl_cwd()
+  let l:stl .= s:stl_file_flags()
+  let l:stl .= s:stl_sep
+  let l:stl .= s:stl_file_name()
   return l:stl
 endfunction
 
 setlocal statusline=%!Stl()
 augroup statusline_update
   autocmd!
-  autocmd WinEnter * for n in range(1, winnr('$'))|if n == winnr()|call setwinvar(n, '&statusline', '%!Stl()')|else|call setwinvar(n, '&statusline', '%!StlNC()')|endif|endfor
+  autocmd WinEnter,BufWinEnter * for n in range(1, winnr('$'))|if n == winnr()|call setwinvar(n, '&statusline', '%!Stl()')|else|call setwinvar(n, '&statusline', '%!StlNC()')|endif|endfor
 augroup end
