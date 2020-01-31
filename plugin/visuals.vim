@@ -34,7 +34,7 @@ endfunction
 let s:stl_bg = s:get_hi_color("StatusLine", "guibg")
 execute "highlight STLFlags guibg=".s:stl_bg." guifg=".s:get_hi_color("ALEWarningSign", "guifg")
 execute "highlight STLLocation guifg=".s:stl_bg." guibg=".s:get_hi_color("StatusLine", "guifg")
-execute "highlight STLCWD guifg=".s:get_hi_color("String", "guifg")." gui=inverse"
+execute "highlight STLCWD guifg=".s:get_hi_color("Directory", "guifg")." gui=inverse"
 execute "highlight! link STLEmpty StatusLineNC"
 function! s:highlight_stl_part(part, highlight_group)
   return "%#".a:highlight_group."#".a:part."%#StatusLine#"
@@ -67,12 +67,24 @@ function! s:stl_file_flags(winnr)
   return l:flags
 endfunction
 
-function! s:stl_file_name()
+function! s:stl_file_name(winnr)
+  let l:bufnr = winbufnr(a:winnr)
+  let l:bufname = bufname(l:bufnr)
   let l:path_disabled_ft = ['help']
-  if index(l:path_disabled_ft, &filetype) >= 0
-    let l:filename = "%{expand('%:t')}"
+  let l:filetype = getbufvar(l:bufnr, '&filetype')
+  if index(l:path_disabled_ft, l:filetype) >= 0
+    let l:filename = fnamemodify(l:bufname, ':t')
   else
-    let l:filename = "%{expand('%') == '' ? '[No Name]' : pathshorten(expand('%:.:h')).expand('/').expand('%:t')}"
+    if l:bufname == ''
+      let l:filename = '[No Name]'
+    else
+      let l:head_dir = fnamemodify(l:bufname, ':.:h')
+      if l:head_dir == '.'
+        let l:filename = fnamemodify(l:bufname, ':t')
+      else
+        let l:filename = pathshorten(l:head_dir).'/'.fnamemodify(l:bufname, ':t')
+      endif
+    endif
   endif
   return l:filename
 endfunction
@@ -99,7 +111,7 @@ function! s:stl()
   let l:stl .= s:highlight_stl_part(s:stl_file_flags(0), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_file_name()
+  let l:stl .= s:stl_file_name(0)
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
@@ -117,7 +129,7 @@ function! s:stlnc(winnr)
   let l:stl .= s:stl_file_flags(a:winnr)
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_file_name()
+  let l:stl .= s:stl_file_name(a:winnr)
   let l:stl .= "%="
   let l:stl .= s:stl_win_id()
   return l:stl
