@@ -44,11 +44,14 @@ let s:stl_sep = " "
 function! s:stl_cwd()
   return "%{pathshorten(fnamemodify(getcwd(), ':~'))}:"
 endfunction
-function! s:stl_file_flags()
-  " Group %(%) is needed for correct field size when flags are empty
-  " :help 'statusline'
-  if &modifiable && !&readonly
-    if &modified
+
+function! s:stl_file_flags(winnr)
+  let l:bufnr = winbufnr(a:winnr)
+  let l:modifiable = getbufvar(l:bufnr, '&modifiable')
+  let l:readonly = getbufvar(l:bufnr, '&readonly')
+  if l:modifiable && !l:readonly
+    let l:modified = getbufvar(l:bufnr, '&modified')
+    if l:modified
       let l:flag = " \u274b"
     else
       let l:flag = ""
@@ -63,19 +66,21 @@ function! s:stl_file_flags()
   endif
   return l:flags
 endfunction
+
 function! s:stl_file_name()
-  let l:trunc = "%<"
   let l:path_disabled_ft = ['help']
   if index(l:path_disabled_ft, &filetype) >= 0
     let l:filename = "%{expand('%:t')}"
   else
     let l:filename = "%{expand('%') == '' ? '[No Name]' : pathshorten(expand('%:.:h')).expand('/').expand('%:t')}"
   endif
-  return l:trunc.l:filename
+  return l:filename
 endfunction
+
 function! s:stl_type()
   return "%(%y%q%w%)"
 endfunction
+
 function! s:stl_location()
   let l:curline = getcurpos()[1]
   let l:file_lines = line("$")
@@ -83,6 +88,7 @@ function! s:stl_location()
   let l:blocks = ["\u2588", "\u2587", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", "\u2581", " "]
   return l:blocks[l:block_nr]
 endfunction
+
 function! s:stl_win_id()
   return "[%{winnr()}]"
 endfunction
@@ -90,8 +96,9 @@ endfunction
 function! Stl()
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
-  let l:stl .= s:highlight_stl_part(s:stl_file_flags(), "STLFlags")
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(0), "STLFlags")
   let l:stl .= s:stl_sep
+  let l:stl .= "%<"
   let l:stl .= s:stl_file_name()
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
@@ -104,17 +111,20 @@ function! Stl()
   return l:stl
 endfunction
 
-function! StlNC()
+function! StlNC(winnr)
   let l:stl = ""
   let l:stl .= s:stl_cwd()
-  let l:stl .= s:stl_file_flags()
+  let l:stl .= s:stl_file_flags(a:winnr)
   let l:stl .= s:stl_sep
+  let l:stl .= "%<"
   let l:stl .= s:stl_file_name()
+  let l:stl .= "%="
+  let l:stl .= s:stl_win_id()
   return l:stl
 endfunction
 
 setlocal statusline=%!Stl()
 augroup statusline_update
   autocmd!
-  autocmd WinEnter,BufWinEnter * for n in range(1, winnr('$'))|if n == winnr()|call setwinvar(n, '&statusline', '%!Stl()')|else|call setwinvar(n, '&statusline', '%!StlNC()')|endif|endfor
+  autocmd WinEnter,BufWinEnter * for n in range(1, winnr('$'))|if n == winnr()|call setwinvar(n, '&statusline', '%!Stl()')|else|call setwinvar(n, '&statusline', '%!StlNC('.n.')')|endif|endfor
 augroup end
