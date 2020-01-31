@@ -105,8 +105,8 @@ function! StlNC()
   return l:stl
 endfunction
 
-set statusline=%!Stl()
+setlocal statusline=%!Stl()
 augroup statusline_update
   autocmd!
-  autocmd WinEnter * for n in range(1, winnr('$'))|echomsg "setting statusline for win ".n|if n == winnr()|echomsg "active"|call setwinvar(n, '&statusline', '!%Stl()')|else|echomsg "inactive"|call setwinvar(n, '&statusline', '!%StlNC()')|endif|endfor
+  autocmd WinEnter * for n in range(1, winnr('$'))|if n == winnr()|call setwinvar(n, '&statusline', '%!Stl()')|else|call setwinvar(n, '&statusline', '%!StlNC()')|endif|endfor
 augroup end
