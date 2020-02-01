@@ -68,6 +68,13 @@ function! s:stl_file_flags(winnr)
 endfunction
 
 function! s:stl_file_name(winnr)
+  " Store cwd of current active window
+  let l:cur_win_cwd = getcwd()
+  " Store cwd of window for which stl is drawn
+  let l:arg_win_cwd = getcwd(a:winnr)
+  " Set local working directory to window for which stl is drawn
+  " This is for correct context of filename-modifiers
+  silent execute "lcd ".l:arg_win_cwd
   let l:bufnr = winbufnr(a:winnr)
   let l:bufname = bufname(l:bufnr)
   let l:path_disabled_ft = ['help']
@@ -86,6 +93,8 @@ function! s:stl_file_name(winnr)
       endif
     endif
   endif
+  " Restore original cwd of current active window
+  silent execute "lcd ".l:cur_win_cwd
   return l:filename
 endfunction
 
