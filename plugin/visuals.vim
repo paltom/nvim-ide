@@ -68,45 +68,64 @@ function! s:stl_file_flags(winnr)
 endfunction
 
 function! s:stl_file_name(winnr)
-  " Store cwd of current active window
-  let l:cur_win_cwd = getcwd()
-  " Is it locally-set directory?
-  " TODO for tabpage cwd also
-  if haslocaldir()
-    let l:cwd_type = 'local'
-  else
-    let l:cwd_type = 'global'
-  endif
-  " Store cwd of window for which stl is drawn
-  let l:arg_win_cwd = getcwd(a:winnr)
-  " Set local working directory to window for which stl is drawn
-  " This is for correct context of filename-modifiers
-  silent execute "lcd ".l:arg_win_cwd
+  function! s:store_cwd_context(winnr)
+    " Store cwd of current active window
+    let l:cwd_context = {
+          \'cwd': getcwd()
+          \}
+    " Is it locally-set directory?
+    if haslocaldir()
+      let l:cwd_context.type = 'local'
+    elseif haslocaldir(-1)
+      let l:cwd_context.type = 'tabpage'
+    else
+      let l:cwd_context.type = 'global'
+    endif
+    " Set local working directory to window for which stl is drawn
+    " This is for correct context of filename-modifiers
+    silent execute "lcd ".getcwd(a:winnr)
+    return l:cwd_context
+  endfunction
+  function! s:restore_cwd_context(cwd_context)
+    " Restore original cwd of current active window
+    if a:cwd_context.type ==# 'local'
+      let l:cwd_type_char = 'l'
+    elseif a:cwd_context.type ==# 'tabpage'
+      let l:cwd_type_char = 't'
+    elseif a:cwd_context.type ==# 'global'
+      let l:cwd_type_char = ''
+    endif
+    silent execute l:cwd_type_char."cd ".a:cwd_context.cwd
+  endfunction
+
+  " Set correct working directory context
+  let l:cwd_context = s:store_cwd_context(a:winnr)
+
   let l:bufnr = winbufnr(a:winnr)
   let l:bufname = bufname(l:bufnr)
+
+  " Handle special cases
+  " Filetypes that should display only base file name
   let l:path_disabled_ft = ['help']
   let l:filetype = getbufvar(l:bufnr, '&filetype')
   if index(l:path_disabled_ft, l:filetype) >= 0
     let l:filename = fnamemodify(l:bufname, ':t')
+    call s:restore_cwd_context(l:cwd_context)
+    return l:filename
+  endif
+  " Empty name
+  if l:bufname == ''
+    let l:filename = '[No Name]'
+    call s:restore_cwd_context(l:cwd_context)
+    return l:filename
+  endif
+  let l:head_dir = fnamemodify(l:bufname, ':.:h')
+  if l:head_dir == '.'
+    let l:filename = fnamemodify(l:bufname, ':t')
   else
-    if l:bufname == ''
-      let l:filename = '[No Name]'
-    else
-      let l:head_dir = fnamemodify(l:bufname, ':.:h')
-      if l:head_dir == '.'
-        let l:filename = fnamemodify(l:bufname, ':t')
-      else
-        let l:filename = pathshorten(l:head_dir).'/'.fnamemodify(l:bufname, ':t')
-      endif
-    endif
+    let l:filename = pathshorten(l:head_dir).'/'.fnamemodify(l:bufname, ':t')
   endif
-  " Restore original cwd of current active window
-  if l:cwd_type ==# 'local'
-    let l:cwd_type_char = 'l'
-  elseif l:cwd_type ==# 'global'
-    let l:cwd_type_char = ''
-  endif
-  silent execute l:cwd_type_char."cd ".l:cur_win_cwd
+  call s:restore_cwd_context(l:cwd_context)
   return l:filename
 endfunction
 
