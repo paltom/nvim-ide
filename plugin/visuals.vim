@@ -70,6 +70,13 @@ endfunction
 function! s:stl_file_name(winnr)
   " Store cwd of current active window
   let l:cur_win_cwd = getcwd()
+  " Is it locally-set directory?
+  " TODO for tabpage cwd also
+  if haslocaldir()
+    let l:cwd_type = 'local'
+  else
+    let l:cwd_type = 'global'
+  endif
   " Store cwd of window for which stl is drawn
   let l:arg_win_cwd = getcwd(a:winnr)
   " Set local working directory to window for which stl is drawn
@@ -94,7 +101,12 @@ function! s:stl_file_name(winnr)
     endif
   endif
   " Restore original cwd of current active window
-  silent execute "lcd ".l:cur_win_cwd
+  if l:cwd_type ==# 'local'
+    let l:cwd_type_char = 'l'
+  elseif l:cwd_type ==# 'global'
+    let l:cwd_type_char = ''
+  endif
+  silent execute l:cwd_type_char."cd ".l:cur_win_cwd
   return l:filename
 endfunction
 
