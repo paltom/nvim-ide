@@ -25,18 +25,13 @@ highlight! link Folded FoldColumn
 highlight! link VertSplit StatusLineNC
 let &fillchars = "vert: "
 
-function! s:get_hi_color(group_name, attribute) abort
-  let l:highlight_group = execute("highlight ".a:group_name)
-  let l:attributes = filter(split(l:highlight_group), 'v:val =~ "="')
-  let l:color = filter(map(l:attributes, 'split(v:val, "=")'), 'v:val[0] == "'.a:attribute.'"')[0][1]
-  return l:color
-endfunction
-let s:stl_bg = s:get_hi_color("StatusLine", "guibg")
-execute "highlight STLFlags guibg=".s:stl_bg." guifg=".s:get_hi_color("ALEWarningSign", "guifg")
-execute "highlight STLLocation guifg=".s:stl_bg." guibg=".s:get_hi_color("Directory", "guifg")
-execute "highlight STLCWD guifg=".s:get_hi_color("String", "guifg")." gui=inverse,bold"
-execute "highlight! link STLEmpty TermCursor"
-execute "highlight STLWinnr gui=bold"
+" Statusline settings
+highlight STLFlags guibg=#2c323c guifg=#e5c07b
+highlight STLLocation guifg=#2c323c guibg=#61afef
+highlight STLCWD guifg=#98c379 gui=inverse,bold
+highlight link STLEmpty TermCursor
+highlight STLWinnr gui=bold
+
 function! s:highlight_stl_part(part, highlight_group)
   return "%#".a:highlight_group."#".a:part."%#StatusLine#"
 endfunction
@@ -202,7 +197,7 @@ endfunction
 
 function s:SID()
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
-endfun
+endfunction
 
 execute "setlocal statusline=%!<SNR>".s:SID()."_stl()"
 augroup statusline_update
