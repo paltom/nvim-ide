@@ -68,65 +68,89 @@ function! s:stl_file_flags(winnr)
   return l:flags
 endfunction
 
-function! s:stl_file_name(winnr)
-  function! s:store_cwd_context(winnr)
-    " Store cwd of current active window
-    let l:cwd_context = {
-          \'cwd': getcwd()
-          \}
-    " Is it locally-set directory?
-    if haslocaldir()
-      let l:cwd_context.type = 'local'
-    elseif haslocaldir(-1)
-      let l:cwd_context.type = 'tabpage'
-    else
-      let l:cwd_context.type = 'global'
-    endif
-    " Set local working directory to window for which stl is drawn
-    " This is for correct context of filename-modifiers
-    silent execute "lcd ".getcwd(a:winnr)
-    return l:cwd_context
-  endfunction
-  function! s:restore_cwd_context(cwd_context)
-    " Restore original cwd of current active window
-    if a:cwd_context.type ==# 'local'
-      let l:cwd_type_char = 'l'
-    elseif a:cwd_context.type ==# 'tabpage'
-      let l:cwd_type_char = 't'
-    elseif a:cwd_context.type ==# 'global'
-      let l:cwd_type_char = ''
-    endif
-    silent execute l:cwd_type_char."cd ".a:cwd_context.cwd
-  endfunction
-
-  " Set correct working directory context
-  let l:cwd_context = s:store_cwd_context(a:winnr)
-
-  let l:bufnr = winbufnr(a:winnr)
-  let l:bufname = bufname(l:bufnr)
-
-  " Handle special cases
-  " Filetypes that should display only base file name
-  let l:path_disabled_ft = ['help']
-  let l:filetype = getbufvar(l:bufnr, '&filetype')
-  if index(l:path_disabled_ft, l:filetype) >= 0
-    let l:filename = fnamemodify(l:bufname, ':t')
-    call s:restore_cwd_context(l:cwd_context)
-    return l:filename
-  endif
-  " Empty name
-  if l:bufname == ''
-    let l:filename = '[No Name]'
-    call s:restore_cwd_context(l:cwd_context)
-    return l:filename
-  endif
-  let l:head_dir = fnamemodify(l:bufname, ':.:h')
-  if l:head_dir == '.'
-    let l:filename = fnamemodify(l:bufname, ':t')
+function s:stl_file_name_set_cwd_context(context)
+  " Store cwd of current active window
+  let a:context.original_cwd = getcwd()
+  " Is it locally-set directory?
+  if haslocaldir()
+    let a:context.cwd_type = 'local'
+  elseif haslocaldir(-1)
+    let a:context.cwd_type = 'tabpage'
   else
-    let l:filename = pathshorten(l:head_dir).'/'.fnamemodify(l:bufname, ':t')
+    let a:context.cwd_type = 'global'
   endif
-  call s:restore_cwd_context(l:cwd_context)
+  " Set local working directory to window for which stl is drawn
+  " This is for correct context of filename-modifiers
+  silent execute "lcd ".getcwd(a:context.winnr)
+endfunction
+function! s:restore_cwd_context(context)
+  " Restore original cwd of current active window
+  if a:context.cwd_type ==# 'local'
+    let l:cwd_type_char = 'l'
+  elseif a:context.cwd_type ==# 'tabpage'
+    let l:cwd_type_char = 't'
+  elseif a:context.cwd_type ==# 'global'
+    let l:cwd_type_char = ''
+  endif
+  silent execute l:cwd_type_char."cd ".a:context.original_cwd
+endfunction
+function! s:stl_file_name_set_result(context, result)
+  let a:context.has_result = 1
+  let a:context.filename = a:result
+endfunction
+function! s:stl_file_name_handle_all_cases(context, file_name_funcs)
+  for fn in a:file_name_funcs
+    call function(fn)(a:context)
+    if a:context.has_result
+      return a:context.filename
+    endif
+  endfor
+endfunction
+" Special cases for filename stl part
+" Filetypes that should display only base file name
+function! s:stl_file_name_simple_name_for_ft(context)
+  let l:path_disabled_filetypes = ['help']
+  let l:filetype = getbufvar(a:context.bufnr, '&filetype')
+  if index(l:path_disabled_filetypes, l:filetype) >= 0
+    call s:stl_file_name_set_result(a:context, fnamemodify(a:context.bufname, ':t'))
+  endif
+endfunction
+" Empty name
+function! s:stl_file_name_no_name(context)
+  if empty(a:context.bufname)
+    call s:stl_file_name_set_result(a:context, '[No Name]')
+  endif
+endfunction
+" Shorten path relatively
+function! s:stl_file_name_shorten_relative_path(context)
+  let l:head_dir = fnamemodify(a:context.bufname, ':.:h')
+  if l:head_dir == '.'
+    call s:stl_file_name_set_result(a:context, fnamemodify(a:context.bufname, ':t'))
+  else
+    call s:stl_file_name_set_result(a:context, pathshorten(l:head_dir).'/'.fnamemodify(a:context.bufname, ':t'))
+  endif
+endfunction
+" Which functions and in which order determine filename part
+let s:stl_file_name_funcs = [
+      \ 's:stl_file_name_simple_name_for_ft',
+      \ 's:stl_file_name_no_name',
+      \ 's:stl_file_name_shorten_relative_path',
+      \]
+function! s:stl_file_name(winnr)
+  let l:bufnr = winbufnr(a:winnr)
+  let l:context  = {
+        \ 'original_cwd': '',
+        \ 'cwd_type': '',
+        \ 'bufnr': l:bufnr,
+        \ 'bufname': bufname(l:bufnr),
+        \ 'winnr': a:winnr,
+        \ 'has_result': 0,
+        \ 'filename': '',
+        \}
+  " Set correct working directory context
+  call s:stl_file_name_set_cwd_context(l:context)
+  let l:filename = s:stl_file_name_handle_all_cases(l:context, s:stl_file_name_funcs)
+  call s:restore_cwd_context(l:context)
   return l:filename
 endfunction
 
