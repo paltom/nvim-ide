@@ -33,9 +33,10 @@ function! s:get_hi_color(group_name, attribute) abort
 endfunction
 let s:stl_bg = s:get_hi_color("StatusLine", "guibg")
 execute "highlight STLFlags guibg=".s:stl_bg." guifg=".s:get_hi_color("ALEWarningSign", "guifg")
-execute "highlight STLLocation guifg=".s:stl_bg." guibg=".s:get_hi_color("StatusLine", "guifg")
-execute "highlight STLCWD guifg=".s:get_hi_color("Directory", "guifg")." gui=inverse"
-execute "highlight! link STLEmpty StatusLineNC"
+execute "highlight STLLocation guifg=".s:stl_bg." guibg=".s:get_hi_color("Directory", "guifg")
+execute "highlight STLCWD guifg=".s:get_hi_color("String", "guifg")." gui=inverse,bold"
+execute "highlight! link STLEmpty TermCursor"
+execute "highlight STLWinnr gui=bold"
 function! s:highlight_stl_part(part, highlight_group)
   return "%#".a:highlight_group."#".a:part."%#StatusLine#"
 endfunction
@@ -159,7 +160,7 @@ function! s:stl()
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part(s:stl_location(), "STLLocation")
   let l:stl .= s:stl_sep
-  let l:stl .= s:stl_win_id()
+  let l:stl .= s:highlight_stl_part(s:stl_win_id(), "STLWinnr")
   return l:stl
 endfunction
 
