@@ -1,3 +1,6 @@
 [submodule "ext/plugins/vader.vim"]
 	path = ext/plugins/vader.vim
 	url = https://github.com/junegunn/vader.vim
+[submodule "ext/plugins/vim-one"]
+	path = ext/plugins/vim-one
+	url = https://github.com/rakr/vim-one

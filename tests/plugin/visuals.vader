@@ -1,0 +1,57 @@
+Execute (Check colorscheme settings):
+  AssertEqual 1, g:one_allow_italics
+  AssertEqual 1, &termguicolors
+  AssertEqual "one", trim(execute("colorscheme"))
+
+Execute (Scroll up with full window of text):
+  for i in range(winheight(0)*2 + 10)
+    call append(0, "xxx")
+  endfor
+  execute "normal! 50%"
+  execute "normal! M"
+  execute "normal! ".winheight(0)/2."k"
+
+Then (Cursor is in line below scrolloff value):
+  AssertEqual 4, winline()
+
+Execute (Scroll down with full window of text):
+  for i in range(winheight(0)*2 + 10)
+    call append(0, "xxx")
+  endfor
+  execute "normal! 50%"
+  execute "normal! M"
+  execute "normal! ".winheight(0)/2."j"
+
+Then (Cursor is in line below scrolloff value):
+  AssertEqual winheight(0)-3, winline()
+
+Given (Some buffer):
+  Line 1
+
+Execute (Line number settings are correct):
+  AssertEqual 1, &number, "Lines are not numbered"
+  AssertEqual 1, &relativenumber, "Lines are not numbered relatively to current one"
+  AssertEqual 5, &numberwidth, "Number column has wrong width (should be 5)"
+
+Execute (Whitespace characters are displayed):
+  AssertEqual 1, &list, "Whitespace characters displaying disabled"
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["tab", "» "]) >= 0
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["trail", "␣"]) >= 0
+
+Execute (Long lines are not wrapped):
+  AssertEqual 0, &wrap
+
+Execute (Long lines are scrolled horizontally in chunks):
+  AssertEqual 35, &sidescroll
+
+Execute (Long lines are marked at the end of screen):
+  AssertEqual 1, &list
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["precedes", "⟪"]) >= 0
+  Assert index(map(split(&listchars, ","), 'split(v:val, ":")'), ["extends", "⟫"]) >= 0
+
+Execute (Vertical split is nicely visible):
+  Assert index(map(split(&fillchars, ","), 'split(v:val, ":")'), ["vert", " "]) >= 0
+  Assert trim(execute("highlight VertSplit")) =~? "links to StatusLineNC"
+
+Execute (Folded lines are nicely rendered):
+  Assert trim(execute("highlight Folded")) =~? "links to FoldColumn"
