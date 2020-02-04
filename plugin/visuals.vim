@@ -1,15 +1,10 @@
-let s:colorscheme_plugin = "vim-one"
-
-" Load guard for one-time loading of plugins (colorscheme)
-"if exists("g:loaded_visuals")
-  "finish
-"endif
-"let g:loaded_visuals = 1
-
 let g:one_allow_italics = 1
 set termguicolors
 set background=dark
+
+let s:colorscheme_plugin = "vim-one"
 call ext#plugins#load([s:colorscheme_plugin])
+
 colorscheme one
 
 set scrolloff=3
@@ -24,6 +19,12 @@ let &listchars .= ",precedes:\u27ea,extends:\u27eb"
 highlight! link Folded FoldColumn
 highlight! link VertSplit StatusLineNC
 let &fillchars = "vert: "
+
+augroup colorcolumn_in_active_window
+  autocmd!
+  autocmd BufNewFile,BufRead,BufWinEnter,WinEnter * let &l:colorcolumn = "80,".join(range(120, 999), ",")
+  autocmd WinLeave * let &l:colorcolumn = join(range(1, 999), ",")
+augroup end
 
 " Statusline settings
 highlight STLFlags guibg=#2c323c guifg=#e5c07b

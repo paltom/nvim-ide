@@ -9,8 +9,11 @@ endfunction
 
 function! s:insert_into_rtp(path_element, index)
   let l:rtp_list = split(&runtimepath, ",")
-  let l:new_rtp_list = insert(l:rtp_list, a:path_element, a:index)
-  let &runtimepath = join(l:new_rtp_list, ",")
+  " insert only if path_element is not present
+  if index(l:rtp_list, a:path_element) < 0
+    let l:rtp_list = insert(l:rtp_list, a:path_element, a:index)
+  endif
+  let &runtimepath = join(l:rtp_list, ",")
 endfunction
 
 function! s:load_plugin(plugin)
