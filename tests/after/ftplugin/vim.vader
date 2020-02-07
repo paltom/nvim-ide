@@ -1,68 +1,36 @@
 Given vim (Vimscript buffer):
-  if 1
-    echo "test"
-  endif
 
-Do (Insert tab at the beginning of line):
-  I\<tab>
+Execute (expandtab is set in after/ftplugin/vim.vim):
+  AssertEqual config#vim_home."/"."after/ftplugin/vim.vim",
+  \pack#internal_tests#option_set_path("expandtab")
 
-Expect (Line indented with 2 spaces):
-    if 1
-    echo "test"
-  endif
+Execute (tabstop is set in after/ftplugin/vim.vim):
+  AssertEqual config#vim_home."/"."after/ftplugin/vim.vim",
+  \pack#internal_tests#option_set_path("tabstop")
 
-Do (Shift line right):
-  >>
+Execute (softtabstop is set in after/ftplugin/vim.vim):
+  AssertEqual config#vim_home."/"."after/ftplugin/vim.vim",
+  \pack#internal_tests#option_set_path("softtabstop")
 
-Expect (Line indented with 2 spaces):
-    if 1
-    echo "test"
-  endif
+Execute (shiftwidth is set in after/ftplugin/vim.vim):
+  AssertEqual config#vim_home."/"."after/ftplugin/vim.vim",
+  \pack#internal_tests#option_set_path("shiftwidth")
 
-Do (Shift line left):
-  j
-  <<
+Execute (shiftround is set in after/ftplugin/vim.vim):
+  AssertEqual config#vim_home."/"."after/ftplugin/vim.vim",
+  \pack#internal_tests#option_set_path("shiftround")
 
-Expect (Line dedented with 2 spaces):
-  if 1
-  echo "test"
-  endif
+Execute (change filetype):
+  setlocal filetype=test
 
-Given vim (Improperly formatted Vimscript buffer):
-   let a = 1
-  let b = 2
-
-Do (Insert tab at the beginning of line):
-  I\<tab>
-
-Expect (Line is indented with 2 spaces):
-    let a = 1
-  let b = 2
-
-Do (Shift line left):
-  <<
-
-Expect (Line is properly formatted):
-  let a = 1
-  let b = 2
-
-Given text (Text buffer):
-
-Execute (Store variables):
-  let expandtab = &expandtab
-  let tabstop = &tabstop
-  let softtabstop = &softtabstop
-  let shiftwidth = &shiftwidth
-  let shiftround = &shiftround
-
-Given vim (Vimscript buffer):
-
-Execute (Change filetype):
-  set filetype=text
-
-Then (Settings are restored):
-  AssertEqual expandtab, &expandtab
-  AssertEqual tabstop, &tabstop
-  AssertEqual softtabstop, &softtabstop
-  AssertEqual shiftwidth, &shiftwidth
-  AssertEqual shiftround, &shiftround
+Then (expandtab, tabstop, softtabstop, shiftwidth, shiftround are restored by ftplugin.vim):
+  AssertEqual expand($VIMRUNTIME)."/ftplugin.vim",
+  \pack#internal_tests#option_set_path("expandtab")
+  AssertEqual expand($VIMRUNTIME)."/ftplugin.vim",
+  \pack#internal_tests#option_set_path("tabstop")
+  AssertEqual expand($VIMRUNTIME)."/ftplugin.vim",
+  \pack#internal_tests#option_set_path("softtabstop")
+  AssertEqual expand($VIMRUNTIME)."/ftplugin.vim",
+  \pack#internal_tests#option_set_path("shiftwidth")
+  AssertEqual expand($VIMRUNTIME)."/ftplugin.vim",
+  \pack#internal_tests#option_set_path("shiftround")

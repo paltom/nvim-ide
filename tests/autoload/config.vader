@@ -2,7 +2,7 @@ Execute (Vim Home directory variable is defined):
   Assert exists("g:config#vim_home")
 
 Execute (Vim Home directory variable points to existing directory):
-  Assert isdirectory(g:config#vim_home)
+  Assert isdirectory(fnamemodify(g:config#vim_home, ":p"))
 
 Execute (Vim Home directory contains basic Vim structure):
   for file in [
