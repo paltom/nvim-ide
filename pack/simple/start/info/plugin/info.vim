@@ -1,42 +1,3 @@
-" Info sections list
-" - List contains info objects
-" - Info object: name, content
-" - Info object content may be String or List of lines to display
-let s:info_sections = [
-      \ {
-      \   "name": "test-line",
-      \   "content": "Test line",
-      \ },
-      \ {
-      \   "name": "test-lines",
-      \   "content": [
-      \     "Test line 1",
-      \     "Test line 2",
-      \   ],
-      \ }
-      \]
-
-" Add Info section
-" - Info section object format:
-"   name - name of section (header)
-"   content - String (single line) or List of lines to display under section
-" - If entry with the same name already exists in sections list, it is
-"   overwritten, otherwise info_section is added at the end of list
-function! Info_add_section(info_section)
-  let l:sections_names = map(copy(s:info_sections), 'v:val.name')
-  let l:info_section_name_index = index(l:sections_names, a:info_section.name)
-  if l:info_section_name_index >= 0
-    let s:info_sections[l:info_section_name_index] = a:info_section
-  else
-    let s:info_sections = add(s:info_sections, a:info_section)
-  endif
-endfunction
-
-" Return all info sections names
-function! s:info_sections_names()
-  return map(copy(s:info_sections), 'v:val.name')
-endfunction
-
 " Return info section names that are not yet present in Info command arguments
 " entered so far.
 " - cmd_line starts with Info followed by space-separated section names
@@ -55,7 +16,7 @@ endfunction
 " - Should return only those that are not yet used
 " - Should take candidates defined in user-customizable sections map
 function! s:info_complete(arg_lead, cmd_line, cur_pos)
-  let l:all_info_sections = s:info_sections_names()
+  let l:all_info_sections = map(info#sections_names(), 'tolower(v:val)')
   let l:not_entered_sections = s:remove_already_entered(l:all_info_sections,
         \ a:cmd_line)
   return join(l:not_entered_sections, "\n")
@@ -105,21 +66,51 @@ function! s:render_sections(sections)
   return s:indent_lines(l:lines, 1)
 endfunction
 
+" Display info lines
+function! s:display(lines)
+  " create temporary buffer
+  let l:info_buffer = nvim_create_buf(v:false, v:true)
+  call nvim_buf_set_lines(l:info_buffer, 0, -1, v:false, a:lines)
+  let l:info_win = nvim_open_win(l:info_buffer, v:false, {
+        \ 'relative': 'editor',
+        \ 'anchor': 'SE',
+        \ 'width': min([max(map(copy(a:lines), 'len(v:val)')) + 1, &columns / 2]),
+        \ 'height': min([len(a:lines), &lines * 3 / 4]),
+        \ 'row': (&lines - &cmdheight - 1) - 1,
+        \ 'col': &columns - 2,
+        \ 'focusable': v:false,
+        \ 'style': 'minimal',
+        \})
+  call nvim_win_set_option(l:info_win, 'winblend', 30)
+  execute "autocmd CursorMoved * ++once call nvim_win_close(".l:info_win.", v:true)"
+endfunction
+
+" Convert list of strings in string suitable for passing as function arguments
+function! s:list_to_f_args(args_list)
+  return join(map(copy(a:args_list), '"\''".v:val."\''"'), ",")
+endfunction
+
 " Display info in floating window
 " - If called without arguments - display all defined info sections
 " - If called with arguments - display only requested info sections in same
 "   order as requested
 " - Adjust window size to content; window can be later made customizable
-" - Up to 20 arguments currently allowed: E740
+" - Up to 20 sections currently allowed: E740
 function! s:info(...)
   " Display only requested sections if called with arguments
   if a:0
-    let l:sections_to_display = filter(copy(s:info_sections),
-          \ 'index('.a:000.', v:val.name) >= 0')
+    let l:sections_string = '['.s:list_to_f_args(a:000).']'
+    let l:sections_to_display = filter(info#sections(),
+          \ 'index('.l:sections_string.', tolower(v:val.name)) >= 0')
   else
-    let l:sections_to_display = s:info_sections
+    let l:sections_to_display = info#sections()
   endif
-  echo join(s:render_sections(l:sections_to_display), "\n")
+  let l:info_lines = s:render_sections(l:sections_to_display)
+  return l:info_lines
 endfunction
 
-command! -nargs=* -complete=custom,s:info_complete Info call s:info(<f-args>)
+function! Info(...)
+  return join(s:info(eval(s:list_to_f_args(a:000))), "\n")
+endfunction
+
+command! -nargs=* -complete=custom,s:info_complete Info call s:display(s:info(<f-args>))
