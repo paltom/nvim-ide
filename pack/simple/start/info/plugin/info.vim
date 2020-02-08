@@ -58,6 +58,9 @@ endfunction
 
 " Render sections and return list of rendered lines
 function! s:render_sections(sections)
+  if empty(a:sections)
+    return []
+  endif
   let l:lines = [""]
   for rendered_section in map(a:sections, 's:render_section(v:val, 0)')
     let l:lines = extend(l:lines, rendered_section)
@@ -68,6 +71,9 @@ endfunction
 
 " Display info lines
 function! s:display(lines)
+  if empty(a:lines)
+    return
+  endif
   " create temporary buffer
   let l:info_buffer = nvim_create_buf(v:false, v:true)
   call nvim_buf_set_lines(l:info_buffer, 0, -1, v:false, a:lines)
@@ -82,7 +88,7 @@ function! s:display(lines)
         \ 'style': 'minimal',
         \})
   call nvim_win_set_option(l:info_win, 'winblend', 30)
-  execute "autocmd CursorMoved * ++once call nvim_win_close(".l:info_win.", v:true)"
+  execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
 endfunction
 
 " Convert list of strings in string suitable for passing as function arguments
@@ -110,7 +116,11 @@ function! s:info(...)
 endfunction
 
 function! Info(...)
-  return join(s:info(eval(s:list_to_f_args(a:000))), "\n")
+  if a:0
+    return join(s:info(eval(s:list_to_f_args(a:000))), "\n")
+  else
+    return ""
+  endif
 endfunction
 
 command! -nargs=* -complete=custom,s:info_complete Info call s:display(s:info(<f-args>))
