@@ -118,20 +118,15 @@ endfunction
 " }}}
 
 " Entrypoint {{{
-" Display info in floating window
-" - If called without arguments - display all defined info sections
-" - If called with arguments - display only requested info sections in same
-"   order as requested
-" - Adjust window size to content; window can be later made customizable
-" - Up to 20 sections currently allowed: E740
 function! s:info(...)
-  " Display only requested sections if called with arguments
+  " Display requested sections only if called with arguments
   if a:0
     let l:sections_string = '['.s:list_to_f_args(a:000).']'
     let l:sections_to_display = filter(info#sections(),
           \ 'index('.l:sections_string.', s:cmd_arg_escaping(v:val.name)) >= 0')
   else
-    let l:sections_to_display = info#sections()
+    let l:sections_to_display = filter(info#sections(),
+          \ 'has_key(v:val, "default")')
   endif
   let l:info_lines = s:render_sections(l:sections_to_display)
   return l:info_lines

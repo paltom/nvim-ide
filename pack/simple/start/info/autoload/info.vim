@@ -11,6 +11,8 @@
 " - function: (exactly one of text, function is mandatory) Function to call
 "   which should return section's content
 "   - may be String or List of lines
+" - default: (optional) Flag indicating if section should be displayed when
+"   not explicitly requested
 " Info sections list
 " - List contains info objects
 let s:info_sections = []
@@ -46,6 +48,11 @@ function! s:validate_info_obj(info_obj)
         return v:false
       endif
     endfor
+  endif
+  if has_key(a:info_obj, "default")
+    if type(a:info_obj.default) != v:t_bool
+      return v:false
+    endif
   endif
   return v:true
 endfunction
