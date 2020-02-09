@@ -121,7 +121,8 @@ endfunction
 function! s:info(...)
   " Display requested sections only if called with arguments
   if a:0
-    let l:sections_string = '['.s:list_to_f_args(a:000).']'
+    let l:sections_string = '['.s:list_to_f_args(map(copy(a:000),
+          \ 's:cmd_arg_escaping(v:val)')).']'
     let l:sections_to_display = filter(info#sections(),
           \ 'index('.l:sections_string.', s:cmd_arg_escaping(v:val.name)) >= 0')
   else
@@ -160,10 +161,11 @@ endfunction
 " Public interface {{{
 function! Info(...)
   if a:0
-    return join(s:info(eval(s:list_to_f_args(a:000))), "\n")
+    let l:lines = s:info(eval(s:list_to_f_args(a:000)))
   else
-    return ""
+    let l:lines = s:info()
   endif
+  return join(l:lines, "\n")
 endfunction
 
 command! -nargs=* -complete=custom,s:info_complete Info call s:display(s:info(<f-args>))
