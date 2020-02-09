@@ -1,61 +1,24 @@
-let g:one_allow_italics = 1
-set termguicolors
-set background=dark
-
-let s:colorscheme_plugin = "vim-one"
-call ext#plugins#load([s:colorscheme_plugin])
-
-colorscheme one
-
-set scrolloff=3
-
-set number relativenumber numberwidth=5
-
-let &listchars = "tab:\u00bb ,trail:\u2423"
-set list
-set nowrap sidescroll=1 sidescrolloff=10
-let &listchars .= ",precedes:\u27ea,extends:\u27eb"
-
-highlight! link Folded FoldColumn
-highlight! link VertSplit StatusLineNC
-let &fillchars = "vert: "
-
-augroup colorcolumn_in_active_window
-  autocmd!
-  autocmd BufNewFile,BufRead,BufWinEnter,WinEnter * let &l:colorcolumn = "80,".join(range(120, 999), ",")
-  autocmd WinLeave * let &l:colorcolumn = join(range(1, 999), ",")
-augroup end
-
-augroup cursorline_in_active_window
-  autocmd!
-  autocmd BufNewFile,BufRead,BufWinEnter,WinEnter * if !&diff|setlocal cursorline|else|setlocal nocursorline|endif
-  autocmd WinLeave * setlocal nocursorline
-  autocmd VimEnter * setlocal cursorline
-augroup end
-function! s:disable_cursorline_in_diff(new_option_value)
-  if a:new_option_value
-    setlocal nocursorline
-  else
-    setlocal cursorline
-  endif
-endfunction
-augroup cursorline_in_diff_windows
-  autocmd!
-  autocmd OptionSet diff call <SID>disable_cursorline_in_diff(v:option_new)
-augroup end
-
-" Statusline settings
+" Statusline settings - Using vim-one colors {{{
 highlight STLFlags guibg=#2c323c guifg=#e5c07b
 highlight STLLocation guifg=#2c323c guibg=#61afef
 highlight STLCWD guifg=#98c379 gui=inverse,bold
-highlight link STLEmpty TermCursor
+highlight STLEmpty gui=inverse
 highlight STLWinnr gui=bold
+" }}}
+
+" Utility functions {{{
+function s:SID()
+  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+endfunction
 
 function! s:highlight_stl_part(part, highlight_group)
   return "%#".a:highlight_group."#".a:part."%#StatusLine#"
 endfunction
+" }}}
 
+" Statusline parts {{{
 let s:stl_sep = " "
+
 function! s:stl_cwd()
   return "%{pathshorten(fnamemodify(getcwd(), ':~'))}:"
 endfunction
@@ -82,6 +45,7 @@ function! s:stl_file_flags(winnr)
   return l:flags
 endfunction
 
+" Filename part functions {{{
 function s:stl_file_name_set_cwd_context(context)
   " Store cwd of current active window
   let a:context.original_cwd = getcwd()
@@ -97,7 +61,7 @@ function s:stl_file_name_set_cwd_context(context)
   " This is for correct context of filename-modifiers
   silent execute "lcd ".getcwd(a:context.winnr)
 endfunction
-function! s:restore_cwd_context(context)
+function! s:stl_file_name_restore_cwd_context(context)
   " Restore original cwd of current active window
   if a:context.cwd_type ==# 'local'
     let l:cwd_type_char = 'l'
@@ -121,12 +85,19 @@ function! s:stl_file_name_handle_all_cases(context, file_name_funcs)
   endfor
 endfunction
 " Special cases for filename stl part
-" Filetypes that should display only base file name
-function! s:stl_file_name_simple_name_for_ft(context)
-  let l:path_disabled_filetypes = ['help']
+" Filetypes that should display custom file name
+" Those can be registered by plugin later using
+" statusline#register_filename_for_ft function
+function! s:fname(bufname)
+  return fnamemodify(a:bufname, ':t')
+endfunction
+let s:file_name_special_filetypes = [{"filetype": 'help', "function": function('s:fname')}]
+function! s:stl_file_name_filetype(context)
   let l:filetype = getbufvar(a:context.bufnr, '&filetype')
-  if index(l:path_disabled_filetypes, l:filetype) >= 0
-    call s:stl_file_name_set_result(a:context, fnamemodify(a:context.bufname, ':t'))
+  let l:special_filetype = filter(copy(s:file_name_special_filetypes), 'v:val.filetype == l:filetype')
+  if len(l:special_filetype) > 0
+    let l:special_filetype = l:special_filetype[-1]
+    call s:stl_file_name_set_result(a:context, l:special_filetype.function(a:context.bufname))
   endif
 endfunction
 " Empty name
@@ -146,7 +117,7 @@ function! s:stl_file_name_shorten_relative_path(context)
 endfunction
 " Which functions and in which order determine filename part
 let s:stl_file_name_funcs = [
-      \ 's:stl_file_name_simple_name_for_ft',
+      \ 's:stl_file_name_filetype',
       \ 's:stl_file_name_no_name',
       \ 's:stl_file_name_shorten_relative_path',
       \]
@@ -164,9 +135,10 @@ function! s:stl_file_name(winnr)
   " Set correct working directory context
   call s:stl_file_name_set_cwd_context(l:context)
   let l:filename = s:stl_file_name_handle_all_cases(l:context, s:stl_file_name_funcs)
-  call s:restore_cwd_context(l:context)
+  call s:stl_file_name_restore_cwd_context(l:context)
   return l:filename
 endfunction
+" }}}
 
 function! s:stl_type()
   return "%(%y%q%w%)"
@@ -183,6 +155,7 @@ endfunction
 function! s:stl_win_id()
   return "[%{winnr()}]"
 endfunction
+" }}}
 
 function! s:stl()
   let l:stl = ""
@@ -214,10 +187,6 @@ function! s:stlnc(winnr)
   return l:stl
 endfunction
 
-function s:SID()
-  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
-endfunction
-
 execute "setlocal statusline=%!<SNR>".s:SID()."_stl()"
 augroup statusline_update
   autocmd!
@@ -229,3 +198,5 @@ augroup statusline_update
         \endif|
         \endfor
 augroup end
+
+" vim:foldmethod=marker
