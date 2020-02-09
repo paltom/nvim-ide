@@ -110,7 +110,7 @@ set background=dark
 let s:colorscheme_plugin = "vim-one"
 call ext#plugins#load([s:colorscheme_plugin])
 
-augroup colorscheme_fixes
+augroup colorscheme_fixes_init
   autocmd!
   autocmd ColorScheme one highlight! link Folded FoldColumn
   autocmd ColorScheme one highlight! link VertSplit StatusLineNC
@@ -151,6 +151,13 @@ augroup cursorline_in_diff_windows
   autocmd!
   autocmd OptionSet diff call <SID>disable_cursorline_in_diff(v:option_new)
 augroup end
+" }}}
+
+" Basic plugins settings {{{
+" need to postpone calling function until statusline plugin is loaded
+autocmd SourcePost *statusline.vim ++once
+            \ call statusline#register_filename_for_ft('help',
+            \       { bufname -> fnamemodify(bufname, ':t') })
 " }}}
 
 " vim:foldmethod=marker
