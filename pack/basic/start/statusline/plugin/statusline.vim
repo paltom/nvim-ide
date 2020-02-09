@@ -4,6 +4,14 @@ highlight STLLocation guifg=#2c323c guibg=#61afef
 highlight STLCWD guifg=#98c379 gui=inverse,bold
 highlight STLEmpty gui=inverse
 highlight STLWinnr gui=bold
+augroup colorscheme_fixes_statusline
+  autocmd!
+  autocmd ColorScheme one highlight STLFlags guibg=#2c323c guifg=#e5c07b
+  autocmd ColorScheme one highlight STLLocation guifg=#2c323c guibg=#61afef
+  autocmd ColorScheme one highlight STLCWD guifg=#98c379 gui=inverse,bold
+  autocmd ColorScheme one highlight STLEmpty gui=inverse
+  autocmd ColorScheme one highlight STLWinnr gui=bold
+augroup end
 " }}}
 
 " Utility functions {{{
@@ -88,16 +96,14 @@ endfunction
 " Filetypes that should display custom file name
 " Those can be registered by plugin later using
 " statusline#register_filename_for_ft function
-function! s:fname(bufname)
-  return fnamemodify(a:bufname, ':t')
-endfunction
-let s:file_name_special_filetypes = [{"filetype": 'help', "function": function('s:fname')}]
 function! s:stl_file_name_filetype(context)
   let l:filetype = getbufvar(a:context.bufnr, '&filetype')
-  let l:special_filetype = filter(copy(s:file_name_special_filetypes), 'v:val.filetype == l:filetype')
+  let l:special_filetype = filter(statusline#file_name_special_filetypes(),
+        \ 'v:val.filetype == l:filetype')
   if len(l:special_filetype) > 0
     let l:special_filetype = l:special_filetype[-1]
-    call s:stl_file_name_set_result(a:context, l:special_filetype.function(a:context.bufname))
+    call s:stl_file_name_set_result(a:context,
+          \ l:special_filetype.filename_function(a:context.bufname))
   endif
 endfunction
 " Empty name
