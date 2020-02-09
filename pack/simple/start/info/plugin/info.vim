@@ -113,7 +113,7 @@ function! s:info_complete(arg_lead, cmd_line, cur_pos)
 endfunction
 
 function! s:cmd_arg_escaping(name)
-  return tolower(substitute(a:name, " ", "_", "g")
+  return tolower(substitute(a:name, " ", "_", "g"))
 endfunction
 " }}}
 
