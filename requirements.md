@@ -40,29 +40,29 @@ Features and requirements for configuration.
 - Where: All static configuration (settings, mappings, autocommands, without
 functions) are located in `init.vim` file.
 
-1. Clipboard
+1.  Clipboard
 
-   Ext-Req: Clipboard tool is available in the system (:help clipboard-tool)
+    Ext-Req: Clipboard tool is available in the system (:help clipboard-tool)
 
-   1. Yank text into clipboard
+    1.  Yank text into clipboard
 
-      1. Yank line (Normal mode)
+        1.  Yank line (Normal mode)
 
-         There is convenient mapping that yanks current line into
-         clipboard
-         - How: mapping, `gY`
+            There is convenient mapping that yanks current line into
+            clipboard
+            - How: mapping, `gY`
 
-      2. Yank text (Normal mode)
+        2.  Yank text (Normal mode)
 
-         There is convenient mapping that yanks text into clipboard.
-         - Req: It should allow motions (:help movement)
-         - Req: It should allow text objects (:help text-objects)
-         - How: mapping, `gy`
+            There is convenient mapping that yanks text into clipboard.
+            - Req: It should allow motions (:help movement)
+            - Req: It should allow text objects (:help text-objects)
+            - How: mapping, `gy`
 
-      3. Yank text (Visual mode)
+        3.  Yank text (Visual mode)
 
-         There is a convenient mapping that yanks visually selected text.
-         - How: mapping (visual), `gy`
+            There is a convenient mapping that yanks visually selected text.
+            - How: mapping (visual), `gy`
 
 ## Plugins
 
@@ -70,4 +70,4 @@ functions) are located in `init.vim` file.
 
 ### IDE
 
-<!-- vim:set textwidth=80 sts=2 ts=2 shiftwidth=2: -->
+<!-- vim:set textwidth=80 sts=2 ts=2 sw=2: -->
