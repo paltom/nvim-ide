@@ -48,21 +48,57 @@ functions) are located in `init.vim` file.
 
         1.  Yank line (Normal mode)
 
-            There is convenient mapping that yanks current line into
-            clipboard
+            - Req: Convenient way to yank current line into clipboard
             - How: mapping, `gY`
 
         2.  Yank text (Normal mode)
 
-            There is convenient mapping that yanks text into clipboard.
+            - Req: Convenient way to yank text into clipboard
             - Req: It should allow motions (:help movement)
             - Req: It should allow text objects (:help text-objects)
             - How: mapping, `gy`
 
         3.  Yank text (Visual mode)
 
-            There is a convenient mapping that yanks visually selected text.
+            - Req: Convenient way to yank visually selected text into clipboard
             - How: mapping (visual), `gy`
+
+    2.  Put text from clipboard
+
+        1.  Put text (Normal mode)
+
+            - Req: Convenient way to put text from clipboard after cursor
+            - How: mapping, `gp`
+            - Req: It should preserve a way to put and move cursor after new
+              text (:help gP)
+            - How: mapping, `gap`
+            - Req: Convenient way to put text from clipboard before cursor
+            - How: mapping, `gP`
+            - Req: It should preserve a way to put and move cursor after new
+              text (:help gP)
+            - How: mapping, `gaP`
+
+        2.  Put line (Normal mode)
+
+            - Req: Convenient way to put line from clipboard above current line
+            - How: mapping, `gOp`
+            - Req: Convenient way to put line from clipboard below current line
+            - How: mapping, `gop`
+
+        3.  Put text (Insert mode)
+
+            - Req: Convenient way to put text from clipboard after cursor and
+              stay in insert mode (cursor after put text)
+            - How: mapping (insert), `<c-v>`
+            - Req: It should preserve a way to put special characters in insert
+              mode (:help i_ctrl-v)
+            - How: mapping (insert), `<c-g><c-v>`
+
+        4.  Put text (Visual mode)
+
+            - Req: Convenient way to put text from clipboard in place of
+              visually selected text
+            - How: mapping (visual), `gp`
 
 ## Plugins
 
