@@ -14,8 +14,8 @@ vnoremap gp "+p
 " }}}
 
 " Basic auto-formatting settings {{{
-set expandtab softtabstop=4 tabstop=4 shiftwidth=4 shiftround
-set autoindent smartindent
+set expandtab softtabstop=4 tabstop=4
+set autoindent smartindent shiftwidth=4 shiftround
 
 augroup format_white_characters
   autocmd!
@@ -42,7 +42,7 @@ nnoremap <silent> [<space> :<c-u>call <SID>add_empty_lines(0, v:count1)<cr>
 nnoremap <silent> ]<space> :<c-u>call <SID>add_empty_lines(1, v:count1)<cr>
 " }}}
 
-" Easy varoius movements {{{
+" Easy various movements {{{
 nnoremap <a-h> <c-w>h
 nnoremap <a-j> <c-w>j
 nnoremap <a-k> <c-w>k
