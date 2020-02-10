@@ -14,20 +14,12 @@ Used abbreviations:
   Requirement that has to be fulfilled outside of Neovim configuration.
   Example: Installing tool used by Neovim.
 
-- Req: Requirement
-
-  Requirement that is fulfilled by this project.
-
 - Int-Req: Internal requirement
 
   Requirement that has to be fulfilled by Neovim software. Example: floating
   windows.
 
-- How: How the feature is implemented (e.g. option,mapping, autocommand,
-  function, plugin)
-
-- Where: Which pack(s) / plugin(s) / file(s) / function(s) / augroup(s), etc.
-  implement given feature.
+- Where: Which pack(s) / plugin(s) / file(s), etc. implement given feature.
 
 # Feature Sets
 
@@ -44,62 +36,30 @@ functions) are located in `init.vim` file, unless specified otherwise.
 
     Ext-Req: Clipboard tool is available in the system (:help clipboard-tool)
 
-    1.  Yank text into clipboard
+    1.  Text can be conveniently yanked into clipboard
 
-        1.  Yank line (Normal mode)
+        - Yank current line into clipboard: `gY` mapping
+        - Yank text into clipboard: `gy` mapping
+          - allow motions (:help movement)
+          - allow text objects (:help text-objects)
+        - Yank visually selected text into clipboard: `gy` mapping
 
-            1.  Req: Convenient way to yank current line into clipboard
-                - How: mapping, `gY`
+    2.  Text can be conveniently put from clipboard
 
-        2.  Yank text (Normal mode)
-
-            1.  Req: Convenient way to yank text into clipboard
-                - Req: It should allow motions (:help movement)
-                - Req: It should allow text objects (:help text-objects)
-                - How: mapping, `gy`
-
-        3.  Yank text (Visual mode)
-
-            1.  Req: Convenient way to yank visually selected text into
-                clipboard
-                - How: mapping (visual), `gy`
-
-    2.  Put text from clipboard
-
-        1.  Put text (Normal mode)
-
-            1.  Req: Convenient way to put text from clipboard after cursor
-                - How: mapping, `gp`
-            2.  Req: It should preserve a way to put and move cursor after new
-                text (:help gP)
-                - How: mapping, `gap`
-            3.  Req: Convenient way to put text from clipboard before cursor
-                - How: mapping, `gP`
-            4.  Req: It should preserve a way to put and move cursor after new
-                text (:help gP)
-                - How: mapping, `gaP`
-
-        2.  Put line (Normal mode)
-
-            1.  Req: Convenient way to put line from clipboard above current line
-                - How: mapping, `gOp`
-            2.  Req: Convenient way to put line from clipboard below current line
-                - How: mapping, `gop`
-
-        3.  Put text (Insert mode)
-
-            1.  Req: Convenient way to put text from clipboard after cursor and
-                stay in insert mode (cursor after put text)
-                - How: mapping (insert), `<c-v>`
-            2.  Req: It should preserve a way to put special characters in
-                insert mode (:help i_ctrl-v)
-                - How: mapping (insert), `<c-g><c-v>`
-
-        4.  Put text (Visual mode)
-
-            1.  Req: Convenient way to put text from clipboard in place of
-                visually selected text
-                - How: mapping (visual), `gp`
+        - Put text from clipboard after cursor: `gp` mapping
+          - Preserve a way to put text with cursor left at the end of new text:
+            `gap` mapping
+        - Put text from clipboard before cursor: `gP` mapping
+          - Preserve a way to put text with cursor left at the end of new text:
+            `gaP` mapping
+        - Put line from clipboard above current line: `gOp` mapping
+        - Put line from clipboard below current line: `gop` mapping
+        - Put text from clipboard in insert mode: `<c-v>` mapping
+          - Stay in insert mode
+          - Cursor just after new text
+          - Preserve a way to insert special characters: `<c-g><c-v>` mapping
+        - Put text from clipboard in place of visually selected text: `gp`
+          mapping
 
 2.  Basic text auto-formatting
 
