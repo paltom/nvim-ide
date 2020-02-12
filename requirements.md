@@ -63,44 +63,33 @@ functions) are located in `init.vim` file, unless specified otherwise.
 
 2.  Basic text auto-formatting
 
-    1.  Tabulation
+    1.  Tab characters are replaced by spaces
 
-        1.  Req: Always insert spaces instead of tabs
-            - How: option, `expandtab`
+        - Tab character is replaced by 4 spaces by default when entering new
+          text: `expandtab`, `tabstop`, `softtabstop` options
+        - Tab characters existing already in edited file are replaced on file
+          write: `format_white_characters` augroup, TODO: change augroup name
 
-        2.  Req: Tabs are represented as 4 spaces by default
-            - How: option, `tabstop`
-            - How: option, `softtabstop`
+    2.  Indentation is done automatically
 
-        3.  Req: Existing tab characters are replaced by spaces
-  <!-- change autocommand name -->
-            - How: autocommand, `format_white_characters` augroup
-
-    2.  Indentation
-
-        1.  Req: Indent lines automatically after opening and before closing
-            braces
-            - How: option, `smartindent`
-        2.  Req: Preserve indentation when continuing inserting text in next
-            line
-            - How: option, `autoindent`
-        3.  Req: Indent/dedent lines by tab-width equivalent (4 spaces by
-            default)
-            - How: option, `shiftwidth`
-        4.  Req: Indent/dedent lines rounding to nearest multiple of tab-width
-            equivalent
-            - How: option, `shiftround`
+        - Lines are indented automatically after opening and before closing
+          braces or a line starting with specific keyword (if, for example):
+          `smartindent` option
+        - Indentation is preserved when text in inserted in next line:
+          `autoindent` option
+        - Lines can be indented/dedented by tab-width equivalent: `shiftwidth`
+          option
+          - Indentation/dedentation is rounded to the nearest multiple of
+            tab-width equivalent: `shiftround` option
 
     3.  Whitespace characters formatting
 
-        1.  Req: Remove trailing whitespaces automatically when writing file
-  <!-- change autocommand name -->
-            - How: autocommand, `format_white_characters` augroup
-
-        2.  Req: Provide a way to disable automatic trailing whitespaces removal
-            - How: variable, `g:remove_trailing_whitespaces`
-            - How: function, `config#toggle_trail_whitespaces_removal`
-              - Where: `autoload/config.vim`
+        - Trailing whitespaces are removed automatically:
+          `format_white_characters` augroup, TODO: change augroup name
+          - When file is written
+          - There is a way to turn it off: `g:remove_trailing_whitespaces`
+            variable, `config#toggle_trailing_whitespaces_removal` function
+            (`autoload/config.vim`)
 
 ## Plugins
 
