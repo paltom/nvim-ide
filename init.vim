@@ -17,9 +17,13 @@ vnoremap gp "+p
 set expandtab softtabstop=4 tabstop=4
 set autoindent smartindent shiftwidth=4 shiftround
 
-augroup format_white_characters
+augroup config_replace_tabs
   autocmd!
   autocmd BufWrite * retab
+augroup end
+
+augroup config_remove_trailing_whitespaces
+  autocmd!
   let g:remove_trailing_whitespaces = v:true
   autocmd BufWrite * if g:remove_trailing_whitespaces|%s/\v\s+$//e|endif
 augroup end

@@ -68,7 +68,7 @@ functions) are located in `init.vim` file, unless specified otherwise.
         - Tab character is replaced by 4 spaces by default when entering new
           text: `expandtab`, `tabstop`, `softtabstop` options
         - Tab characters existing already in edited file are replaced on file
-          write: `format_white_characters` augroup, TODO: change augroup name
+          write: `config_replace_tabs` augroup
 
     2.  Indentation is done automatically
 
@@ -85,7 +85,7 @@ functions) are located in `init.vim` file, unless specified otherwise.
     3.  Whitespace characters formatting
 
         - Trailing whitespaces are removed automatically:
-          `format_white_characters` augroup, TODO: change augroup name
+          `config_remove_trailing_whitespaces` augroup
           - When file is written
           - There is a way to turn it off: `g:remove_trailing_whitespaces`
             variable, `config#toggle_trailing_whitespaces_removal` function
