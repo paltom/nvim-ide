@@ -91,6 +91,51 @@ functions) are located in `init.vim` file, unless specified otherwise.
             variable, `config#toggle_trailing_whitespaces_removal` function
             (`autoload/config.vim`)
 
+3.  Moving around
+
+    1.  Moving between windows
+
+        - Move to another window: `<a-h>`, `<a-j>`, `<a-k>`, `<a-l>` mappings
+          - Move also when in insert mode
+          - Move also when in visual mode
+          - Move also from terminal window without going out of terminal mode
+        - Switch between current/alternate (:help alternate-file) buffer:
+          `<backspace>` mapping
+
+    2.  Moving between tabpages
+
+        - Move to previous tabpage: `[t` mapping
+        - Move to next tabpage: `]t` mapping
+          - Cycle through tabpages: `<c-t>t`, `<c-t><c-t>` mappings
+        - [ ] Move to the first, last tabpage: `[T`, `]T` mappings
+
+    3.  Moving inside window
+
+        - Easily move to the beginning, end of line: `H`, `L` mappings
+          - Work also as text-object (motion target): operator type mapping
+
+    4.  Moving between search results
+
+        - Move to the next/previous search result
+          - Use location list/quickfix list
+          - If there are both location list and quicklist for current window,
+            location list has precedence
+
+    5.  Selecting completions
+
+        - Trigger/select popupmenu with completions: `<c-j>`, `<c-k>` mappings
+        - Trigger wildmenu: `<tab>` character, `wildcharm` option
+        - Move up/down (same directory) in wildmenu options: `<c-j>`, `<c-k>`,
+          `<down>`, `<up>` mappings
+        - Move between directories in wildmenu list: `<c-h>`, `<c-l>`, `<left>`,
+          `<right>` mappings
+
+4.  Mode switching
+
+    1.  Switch out from terminal mode
+
+        - Easily switch out of terminal mode: `<c-w>` mapping
+
 ## Plugins
 
 ### Basic
