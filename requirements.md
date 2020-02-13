@@ -136,6 +136,24 @@ functions) are located in `init.vim` file, unless specified otherwise.
 
         - Easily switch out of terminal mode: `<c-w>` mapping
 
+5.  Searching
+
+    1.  Search command
+
+        - Case is ignored when only lower-cased characters are used:
+          `ignorecase`, `smartcase` options
+
+    2.  Search highlighting
+
+        - Search results are highlighted only during entering search pattern:
+          `nohlsearch`, `incsearch` options, `config_highlight_searches` augroup
+
+    3.  Search visual selection
+
+        - Search visually selected text: `/` visual mapping
+          - Preserve a way to go to search in visual mode: `g/` visual mapping
+          - Text is also available in unnamed register after searching for it
+
 [ ] Colorscheme: allow switching between dark/light backgrounds (update
 statusline highlights)
 

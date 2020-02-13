@@ -98,7 +98,7 @@ nnoremap <backspace> <c-^>
 set ignorecase smartcase
 set nohlsearch incsearch
 
-augroup highlight_searches
+augroup config_highlight_searches
   autocmd!
   autocmd CmdLineEnter /,\? set hlsearch
   autocmd CmdLineLeave /,\? set nohlsearch
