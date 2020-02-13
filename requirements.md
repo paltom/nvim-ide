@@ -136,6 +136,9 @@ functions) are located in `init.vim` file, unless specified otherwise.
 
         - Easily switch out of terminal mode: `<c-w>` mapping
 
+[ ] Colorscheme: allow switching between dark/light backgrounds (update
+statusline highlights)
+
 ## Plugins
 
 ### Basic
