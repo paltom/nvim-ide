@@ -117,9 +117,12 @@ functions) are located in `init.vim` file, unless specified otherwise.
     4.  Moving between search results
 
         - Move to the next/previous search result
-          - Use location list/quickfix list
+          - Use location list/quickfix list and last search pattern (:help
+            last-pattern)
           - If there are both location list and quicklist for current window,
             location list has precedence
+          - [ ] If there are no location list or quicklist available, use
+            last search pattern
 
     5.  Selecting completions
 
@@ -154,8 +157,55 @@ functions) are located in `init.vim` file, unless specified otherwise.
           - Preserve a way to go to search in visual mode: `g/` visual mapping
           - Text is also available in unnamed register after searching for it
 
-[ ] Colorscheme: allow switching between dark/light backgrounds (update
-statusline highlights)
+6.  Theme and visuals
+
+    1.  Colorscheme
+
+        - Comments (and possibly other elements) are displayed in italics: "one"
+          colorscheme, `g:one_allow_italics` variable
+        - Rich colors (full palette) can be displayed: `termguicolors` option
+        - Background can be switched between dark and light: `background` option
+          - Other visual elements' colors adjust automatically
+            - [ ] statusline
+            - vertical split border: `config_colorscheme_update` augroup
+            - folds: `config_colorscheme_update` augroup
+        - Vertical split is blank: `fillchars` option
+
+    2.  Text visibility
+
+        - Lines do not wrap: `wrap` option
+        - There is a context visible around current cursor position
+          - Visible 2 lines above and below current line when not at the
+            beginning/end of file: `scrolloff` option
+          - Visible 10 characters before and after cursor in line when not at
+            the beginning/end of line: `sidescrolloff` option
+            - Scrolling vertically is smooth: `sidescroll` option
+        - Whitespace characters are rendered: `list`, `listchars` options
+          - Tabs
+          - Trailing whitespaces
+        - Long line text not fitting in a window is marked: `list`, `listchars`
+          options
+
+    3.  Focus visibility
+
+        - Cursor line is visible in active window only: `cursorline` option,
+          `config_cursorline_in_active_window` augroup
+          - Not in windows where diffs are displayed, update when `diff` option
+            is toggled for window: `config_cursorline_in_active_window`,
+            `config_cursorline_in_diff_windows` augroups;
+            `disable_cursorline_in_diff` function
+        -
+
+    4.  Location in file
+
+        - Line numbers are displayed: `number` option
+          - Line numbers are relative to current line: `relativenumber` option
+          - Current line number is absolute: `number`, `relativenumber` options
+          - Numbers displaying area is wide enough for most of files (thousands
+            of lines at most): `numberwidth` option
+
+[ ] Tabline and tabpagelabel configuration
+[ ] tabpagelabel shows if there are ANY modified buffers in the tabpage
 
 ## Plugins
 
