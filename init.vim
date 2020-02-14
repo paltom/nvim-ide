@@ -1,3 +1,5 @@
+filetype plugin indent on
+
 " Easy access to system clipboard {{{
 nnoremap gy "+y
 nnoremap gY "+Y
@@ -137,7 +139,7 @@ let &listchars = "tab:\u00bb ,trail:\u2423"
 set list
 let &listchars .= ",precedes:\u27ea,extends:\u27eb"
 
-augroup colorcolumn_in_active_window
+augroup config_colorcolumn_in_active_window
   autocmd!
   autocmd BufNewFile,BufRead,BufWinEnter,WinEnter *
         \ let &l:colorcolumn = "80,".join(range(120, 999), ",")
@@ -171,31 +173,32 @@ augroup end
 set number relativenumber numberwidth=5
 
 " Statusline {{{
-let s:file_name_special_filetypes = []
-
-function! s:register_filename_for_ft(filetype, filename_funcref)
-  let s:file_name_special_filetypes = add(s:file_name_special_filetypes,
-        \ {"filetype": a:filetype, "filename_function":  a:filename_funcref})
+" Statusline colors - using vim-one colors {{{
+function! s:update_statusline_colors()
+  function! s:get_highlight_color(highlight_name, attribute)
+    return filter(
+        \   map(
+        \     filter(
+        \       split(execute("highlight ".a:highlight_name)),
+        \     'v:val =~ "="'),
+        \   'split(v:val, "=")'),
+        \ 'v:val[0] ==? "'.a:attribute.'"')[0][1]
+  endfunction
+  let l:stl_guibg = s:get_highlight_color("StatusLine", "guibg")
+  let l:stl_flags_guifg = s:get_highlight_color("Search", "guibg")
+  let l:stl_loc_guibg = s:get_highlight_color("Directory", "guifg")
+  let l:stl_cwd_guifg = s:get_highlight_color("String", "guifg")
+  execute "highlight STLFlags guibg=".l:stl_guibg." guifg=".l:stl_flags_guifg
+  execute "highlight STLLocation guifg=".l:stl_guibg." guibg=".l:stl_loc_guibg
+  execute "highlight STLCWD guifg=".l:stl_cwd_guifg." gui=inverse,bold"
+  highlight STLEmpty gui=inverse
+  highlight STLWinnr gui=bold
 endfunction
-
-function! s:file_name_special_filetypes()
-  return copy(s:file_name_special_filetypes)
-endfunction
-call s:register_filename_for_ft('help',
-      \ { bufname -> fnamemodify(bufname, ':t') })
-" Statusline settings - Using vim-one colors {{{
-highlight STLFlags guibg=#2c323c guifg=#e5c07b
-highlight STLLocation guifg=#2c323c guibg=#61afef
-highlight STLCWD guifg=#98c379 gui=inverse,bold
-highlight STLEmpty gui=inverse
-highlight STLWinnr gui=bold
-augroup colorscheme_fixes_statusline
+call s:update_statusline_colors()
+augroup config_statusline_colors
   autocmd!
-  autocmd ColorScheme one highlight STLFlags guibg=#2c323c guifg=#e5c07b
-  autocmd ColorScheme one highlight STLLocation guifg=#2c323c guibg=#61afef
-  autocmd ColorScheme one highlight STLCWD guifg=#98c379 gui=inverse,bold
-  autocmd ColorScheme one highlight STLEmpty gui=inverse
-  autocmd ColorScheme one highlight STLWinnr gui=bold
+  execute "autocmd ColorScheme ".join(values(s:colorscheme_plugins), ",")
+        \" call s:update_statusline_colors()"
 augroup end
 " }}}
 
@@ -279,12 +282,19 @@ function! s:stl_file_name_handle_all_cases(context, file_name_funcs)
 endfunction
 " Special cases for filename stl part
 " Filetypes that should display custom file name
-" Those can be registered by plugin later using
-" statusline#register_filename_for_ft function
+" Those can be registered by plugin later
+let g:statusline_file_name_special_filetypes = []
+let g:statusline_file_name_special_filetypes =
+      \ add(g:statusline_file_name_special_filetypes, {
+      \   "filetype": "help",
+      \   "filename_function": { bufname -> fnamemodify(bufname, ':t') }
+      \})
 function! s:stl_file_name_filetype(context)
   let l:filetype = getbufvar(a:context.bufnr, '&filetype')
-  let l:special_filetype = filter(s:file_name_special_filetypes(),
+  let l:special_filetypes_map = copy(g:statusline_file_name_special_filetypes)
+  let l:special_filetype = filter(l:special_filetypes_map,
         \ 'v:val.filetype == l:filetype')
+  unlet l:special_filetypes_map
   if len(l:special_filetype) > 0
     let l:special_filetype = l:special_filetype[-1]
     call s:stl_file_name_set_result(a:context,
@@ -381,13 +391,14 @@ endfunction
 execute "setlocal statusline=%!<SNR>".s:SID()."_stl()"
 augroup statusline_update
   autocmd!
-  autocmd WinEnter,BufWinEnter * for n in range(1, winnr('$'))|
-        \if n == winnr()|
-        \call setwinvar(n, '&statusline', '%!<SNR>'.s:SID().'_stl()')|
-        \else|
-        \call setwinvar(n, '&statusline', '%!<SNR>'.s:SID().'_stlnc('.n.')')|
-        \endif|
-        \endfor
+  autocmd WinEnter,BufWinEnter *
+        \ for n in range(1, winnr('$'))|
+        \   if n == winnr()|
+        \     call setwinvar(n, '&statusline', '%!<SNR>'.s:SID().'_stl()')|
+        \   else|
+        \     call setwinvar(n, '&statusline', '%!<SNR>'.s:SID().'_stlnc('.n.')')|
+        \   endif|
+        \ endfor
 augroup end
 " }}}
 

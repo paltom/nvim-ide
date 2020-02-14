@@ -166,7 +166,8 @@ functions) are located in `init.vim` file, unless specified otherwise.
         - Rich colors (full palette) can be displayed: `termguicolors` option
         - Background can be switched between dark and light: `background` option
           - Other visual elements' colors adjust automatically
-            - [ ] statusline
+            - statusline: `update_statusline_colors` function;
+              `config_statusline_colors` augroup
             - vertical split border: `config_colorscheme_update` augroup
             - folds: `config_colorscheme_update` augroup
         - Vertical split is blank: `fillchars` option
@@ -194,7 +195,10 @@ functions) are located in `init.vim` file, unless specified otherwise.
             is toggled for window: `config_cursorline_in_active_window`,
             `config_cursorline_in_diff_windows` augroups;
             `disable_cursorline_in_diff` function
-        -
+        - Preferred line width and maximum line width is marked in active
+          window: `colorcolumn` option; `config_colorcolumn_in_active_window`
+          augroup
+          - Inactive window has different background color for all columns
 
     4.  Location in file
 
@@ -206,10 +210,23 @@ functions) are located in `init.vim` file, unless specified otherwise.
 
     5.  Statusline
 
+        - Statusline consists of following elements:
+          - TODO: rules for each element
+          - TODO: colors?
+          - current working directory
+          - file flags
+          - filename
+          - active window marking (separator in contrast colors)
+          - filetype
+          - simple location (FIXME - issue)
+          - window number (FIXME - helpclose issue)
+        - Rest of status-like information specific for plugins/files can be
+          displayed using Info extension plugin
+
     6.  Tabline
 
-[ ] Tabline and tabpagelabel configuration
-[ ] tabpagelabel shows if there are ANY modified buffers in the tabpage
+- [ ] Tabline and tabpagelabel configuration
+- [ ] tabpagelabel shows if there are ANY modified buffers in the tabpage
 
 ## Plugins
 
@@ -217,7 +234,8 @@ Additional functionalities that cannot be achieved by Neovim configuration.
 
 ### Extensions
 
-Simple plugins that extend on default Neovim functionality. Common tasks.
+Simple plugins that extend on default Neovim functionality. Common tasks. Stored
+in `pack/extensions`.
 
 1.  Info
 
@@ -226,13 +244,13 @@ Simple plugins that extend on default Neovim functionality. Common tasks.
 
 ### Utils
 
-Utilities for various, uncommon tasks.
+Utilities for various, uncommon tasks. Stored in `pack/utils`.
 
 1.  Markdown previewer
 
 ### IDE
 
 Features needed for various IDE functionalities. Consist of sets of plugins
-along with configuration managed as packs.
+along with configuration managed as packs. Stored in `pack/ide`.
 
 <!-- vim:set textwidth=80 sts=2 ts=2 sw=2 fdm=indent: -->
