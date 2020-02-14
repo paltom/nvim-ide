@@ -204,13 +204,35 @@ functions) are located in `init.vim` file, unless specified otherwise.
           - Numbers displaying area is wide enough for most of files (thousands
             of lines at most): `numberwidth` option
 
+    5.  Statusline
+
+    6.  Tabline
+
 [ ] Tabline and tabpagelabel configuration
 [ ] tabpagelabel shows if there are ANY modified buffers in the tabpage
 
 ## Plugins
 
-### Basic
+Additional functionalities that cannot be achieved by Neovim configuration.
+
+### Extensions
+
+Simple plugins that extend on default Neovim functionality. Common tasks.
+
+1.  Info
+
+    For displaying various information that may be configured. Extends on
+    statusline.
+
+### Utils
+
+Utilities for various, uncommon tasks.
+
+1.  Markdown previewer
 
 ### IDE
+
+Features needed for various IDE functionalities. Consist of sets of plugins
+along with configuration managed as packs.
 
 <!-- vim:set textwidth=80 sts=2 ts=2 sw=2 fdm=indent: -->
