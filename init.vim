@@ -25,7 +25,10 @@ augroup end
 augroup config_remove_trailing_whitespaces
   autocmd!
   let g:remove_trailing_whitespaces = v:true
-  autocmd BufWrite * if g:remove_trailing_whitespaces|%s/\v\s+$//e|endif
+  autocmd BufWrite *
+        \ if g:remove_trailing_whitespaces|
+        \   %s/\v\s+$//e|
+        \ endif
 augroup end
 
 function! s:add_empty_lines(direction, count) range
@@ -112,37 +115,43 @@ vnoremap g/ /
 let g:one_allow_italics = 1
 set termguicolors
 set background=dark
+let &fillchars = "vert: "
 
-let s:colorscheme_plugin = "vim-one"
-call ext#plugins#load([s:colorscheme_plugin])
+" Map colorscheme plugin directory to colorscheme name as visible by Vim
+let s:colorscheme_plugins = {"vim-one": "one"}
+call ext#plugins#load(keys(s:colorscheme_plugins))
 
-augroup colorscheme_fixes_init
+augroup config_colorscheme_update
   autocmd!
-  autocmd ColorScheme one highlight! link Folded FoldColumn
-  autocmd ColorScheme one highlight! link VertSplit StatusLineNC
+  execute "autocmd ColorScheme ".join(values(s:colorscheme_plugins), ",").
+              \" highlight! link Folded FoldColumn"
+  execute "autocmd ColorScheme ".join(values(s:colorscheme_plugins), ",").
+              \" highlight! link VertSplit StatusLineNC"
 augroup end
 colorscheme one
 
+set nowrap
 set scrolloff=3
-
-set number relativenumber numberwidth=5
-
+set sidescroll=1 sidescrolloff=10
 let &listchars = "tab:\u00bb ,trail:\u2423"
 set list
-set nowrap sidescroll=1 sidescrolloff=10
 let &listchars .= ",precedes:\u27ea,extends:\u27eb"
-
-let &fillchars = "vert: "
 
 augroup colorcolumn_in_active_window
   autocmd!
-  autocmd BufNewFile,BufRead,BufWinEnter,WinEnter * let &l:colorcolumn = "80,".join(range(120, 999), ",")
-  autocmd WinLeave * let &l:colorcolumn = join(range(1, 999), ",")
+  autocmd BufNewFile,BufRead,BufWinEnter,WinEnter *
+        \ let &l:colorcolumn = "80,".join(range(120, 999), ",")
+  autocmd WinLeave *
+        \ let &l:colorcolumn = join(range(1, 999), ",")
 augroup end
-
-augroup cursorline_in_active_window
+augroup config_cursorline_in_active_window
   autocmd!
-  autocmd BufNewFile,BufRead,BufWinEnter,WinEnter * if !&diff|setlocal cursorline|else|setlocal nocursorline|endif
+  autocmd BufNewFile,BufRead,BufWinEnter,WinEnter *
+        \ if !&diff|
+        \   setlocal cursorline|
+        \ else|
+        \   setlocal nocursorline|
+        \ endif
   autocmd WinLeave * setlocal nocursorline
   autocmd VimEnter * setlocal cursorline
 augroup end
@@ -153,13 +162,18 @@ function! s:disable_cursorline_in_diff(new_option_value)
     setlocal cursorline
   endif
 endfunction
-augroup cursorline_in_diff_windows
+augroup config_cursorline_in_diff_windows
   autocmd!
-  autocmd OptionSet diff call <SID>disable_cursorline_in_diff(v:option_new)
+  autocmd OptionSet diff
+        \ call <SID>disable_cursorline_in_diff(v:option_new)
 augroup end
+
+set number relativenumber numberwidth=5
 " }}}
 
 " Basic plugins settings {{{
+" TODO: rename "basic" plugins to "extension" (as they extend basic
+" functionality
 " need to postpone calling function until statusline plugin is loaded
 autocmd SourcePost *statusline.vim ++once
             \ call statusline#register_filename_for_ft('help',
