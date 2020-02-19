@@ -213,8 +213,19 @@ functions) are located in `init.vim` file, unless specified otherwise.
         - Statusline consists of following elements:
           - TODO: rules for each element
           - TODO: colors?
-          - current working directory
-          - file flags
+          - current working directory: `stl_cwd` function
+            - path of the current working directory is shortened (excluding last
+              path component)
+            - current working directory for window is displayed (may be
+              different for different windows and tabpages): `getcwd()`
+            - path is relative to user home directory when possible
+            - current working directory is highlighted as String highlight group
+              with inversed colors
+          - file flags: `stl_file_flags` function
+            - non-modifiable and read only files are marked with lockpad icon
+              (unicode character)
+            - modified (but not written to disk) files are marked with centered
+              star icon (unicode character)
           - filename
           - active window marking (separator in contrast colors)
           - filetype
