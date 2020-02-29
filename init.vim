@@ -317,8 +317,8 @@ endfunction
 " Statusline file status flags part
 " When file is not modifiable or readonly, display lockpad character
 " When file is modified, display centered asterisk character
-function! s:stl_file_flags(winnr)
-  let l:bufnr = winbufnr(a:winnr)
+function! s:stl_file_flags(winid)
+  let l:bufnr = winbufnr(a:winid)
   let l:modifiable = getbufvar(l:bufnr, '&modifiable')
   let l:readonly = getbufvar(l:bufnr, '&readonly')
   if l:modifiable && !l:readonly
@@ -353,7 +353,7 @@ function s:stl_filename_set_cwd_context(context)
   endif
   " Set local working directory to window for which stl is drawn
   " This is for correct context of filename-modifiers
-  silent execute "lcd ".getcwd(a:context.winnr)
+  silent execute "lcd ".getcwd(a:context.winid)
 endfunction
 function! s:stl_filename_restore_cwd_context(context)
   " Restore original cwd of current active window
@@ -432,15 +432,15 @@ let s:stl_filename_funcs = [
       \ 's:stl_filename_no_name',
       \ 's:stl_filename_shorten_relative_path',
       \]
-function! s:stl_filename(winnr)
-  let l:bufnr = winbufnr(a:winnr)
+function! s:stl_filename(winid)
+  let l:bufnr = winbufnr(a:winid)
   " Store context of window for which statusline is drawn
   let l:context  = {
         \ 'original_cwd': '',
         \ 'cwd_type': '',
         \ 'bufnr': l:bufnr,
         \ 'bufname': bufname(l:bufnr),
-        \ 'winnr': a:winnr,
+        \ 'winid': a:winid,
         \ 'has_result': 0,
         \ 'filename': '',
         \}
@@ -470,19 +470,20 @@ function! s:stl_location()
 endfunction
 
 " Display window id statusline part
-function! s:stl_win_id()
+function! s:stl_win_nr()
   return "[%{winnr()}]"
 endfunction
 " }}}
 
 " Active window statusline drawing
 function! s:stl()
+  let l:winid = win_getid(0)
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
-  let l:stl .= s:highlight_stl_part(s:stl_file_flags(0), "STLFlags")
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(l:winid), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_filename(0)
+  let l:stl .= s:stl_filename(l:winid)
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
@@ -490,20 +491,21 @@ function! s:stl()
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part(s:stl_location(), "STLLocation")
   let l:stl .= s:stl_sep
-  let l:stl .= s:highlight_stl_part(s:stl_win_id(), "STLWinnr")
+  let l:stl .= s:highlight_stl_part(s:stl_win_nr(), "STLWinnr")
   return l:stl
 endfunction
 
 " Inactive windows statusline drawing
 function! s:stlnc(winnr)
+  let l:winid = win_getid(a:winnr)
   let l:stl = ""
   let l:stl .= s:stl_cwd()
-  let l:stl .= s:stl_file_flags(a:winnr)
+  let l:stl .= s:stl_file_flags(l:winid)
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_filename(a:winnr)
+  let l:stl .= s:stl_filename(l:winid)
   let l:stl .= "%="
-  let l:stl .= s:stl_win_id()
+  let l:stl .= s:stl_win_nr()
   return l:stl
 endfunction
 
