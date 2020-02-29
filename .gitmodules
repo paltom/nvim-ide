@@ -1,3 +1,6 @@
 [submodule "ext/plugins/vim-one"]
     path = ext/plugins/vim-one
     url = https://github.com/rakr/vim-one
+[submodule "ext/plugins/vim-instant-markdown"]
+	path = ext/plugins/vim-instant-markdown
+	url = https://github.com/suan/vim-instant-markdown
