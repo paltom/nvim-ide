@@ -226,7 +226,22 @@ functions) are located in `init.vim` file, unless specified otherwise.
               (unicode character)
             - modified (but not written to disk) files are marked with centered
               star icon (unicode character)
-          - filename
+          - filename: `stl_filename` function
+            - filenames for certain filetypes are handled individually by custom
+              functions: `stl_filename_filetype` function
+              - functions handling specific filetypes can be added:
+                `g:statusline_filename_special_filetypes` variable
+                - list contains dictionaries with `filetype` and
+                  `filename_function` entries
+            - filenames paths are shortened relatively to current working
+              directory for statusline's window:
+              `stl_filename_shorten_relative_path` function
+            - filenames for all windows are handled for current working
+              directory that is set for window for which statusline is drawn:
+              `stl_filename_set_cwd_context`, `stl_filename_restore_cwd_context`
+              functions
+            - filename for buffer for which there is no file set is '[No Name]':
+              `stl_filename_no_name` function
           - active window marking (separator in contrast colors)
           - filetype
           - simple location (FIXME - issue)
