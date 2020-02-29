@@ -1,88 +1,136 @@
 " Info object format:
-" - name: (mandatory) Section name to display
-"   - name may contain spaces, however for completion and Info() funciton call
-"   argument providing purposes, name will be lowercased and spaces will be
-"   replaced by underscores
-"   - root-level section names will be underlined with '=' characters
-" - subsections: (optional) list of nested section objects
-" - text: (exactly one of text, function is mandatory) Static text to
-"   display as section's content
-"   - may be String or List of lines
-" - function: (exactly one of text, function is mandatory) Function to call
-"   which should return section's content
-"   - may be String or List of lines
-" - default: (optional) Flag indicating if section should be displayed when
-"   not explicitly requested
-" Info sections list
-" - List contains info objects
-let s:info_sections = []
+" - dictionary
+" - keys are used for completing Info command arguments
+" - values are dictionary containing following entries:
+" - 'name' of the section: string
+" - 'text' to display
+"   OR
+" - 'function' which result to display
+" - text or function may be string or list of strings
+" - text takes precendence over function
+" - optionally, nested 'subsections' (formatted same as values)
+if !exists("g:info_sections")
+  let g:info_sections = {}
+endif
 
-function! s:validate_info_obj(info_obj)
-  if type(a:info_obj) != v:t_dict
-    return v:false
+function! s:render_and_indent(render_func, level)
+  let l:lines = []
+  let l:lines = extend(l:lines, a:render_func(a:level))
+  if a:level > 0
+    let l:lines = map(l:lines, '"  ".v:val')
   endif
-  if !has_key(a:info_obj, "name")
-    return v:false
+  return l:lines
+endfunction
+
+function! s:render_name(name, level)
+  let l:lines = []
+  let l:lines = add(l:lines, a:name)
+  if a:level == 0
+    let l:lines = add(l:lines, repeat("=", len(a:name)))
   endif
-  if has_key(a:info_obj, "text")
-    if has_key(a:info_obj, "function")
-      return v:false
-    endif
-    if type(a:info_obj.text) != v:t_string &&
-          \ type(a:info_obj.text) != v:t_list
-      return v:false
-    endif
-  elseif has_key(a:info_obj, "function")
-    if type(a:info_obj.function) != v:t_func
-      return v:false
-    endif
+  return l:lines
+endfunction
+
+function! s:render_text(text, level)
+  let l:lines = []
+  if type(a:text) == v:t_list
+    let l:lines = extend(l:lines, a:text)
   else
-    return v:false
+    let l:lines = add(l:lines, a:text)
   endif
-  if has_key(a:info_obj, "subsections")
-    if type(a:info_obj.subsections) != v:t_list
-      return v:false
-    endif
-    for subsection in a:info_obj.subsections
-      if !s:validate_info_obj(subsection)
-        return v:false
-      endif
+  return l:lines
+endfunction
+
+function! s:render_function(funcref, level)
+  let l:lines = []
+  let l:result = a:funcref()
+  if type(l:result) == v:t_list
+    let l:lines = extend(l:lines, l:result)
+  else
+    let l:lines = add(l:lines, l:result)
+  endif
+  return l:lines
+endfunction
+
+function! s:render_section(section, level)
+  let l:lines = []
+  let l:lines = extend(l:lines, s:render_name(a:section.name, a:level))
+  if has_key(a:section, "text")
+    let l:lines = extend(l:lines,
+          \ s:render_and_indent(function("s:render_text", [a:section.text]),
+          \                     a:level + 1)
+          \)
+  elseif has_key(a:section, "function")
+    let l:lines = extend(l:lines,
+          \ s:render_and_indent(function("s:render_function", [a:section.function]),
+          \                     a:level + 1)
+          \)
+  endif
+  if has_key(a:section, "subsections")
+    for subsec in keys(a:section.subsections)
+      let l:subsection = get(a:section.subsections, subsec)
+      let l:lines = extend(l:lines,
+            \ s:render_and_indent(function("s:render_section", [l:subsection]),
+            \                     a:level + 1)
+            \)
     endfor
   endif
-  if has_key(a:info_obj, "default")
-    if type(a:info_obj.default) != v:t_bool
-      return v:false
-    endif
-  endif
-  return v:true
+  return l:lines
 endfunction
 
-" Add Info section
-" - If entry with the same name already exists in sections list, it is
-"   overwritten, otherwise info_section is added at the end of list
-" - Validates format of added object (with nested subsections if present)
-function! info#add_section(info_section)
-  if !s:validate_info_obj(a:info_section)
-    echohl WarningMsg
-    echomsg "Invalid format of Info section object: ".string(a:info_section)
-    echohl None
+function! s:format(sections)
+  if empty(g:info_sections)
+    return []
+  endif
+  let l:lines = ['']
+  if empty(a:sections)
+    let l:sections_to_format = g:info_sections
+  else
+    let l:sections_to_format = filter(copy(g:info_sections),
+          \ 'index(a:sections, v:key) >= 0'
+          \)
+  endif
+  if empty(l:sections_to_format)
+    return []
+  endif
+  for sec in keys(l:sections_to_format)
+    let l:section = get(g:info_sections, sec)
+    let l:lines = extend(l:lines,
+          \ s:render_and_indent(function("s:render_section", [l:section]), 0))
+    let l:lines = add(l:lines, "")
+  endfor
+  return map(l:lines, '" ".v:val')
+endfunction
+
+function! s:print(lines)
+  return join(a:lines, "\n")
+endfunction
+
+function! s:display(lines)
+  if empty(a:lines)
     return
   endif
-  let l:info_section_name_index = index(info#sections_names(),
-        \ a:info_section.name)
-  if l:info_section_name_index >= 0
-    let s:info_sections[l:info_section_name_index] = a:info_section
+  let l:info_buffer = nvim_create_buf(v:false, v:true)
+  call nvim_buf_set_lines(l:info_buffer, 0, -1, v:false, a:lines)
+  let l:info_win = nvim_open_win(l:info_buffer, v:false, {
+        \ 'relative': 'editor',
+        \ 'anchor': 'SE',
+        \ 'width': min([max(map(copy(a:lines), 'len(v:val)')) + 1, &columns / 2]),
+        \ 'height': min([len(a:lines), &lines * 3 / 4]),
+        \ 'row': (&lines - &cmdheight - 1) - 1,
+        \ 'col': &columns - 2,
+        \ 'focusable': v:false,
+        \ 'style': 'minimal',
+        \})
+  call nvim_win_set_option(l:info_win, 'winblend', 30)
+  execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
+endfunction
+
+function! info#show(echo_flag, sections)
+  let l:lines = s:format(a:sections)
+  if a:echo_flag
+    echo s:print(l:lines)
   else
-    let s:info_sections = add(s:info_sections, a:info_section)
+    call s:display(l:lines)
   endif
-endfunction
-
-" Return copy of current info objects list
-function! info#sections()
-  return copy(s:info_sections)
-endfunction
-
-" Return all info sections names
-function! info#sections_names()
-  return map(info#sections(), 'v:val.name')
 endfunction

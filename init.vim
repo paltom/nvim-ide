@@ -482,7 +482,7 @@ function! s:stl()
   let l:stl .= s:highlight_stl_part(s:stl_file_flags(0), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_file_name(0)
+  let l:stl .= s:stl_filename(0)
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
@@ -501,7 +501,7 @@ function! s:stlnc(winnr)
   let l:stl .= s:stl_file_flags(a:winnr)
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_file_name(a:winnr)
+  let l:stl .= s:stl_filename(a:winnr)
   let l:stl .= "%="
   let l:stl .= s:stl_win_id()
   return l:stl
