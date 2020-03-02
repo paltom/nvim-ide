@@ -491,14 +491,13 @@ endfunction
 " }}}
 
 " Active window statusline drawing
-function! s:stl()
-  let l:winid = win_getid(0)
+function! s:stl(winid)
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
-  let l:stl .= s:highlight_stl_part(s:stl_file_flags(l:winid), "STLFlags")
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(a:winid), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_filename(l:winid)
+  let l:stl .= s:stl_filename(a:winid)
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
@@ -511,32 +510,30 @@ function! s:stl()
 endfunction
 
 " Inactive windows statusline drawing
-function! s:stlnc(winnr)
-  let l:winid = win_getid(a:winnr)
+function! s:stlnc(winid)
   let l:stl = ""
   let l:stl .= s:stl_cwd()
-  let l:stl .= s:stl_file_flags(l:winid)
+  let l:stl .= s:stl_file_flags(a:winid)
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_filename(l:winid)
+  let l:stl .= s:stl_filename(a:winid)
   let l:stl .= "%="
   let l:stl .= s:stl_win_nr()
   return l:stl
 endfunction
 
 
-execute "setlocal statusline=%!<snr>".s:sid()."_stl()"
+execute "setlocal statusline=%!<snr>".s:sid()."_stl(".win_getid().")"
 augroup config_statusline_update
   autocmd!
   " Set correct statusline functions for all windows in tabpage when changing
   " windows
-  " TODO: pass window ID here?
   autocmd WinEnter,BufWinEnter *
         \ for n in range(1, winnr('$'))|
         \   if n == winnr()|
-        \     call setwinvar(n, '&statusline', '%!<snr>'.s:sid().'_stl()')|
+        \     call setwinvar(n, '&statusline', '%!<snr>'.s:sid().'_stl('.win_getid(n).')')|
         \   else|
-        \     call setwinvar(n, '&statusline', '%!<snr>'.s:sid().'_stlnc('.n.')')|
+        \     call setwinvar(n, '&statusline', '%!<snr>'.s:sid().'_stlnc('.win_getid(n).')')|
         \   endif|
         \ endfor
 augroup end
