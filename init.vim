@@ -366,13 +366,13 @@ function! s:stl_filename_restore_cwd_context(context)
   endif
   silent execute l:cwd_type_char."cd ".a:context.original_cwd
 endfunction
-function! s:stl_filename_set_result(context, result)
+function! s:filename_set_result(context, result)
   " Helper function for marking that filename function returned result (early
   " exit)
   let a:context.has_result = 1
   let a:context.filename = a:result
 endfunction
-function! s:stl_filename_handle_all_cases(context, file_name_funcs)
+function! s:filename_handle_all_cases(context, file_name_funcs)
   " Helper function for trying all cases of filename handling functions
   " As soon as on of functions returns result, return it and don't try
   " remaining functions
@@ -404,33 +404,38 @@ function! s:stl_filename_filetype(context)
   if len(l:special_filetype) > 0
     " Last entry for given filetype is used
     let l:special_filetype = l:special_filetype[-1]
-    call s:stl_filename_set_result(a:context,
+    call s:filename_set_result(a:context,
           \ l:special_filetype.filename_function(a:context.bufname))
   endif
 endfunction
 " Empty filename handling (buffer not written to disk)
-function! s:stl_filename_no_name(context)
+function! s:filename_no_name(context)
   if empty(a:context.bufname)
-    call s:stl_filename_set_result(a:context, '[No Name]')
+    call s:filename_set_result(a:context, '[No Name]')
   endif
 endfunction
 " Regular filename handling
 " Shorten path relatively to current working directory
 " Leave full name of directory containing file
-function! s:stl_filename_shorten_relative_path(context)
+function! s:filename_shorten_relative_path(context)
   let l:head_dir = fnamemodify(a:context.bufname, ':.:h')
   if l:head_dir == '.'
     " If file is in current working directory, do not display cwd
-    call s:stl_filename_set_result(a:context, fnamemodify(a:context.bufname, ':t'))
+    call s:filename_set_result(a:context, fnamemodify(a:context.bufname, ':t'))
   else
-    call s:stl_filename_set_result(a:context, pathshorten(l:head_dir).'/'.fnamemodify(a:context.bufname, ':t'))
+    call s:filename_set_result(a:context, pathshorten(l:head_dir).'/'.fnamemodify(a:context.bufname, ':t'))
   endif
+endfunction
+" Simple filename
+function! s:filename_simple(context)
+  let l:filename = fnamemodify(a:context.bufname, ":t")
+  call s:filename_set_result(a:context, l:filename)
 endfunction
 " Which functions and in which order (precedence) determine filename part
 let s:stl_filename_funcs = [
       \ 's:stl_filename_filetype',
-      \ 's:stl_filename_no_name',
-      \ 's:stl_filename_shorten_relative_path',
+      \ 's:filename_no_name',
+      \ 's:filename_shorten_relative_path',
       \]
 function! s:stl_filename(winid)
   let l:bufnr = winbufnr(a:winid)
@@ -447,7 +452,7 @@ function! s:stl_filename(winid)
   " Set correct working directory context (for window for which statusline is
   " drawn, not active window)
   call s:stl_filename_set_cwd_context(l:context)
-  let l:filename = s:stl_filename_handle_all_cases(l:context, s:stl_filename_funcs)
+  let l:filename = s:filename_handle_all_cases(l:context, s:stl_filename_funcs)
   " Restore window's original current working directory
   call s:stl_filename_restore_cwd_context(l:context)
   return l:filename
@@ -549,12 +554,20 @@ set guioptions-=e
 let s:tbl_sep = " "
 
 " Filename tabline part
-" TODO: handle different cases of filenames similarly to statusline
+let s:tbl_filename_funcs = [
+      \ 's:filename_no_name',
+      \ 's:filename_simple',
+      \]
 function! s:tbl_filename(tabpagenr)
   let l:tabpage_curwin = tabpagewinnr(a:tabpagenr)
   let l:curwin_bufnr = tabpagebuflist(a:tabpagenr)[l:tabpage_curwin - 1]
   let l:bufname = bufname(l:curwin_bufnr)
-  return fnamemodify(l:bufname, ":t")
+  let l:context = {
+        \ 'bufname': l:bufname,
+        \ 'has_result': 0,
+        \ 'filename': '',
+        \}
+  return s:filename_handle_all_cases(l:context, s:tbl_filename_funcs)
 endfunction
 
 " If any window in tabpage is modified
