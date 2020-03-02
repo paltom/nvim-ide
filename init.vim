@@ -460,13 +460,28 @@ function! s:stl_type()
 endfunction
 
 " Location if file statusline part
-" TODO: handle short files issue
 function! s:stl_location()
-  let l:curline = getcurpos()[1]
+  let l:location_indicators_list = [
+        \ ["\u2588"],
+        \ ["\u2588", " "],
+        \ ["\u2588", "\u2584", " "],
+        \ ["\u2588", "\u2585", "\u2583", " "],
+        \ ["\u2588", "\u2586", "\u2584", "\u2582", " "],
+        \ ["\u2588", "\u2586", "\u2585", "\u2583", "\u2582", " "],
+        \ ["\u2588", "\u2587", "\u2585", "\u2584", "\u2583", "\u2582", " "],
+        \ ["\u2588", "\u2587", "\u2586", "\u2585", "\u2583", "\u2582", "\u2581", " "],
+        \ ["\u2588", "\u2587", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", "\u2581", " "],
+        \]
+  let l:curline = line(".")
   let l:file_lines = line("$")
-  let l:block_nr = float2nr(floor((l:curline-1)/0.111111/l:file_lines)) " 0.111111 = 1/9
-  let l:blocks = ["\u2588", "\u2587", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", "\u2581", " "]
-  return l:blocks[l:block_nr]
+  " Make count a float number to enable floating-point arithmetics
+  let l:indicators_count = eval(len(l:location_indicators_list).".0")
+  if l:file_lines < l:indicators_count
+    return l:location_indicators_list[l:file_lines - 1][l:curline - 1]
+  else
+    let l:indicator_index = float2nr(floor(l:indicators_count*(l:curline - 1)/l:file_lines))
+    return l:location_indicators_list[-1][l:indicator_index]
+  endif
 endfunction
 
 " Display window id statusline part
@@ -515,6 +530,7 @@ augroup config_statusline_update
   autocmd!
   " Set correct statusline functions for all windows in tabpage when changing
   " windows
+  " TODO: pass window ID here?
   autocmd WinEnter,BufWinEnter *
         \ for n in range(1, winnr('$'))|
         \   if n == winnr()|
@@ -536,6 +552,7 @@ set guioptions-=e
 let s:tbl_sep = " "
 
 " Filename tabline part
+" TODO: handle different cases of filenames similarly to statusline
 function! s:tbl_filename(tabpagenr)
   let l:tabpage_curwin = tabpagewinnr(a:tabpagenr)
   let l:curwin_bufnr = tabpagebuflist(a:tabpagenr)[l:tabpage_curwin - 1]
