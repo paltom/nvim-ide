@@ -11,3 +11,9 @@ function! TestCommCompl(arg_lead, cmd_line, cursor_pos)
 endfunction
 
 command! -nargs=+ -complete=custom,TestCommCompl Test echomsg "test"
+
+augroup cmd_test
+  autocmd!
+  autocmd CmdlineChanged * let s:wildmenu=&wildmenu|if getcmdline() =~# '\v^Test '|set nowildmenu|endif
+  autocmd CmdlineLeave * let &wildmenu = s:wildmenu
+augroup end
