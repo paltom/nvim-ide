@@ -17,4 +17,7 @@ augroup cmd_test
   autocmd CmdlineEnter * let s:wildmenu = &wildmenu
   autocmd CmdlineChanged * if getcmdline() =~# '\v^Test '|set nowildmenu|endif
   autocmd CmdlineLeave * let &wildmenu = s:wildmenu
+  autocmd CmdlineChanged * if getcmdline() =~# '\v^Test '|echomsg "Cmdline change: ".getcmdline()."|"|endif
+  " Or show info in preview (how to synchronize selection with info?)
 augroup end
+
