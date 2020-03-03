@@ -14,6 +14,7 @@ command! -nargs=+ -complete=custom,TestCommCompl Test echomsg "test"
 
 augroup cmd_test
   autocmd!
-  autocmd CmdlineChanged * let s:wildmenu=&wildmenu|if getcmdline() =~# '\v^Test '|set nowildmenu|endif
+  autocmd CmdlineEnter * let s:wildmenu = &wildmenu
+  autocmd CmdlineChanged * if getcmdline() =~# '\v^Test '|set nowildmenu|endif
   autocmd CmdlineLeave * let &wildmenu = s:wildmenu
 augroup end
