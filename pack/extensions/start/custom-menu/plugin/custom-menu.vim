@@ -21,3 +21,6 @@ augroup cmd_test
   " Or show info in preview (how to synchronize selection with info?)
 augroup end
 
+let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
+call rpcrequest(nvim, 'nvim_ui_attach', &columns, &lines, {'ext_cmdline': v:true, 'ext_popupmenu': v:true})
+call rpcnotify(nvim, 'redraw', ['popupmenu_show', [['test', 't', '', '']], 1, 2, 2, -1])
