@@ -1,18 +1,3 @@
-" Info object format:
-" - dictionary
-" - keys are used for completing Info command arguments
-" - values are dictionary containing following entries:
-" - 'name' of the section: string
-" - 'text' to display
-"   OR
-" - 'function' which result to display
-" - text or function may be string or list of strings
-" - text takes precendence over function
-" - optionally, nested 'subsections' (formatted same as values)
-if !exists("g:info_sections")
-  let g:info_sections = {}
-endif
-
 function! s:render_and_indent(render_func, level)
   let l:lines = []
   let l:lines = extend(l:lines, a:render_func(a:level))
