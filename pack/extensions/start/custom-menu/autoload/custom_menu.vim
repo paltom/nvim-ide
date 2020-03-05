@@ -31,7 +31,15 @@ function! s:menu_completions(menu_cmd_lead, cmdline, cursor_pos)
 endfunction
 
 function! s:execute_action(action)
-  execute(a:action)
+  if type(a:action) == v:t_string
+    execute(a:action)
+  elseif type(a:action) == v:t_func
+    call a:action()
+  else
+    echohl WarningMsg
+    echomsg "Unknown action type: ".string(action)
+    echohl None
+  endif
 endfunction
 
 function! s:menu_action(command, menu_path)
@@ -45,14 +53,13 @@ function! s:menu_action(command, menu_path)
           \ "echomsg 'Missing action for ''".join(a:menu_path, " ").
           \ "'' in command ''".a:command."'''|".
           \ "echohl None"
-    let l:action = get(l:submenu, "action", l:missing_action_msg)
+    call s:execute_action(get(l:submenu, "action", l:missing_action_msg))
   else
-    let l:action = "echohl WarningMsg|".
-          \ "echomsg 'Cannot find unambiguous menu command: ''".
-          \ join(a:menu_path, " ")."'' in ''".a:command."'' command'|".
-          \ "echohl None"
+    echohl WarningMsg.
+    echomsg "Cannot find unambiguous menu command: '".
+          \ join(a:menu_path, " ")."' in '".a:command."' command"
+    echohl None
   endif
-  call s:execute_action(l:action)
 endfunction
 
 function! custom_menu#update_commands()
