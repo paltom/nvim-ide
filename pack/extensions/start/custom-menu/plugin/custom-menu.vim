@@ -44,18 +44,16 @@ if !exists('g:custom_menu')
 endif
 
 function! s:walk_menu(current_menu, path_to_walk)
-  echomsg string(a:current_menu)
-  echomsg string(a:path_to_walk)
   if empty(a:path_to_walk)
     return a:current_menu
   endif
-  " Filter menu items in current menu that starts with first path element
+  " Filter menu items in current menu that match first path element
   let l:current_path_elem = a:path_to_walk[0]
   let l:next_items = filter(copy(a:current_menu), 'v:val["cmd"] ==# '''.l:current_path_elem."'")
   if empty(l:next_items)
     return []
   endif
-  " There is exactly one match here
+  " There should be exactly one match here
   let l:next_item = l:next_items[0]
   if !has_key(l:next_item, "menu")
     return []
@@ -76,4 +74,15 @@ function! s:menu_completions(menu_cmd_lead, cmdline, cursor_pos)
   return join(l:candidates, "\n")
 endfunction
 
-command! -nargs=+ -complete=custom,s:menu_completions Test echomsg "test"
+function! s:menu_action(command, menu_path)
+  let l:menu = copy(g:custom_menu[a:command])
+  echomsg string(l:menu)
+  echomsg "not implemented yet"
+endfunction
+
+command! -nargs=+ -complete=custom,s:menu_completions Test call s:menu_action("Test", [<f-args>])
+
+" autocmd VimEnter * call custom_menu#update_commands
+" if user wants to add command, he must call custom_menu#add_command or modify
+" g:custom_menu variable directly and invoke custom_menu#update_commands
+" afterwards
