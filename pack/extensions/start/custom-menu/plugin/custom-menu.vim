@@ -101,7 +101,12 @@ function! s:menu_action(command, menu_path)
   call s:execute_action(l:action)
 endfunction
 
-command! -nargs=+ -complete=custom,s:menu_completions Test call s:menu_action("Test", [<f-args>])
+function! s:update_commands()
+  for cmd in keys(g:custom_menu)
+    execute "command! -nargs=+ -complete=custom,s:menu_completions ".
+          \ cmd." call s:menu_action('".cmd."', [<f-args>])"
+  endfor
+endfunction
 
 " autocmd VimEnter * call custom_menu#update_commands
 " if user wants to add command, he must call custom_menu#add_command or modify
