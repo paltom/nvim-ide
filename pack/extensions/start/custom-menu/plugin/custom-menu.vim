@@ -108,6 +108,11 @@ function! s:update_commands()
   endfor
 endfunction
 
+augroup custom_menu_setup
+  autocmd!
+  autocmd VimEnter * call s:update_commands()
+augroup end
+
 " autocmd VimEnter * call custom_menu#update_commands
 " if user wants to add command, he must call custom_menu#add_command or modify
 " g:custom_menu variable directly and invoke custom_menu#update_commands
