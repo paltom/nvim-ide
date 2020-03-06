@@ -37,7 +37,7 @@ function! s:execute_action(action)
     call a:action()
   else
     echohl WarningMsg
-    echomsg "Unknown action type: ".string(action)
+    echomsg "Unknown action type: ".string(a:action)
     echohl None
   endif
 endfunction
