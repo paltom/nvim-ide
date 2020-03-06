@@ -1,26 +1,54 @@
-" Test completing command tree
-" Test a b
-" Test a c
-" Test d
-function! TestCommCompl(arg_lead, cmd_line, cursor_pos)
-  echomsg "Arg: ".a:arg_lead
-  echomsg "Cmd: ".a:cmd_line
-  echomsg "Pos: ".a:cursor_pos
-  let l:candidates = ["a", "d"]
-  return join(l:candidates, "\n")
-endfunction
+" Requirement: Top-level menu must conform to Vim's user command naming rules
+" Keys not conforming to above rules are ignored
+" Requirement: Menu item contains following keys:
+" - "cmd": name of menu item - must conform to Vim's identifier naming rules
+" - "action": code to be executed when invoking associated menu item
+"   - code may be String - executed with `execute` command
+"   - code may be Funcref - executed directly
+"   - "action" key is optional, when missing, menu item must contain "menu"
+"   key
+" - "menu": sub menu available below current menu item
+"   - "menu" value is a list of nested menu items
+"   - "menu" key is optional, when missing, manu item must contain "action"
+"   key
+" - Note that both "action" and "menu" may be specified
+" Requirement: if user wants to add command, he must modify g:custom_menu variable directly
+" and invoke custom_menu#update_commands afterwards
+"let g:custom_menu.Test = [
+      "\ {
+      "\   "cmd": "level1action",
+      "\   "action": "echo 'Level 1 action'",
+      "\ },
+      "\ {
+      "\   "cmd": "level1submenu",
+      "\   "menu": [
+      "\     {
+      "\       "cmd": "level2action",
+      "\       "action": "echo 'Level 2 action'",
+      "\     },
+      "\     {
+      "\       "cmd": "level2actionwithsubmenu",
+      "\       "action": "echo 'Level 2 action (submenu available)'",
+      "\       "menu": [
+      "\         {
+      "\           "cmd": "level3action",
+      "\           "action": "echo 'Level 3 action'",
+      "\         }
+      "\       ]
+      "\     }
+      "\   ]
+      "\ }
+      "\]
+if exists('g:loaded_custom_menu')
+  finish
+endif
+let g:loaded_custom_menu = v:true
 
-command! -nargs=+ -complete=custom,TestCommCompl Test echomsg "test"
+if !exists('g:custom_menu')
+  let g:custom_menu = {}
+endif
 
-augroup cmd_test
+augroup custom_menu_setup
   autocmd!
-  autocmd CmdlineEnter * let s:wildmenu = &wildmenu
-  autocmd CmdlineChanged * if getcmdline() =~# '\v^Test '|set nowildmenu|endif
-  autocmd CmdlineLeave * let &wildmenu = s:wildmenu
-  autocmd CmdlineChanged * if getcmdline() =~# '\v^Test '|echomsg "Cmdline change: ".getcmdline()."|"|endif
-  " Or show info in preview (how to synchronize selection with info?)
+  autocmd VimEnter * call custom_menu#update_commands()
 augroup end
-
-"let nvim = jobstart(['nvim', '--embed'], {'rpc': v:true})
-"call rpcrequest(nvim, 'nvim_ui_attach', &columns, &lines, {'ext_cmdline': v:true, 'ext_popupmenu': v:true})
-"call rpcnotify(nvim, 'redraw', ['popupmenu_show', [['test', 't', '', '']], 1, 2, 2, -1])
