@@ -51,15 +51,16 @@ function! s:menu_action(command, menu_path)
     let l:submenu = l:submenus[0]
     let l:missing_action_msg = "echohl WarningMsg|".
           \ "echomsg 'Missing action for ''".join(a:menu_path, " ").
-          \ "'' in command ''".a:command."'''|".
+          \ "'' command in ''".a:command."'' menu'|".
           \ "echohl None"
-    call s:execute_action(get(l:submenu, "action", l:missing_action_msg))
+    let Action = get(l:submenu, "action", l:missing_action_msg)
   else
-    echohl WarningMsg.
-    echomsg "Cannot find unambiguous menu command: '".
-          \ join(a:menu_path, " ")."' in '".a:command."' command"
-    echohl None
+    let Action = "echohl WarningMsg|".
+          \ "echomsg \"Cannot find unambiguous menu command: '".
+          \ join(a:menu_path, " ")."' in '".a:command."' menu\"|".
+          \ "echohl None"
   endif
+  call s:execute_action(Action)
 endfunction
 
 function! custom_menu#update_commands()
