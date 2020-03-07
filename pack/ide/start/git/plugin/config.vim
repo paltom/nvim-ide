@@ -30,14 +30,11 @@ let g:custom_menu["IDE"] = add(
       \       "cmd": "checkout",
       \       "action": function("ide#git#checkout"),
       \       "complete": { ->
-      \                     join(
-      \                       map(
-      \                         filter(
-      \                           ide#git#list_branches(),
-      \                           { _, branch -> branch !~# '\v^\s*\*\s+'}),
-      \                         { _, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$')}),
-      \                       "\n"
-      \                     )
+      \                     map(
+      \                       filter(
+      \                         ide#git#list_branches(),
+      \                         { _, branch -> branch !~# '\v^\s*\*\s+'}),
+      \                       { _, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$')})
       \                   }
       \     },
       \   ]

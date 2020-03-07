@@ -41,7 +41,14 @@ function! s:menu_completions(cmd_lead, cmdline, cursor_pos)
     let l:candidates = s:map_cmd(g:custom_menu[l:command])
   else
     let l:cmd_obj = custom_menu#get_menu_by_path(l:command, l:path)
-    let l:candidates = s:map_cmd(get(l:cmd_obj, "menu", []))
+    if has_key(l:cmd_obj, "menu")
+      let l:candidates = s:map_cmd(l:cmd_obj["menu"])
+    else
+      echomsg "Reached end, custom cmd_obj completion if available"
+      echomsg string(l:cmd_obj)
+      echomsg a:cmdline
+      let l:candidates = get(l:cmd_obj, "complete", { -> []})()
+    endif
   endif
   return join(l:candidates, "\n")
 endfunction
