@@ -6,22 +6,22 @@ function! s:get_cmd_by_path(menu, path)
   let l:next_cmd = get(a:path, 0, "")
   let l:cmd_obj = s:find_menu_by_command(a:menu, l:next_cmd)
   if empty(l:cmd_obj)
-    return {}
+    return [{}, a:path]
   endif
   let l:cmd_obj = l:cmd_obj[0]
   let l:next_path = a:path[1:]
   if empty(l:next_path)
-    return l:cmd_obj
+    return [l:cmd_obj, []]
   endif
   if !has_key(l:cmd_obj, "menu")
-    return {}
+    return [l:cmd_obj, l:next_path]
   endif
   return s:get_cmd_by_path(l:cmd_obj["menu"], l:next_path)
 endfunction
 
 function! custom_menu#get_menu_by_path(command, path)
   let l:menu = g:custom_menu[a:command]
-  return s:get_cmd_by_path(l:menu, a:path)
+  return s:get_cmd_by_path(l:menu, a:path)[0]
 endfunction
 
 function! s:menu_completions(cmd_lead, cmdline, cursor_pos)
@@ -37,16 +37,19 @@ function! s:menu_completions(cmd_lead, cmdline, cursor_pos)
   let l:command = filter(keys(g:custom_menu),
           \ { _, comm -> comm =~# '\v^'.l:command}
           \)[0]
+  let l:command_menu = g:custom_menu[l:command]
   if empty(l:path)
-    let l:candidates = s:map_cmd(g:custom_menu[l:command])
+    let l:candidates = s:map_cmd(l:command_menu)
   else
-    let l:cmd_obj = custom_menu#get_menu_by_path(l:command, l:path)
+    let [l:cmd_obj, l:path_left] = s:get_cmd_by_path(l:command_menu, l:path)
     if has_key(l:cmd_obj, "menu")
       let l:candidates = s:map_cmd(l:cmd_obj["menu"])
     else
       echomsg "Reached end, custom cmd_obj completion if available"
+      echomsg string(l:path_left)
       echomsg string(l:cmd_obj)
       echomsg a:cmdline
+      echomsg string(l:path_left)
       let l:candidates = get(l:cmd_obj, "complete", { -> []})()
     endif
   endif
