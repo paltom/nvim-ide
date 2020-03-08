@@ -1,6 +1,6 @@
-"if exists('g:loaded_ide_git')
-"  finish
-"endif
+if exists('g:loaded_ide_git')
+  finish
+endif
 let g:loaded_ide_git = v:true
 
 set updatetime=100
