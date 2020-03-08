@@ -52,10 +52,9 @@ function! s:render_section(section, level)
           \)
   endif
   if has_key(a:section, "subsections")
-    for subsec in keys(a:section.subsections)
-      let l:subsection = get(a:section.subsections, subsec)
+    for subsec in a:section.subsections
       let l:lines = extend(l:lines,
-            \ s:render_and_indent(function("s:render_section", [l:subsection]),
+            \ s:render_and_indent(function("s:render_section", [subsec]),
             \                     a:level + 1)
             \)
     endfor
@@ -79,7 +78,7 @@ function! s:format(sections)
   endif
   let l:lines = ['']
   for sec in keys(l:sections_to_format)
-    let l:section = get(g:info_sections, sec)
+    let l:section = g:info_sections[sec]
     let l:lines = extend(l:lines,
           \ s:render_and_indent(function("s:render_section", [l:section]), 0))
     let l:lines = add(l:lines, "")
@@ -109,6 +108,10 @@ function! s:display(lines)
         \ 'style': 'minimal',
         \})
   call nvim_win_set_option(l:info_win, 'winblend', 30)
+  " TODO: wrap only when lines are longer than maximum width
+  " increase height in this case to accomodate wrapped lines
+  " OR enable window focus and update closing condition
+  call nvim_win_set_option(l:info_win, 'wrap', v:true)
   execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
 endfunction
 

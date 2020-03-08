@@ -82,25 +82,25 @@ if !exists('g:info_sections')
 endif
 let g:info_sections["git"] = {
       \ "name": "Git",
-      \ "subsections": {
-      \   "repository": {
+      \ "subsections": [
+      \   {
       \     "name": "Repository path",
       \     "function": { -> fnamemodify(b:git_dir, ":~:h") }
       \   },
-      \   "status": {
+      \   {
       \     "name": "Status",
-      \     "subsections": {
-      \       "changes summary": {
+      \     "subsections": [
+      \       {
       \         "name": "Changes summary",
       \         "function": function("s:git_changes")
       \       },
-      \       "file list": {
+      \       {
       \         "name": "Files changed",
       \         "function": function("s:git_changed_files")
       \       }
-      \     }
+      \     ]
       \   }
-      \ }
+      \ ]
       \}
 
 call ext#plugins#load(ide#git#plugins)
