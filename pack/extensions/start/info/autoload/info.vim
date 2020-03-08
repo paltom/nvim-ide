@@ -2,7 +2,7 @@ function! s:render_and_indent(render_func, level)
   let l:lines = []
   let l:lines = extend(l:lines, a:render_func(a:level))
   if a:level > 0
-    let l:lines = map(l:lines, '"  ".v:val')
+    let l:lines = map(l:lines, { _, line -> "  ".line})
   endif
   return l:lines
 endfunction
@@ -67,24 +67,24 @@ function! s:format(sections)
   if empty(g:info_sections)
     return []
   endif
-  let l:lines = ['']
   if empty(a:sections)
     let l:sections_to_format = g:info_sections
   else
     let l:sections_to_format = filter(copy(g:info_sections),
-          \ 'index(a:sections, v:key) >= 0'
+          \ { key, _ -> index(a:sections, key) >= 0}
           \)
   endif
   if empty(l:sections_to_format)
     return []
   endif
+  let l:lines = ['']
   for sec in keys(l:sections_to_format)
     let l:section = get(g:info_sections, sec)
     let l:lines = extend(l:lines,
           \ s:render_and_indent(function("s:render_section", [l:section]), 0))
     let l:lines = add(l:lines, "")
   endfor
-  return map(l:lines, '" ".v:val')
+  return map(l:lines, { _, line -> " ".line})
 endfunction
 
 function! s:print(lines)
@@ -100,7 +100,8 @@ function! s:display(lines)
   let l:info_win = nvim_open_win(l:info_buffer, v:false, {
         \ 'relative': 'editor',
         \ 'anchor': 'SE',
-        \ 'width': min([max(map(copy(a:lines), 'len(v:val)')) + 1, &columns / 2]),
+        \ 'width': min([max(map(copy(a:lines), { _, line -> len(line)})) + 1,
+        \               &columns / 2]),
         \ 'height': min([len(a:lines), &lines * 3 / 4]),
         \ 'row': (&lines - &cmdheight - 1) - 1,
         \ 'col': &columns - 2,

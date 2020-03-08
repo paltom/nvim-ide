@@ -3,6 +3,10 @@ let ide#git#plugins = [
       \ "vim-gitgutter",
       \]
 
+function! ide#git#status()
+  execute "tab Gstatus"
+endfunction
+
 function! ide#git#checkout(branch_name)
   execute "!git checkout ".a:branch_name
 endfunction
