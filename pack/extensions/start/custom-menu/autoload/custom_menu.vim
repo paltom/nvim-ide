@@ -97,8 +97,9 @@ function! s:menu_completions(cmd_lead, cmdline, cursor_pos)
       " cmd object has no 'menu' key - completions are provided by 'complete'
       " function from cmd object (if such a function exists)
       " path that is left from getting to cmd object is passed to custom
-      " 'complete' function
-      let l:completions = get(l:cmd_obj, "complete", { _ -> []})(l:path_left)
+      " 'complete' function along with cmd_lead argument
+      let l:completions = get(l:cmd_obj, "complete", { lead, args -> []})
+            \(a:cmd_lead, add(l:path_left, a:cmd_lead))
     endif
   endif
   return join(l:completions, "\n")

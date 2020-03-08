@@ -7,10 +7,10 @@ set updatetime=100
 set signcolumn=yes
 let g:gitgutter_diff_args = '--ignore-space-at-eol'
 
-function! s:checkout_complete(args)
+function! s:checkout_complete(arg_lead, args)
   " only one argument should be completed, if there are already some args
   " fully entered, there is nothing to complete
-  if !empty(a:args)
+  if len(a:args) > 1
     return []
   endif
   return map(
