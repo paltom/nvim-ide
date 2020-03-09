@@ -154,7 +154,7 @@ endfunction
 function! info#show(echo_flag, sections)
   let l:lines = s:format(a:sections)
   if a:echo_flag
-    echo s:print(l:lines)
+    call s:print(l:lines)
   else
     call s:display(l:lines)
   endif
