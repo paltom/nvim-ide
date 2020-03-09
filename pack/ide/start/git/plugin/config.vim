@@ -67,8 +67,11 @@ endfunction
 function! s:git_changes()
   let l:git_output = s:get_git_output("diff --stat")
   let l:summary = l:git_output[-1]
-  let [l:files, l:added, l:removed] =
-        \ matchlist(l:summary, '\v(\d+) files changed, (\d+) insertions\(\+\), (\d+) deletions\(\-\)')[1:3]
+  let [l:files, _, l:added, _, l:removed] =
+        \ matchlist(l:summary, '\v((\d+) files? changed,)( (\d+) insertions?\(\+\),)?( (\d+) deletions?\(\-\))?')[2:6]
+  let l:files = empty(l:files) ? 0 : l:files
+  let l:added = empty(l:added) ? 0 : l:added
+  let l:removed = empty(l:removed) ? 0 : l:removed
   return printf("+%d -%d (in %d files)", l:added, l:removed, l:files)
 endfunction
 

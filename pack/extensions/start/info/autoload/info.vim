@@ -124,6 +124,13 @@ function! s:display(lines)
   " put window in right bottom corner
   " TODO make focusable and automatically go into window if lines do not fit
   " into window - different closing behavior
+  let l:max_win_width = &columns / 2
+  let l:max_win_height = &lines * 3 / 4
+  " +1 is for right border
+  let l:max_line_width = max(map(copy(a:lines), { _, line -> len(line)})) + 1
+  let l:lines_count = len(a:lines)
+  let l:will_fit = l:max_line_width < l:max_win_width &&
+        \ l:lines_count < l:max_win_height
   let l:info_win = nvim_open_win(l:info_buffer, v:false, {
         \ 'relative': 'editor',
         \ 'anchor': 'SE',
