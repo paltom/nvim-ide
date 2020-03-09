@@ -131,19 +131,20 @@ function! s:display(lines)
   let l:lines_count = len(a:lines)
   let l:will_fit = l:max_line_width < l:max_win_width &&
         \ l:lines_count < l:max_win_height
-  let l:info_win = nvim_open_win(l:info_buffer, v:false, {
+  let l:info_win = nvim_open_win(l:info_buffer, !l:will_fit, {
         \ 'relative': 'editor',
         \ 'anchor': 'SE',
-        \ 'width': min([max(map(copy(a:lines), { _, line -> len(line)})) + 1,
-        \               &columns / 2]),
-        \ 'height': min([len(a:lines), &lines * 3 / 4]),
+        \ 'width': min([l:max_line_width, l:max_win_width]),
+        \ 'height': min([l:lines_count, l:max_win_height]),
         \ 'row': (&lines - &cmdheight - 1) - 1,
         \ 'col': &columns - 2,
-        \ 'focusable': v:false,
+        \ 'focusable': !l:will_fit,
         \ 'style': 'minimal',
         \})
   call nvim_win_set_option(l:info_win, 'winblend', 30)
-  execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
+  if l:will_fit
+    execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
+  endif
 endfunction
 
 " Show info
