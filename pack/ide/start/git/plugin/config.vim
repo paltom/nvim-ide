@@ -65,6 +65,10 @@ let g:custom_menu["IDE"] = add(
       \       "complete": function("s:branches_complete")
       \     },
       \     {
+      \       "cmd": "fetch",
+      \       "action": function("ide#git#fetch")
+      \     },
+      \     {
       \       "cmd": "head",
       \       "action": function("ide#git#head")
       \     }

@@ -57,3 +57,7 @@ endfunction
 function! ide#git#merge(from_branch)
   execute "Gmerge ".a:from_branch
 endfunction
+
+function! ide#git#fetch()
+  Gfetch
+endfunction
