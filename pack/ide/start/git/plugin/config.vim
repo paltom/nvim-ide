@@ -13,6 +13,7 @@ function! s:branches_complete(arg_lead, args)
   if len(a:args) > 1
     return []
   endif
+  " TODO sort completions (also below function)
   return map(
       \   filter(
       \     ide#git#list_branches(),
