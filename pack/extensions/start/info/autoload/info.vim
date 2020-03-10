@@ -37,7 +37,14 @@ endfunction
 " Display result of function element
 function! s:render_function(funcref, level)
   let l:lines = []
-  let l:result = a:funcref()
+  try
+    let l:result = a:funcref()
+  catch /.*/
+    echohl WarningMsg
+    echomsg "Error when calling ".string(a:funcref).": ".string(v:exception)
+    echohl None
+    return []
+  endtry
   " function call result may be single string or list of strings (lines)
   if type(l:result) == v:t_list
     let l:lines = extend(l:lines, l:result)
@@ -143,7 +150,7 @@ function! s:display(lines)
   call nvim_win_set_option(l:info_win, 'winblend', 30)
   call nvim_buf_set_option(l:info_buffer, "modifiable", v:false)
   if l:will_fit
-    execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
+    execute "autocmd CursorMoved,CursorMovedI * ++once silent! call nvim_win_close(".l:info_win.", v:true)"
   else
     call nvim_buf_set_keymap(l:info_buffer, "n", "<left>", "col('.') == 1 ? '<c-w>p' : '<left>'", {"expr": v:true})
     call nvim_buf_set_keymap(l:info_buffer, "n", "h", "col('.') == 1 ? '<c-w>p' : 'h'", {"expr": v:true})

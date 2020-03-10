@@ -53,9 +53,13 @@ let g:custom_menu["IDE"] = add(
 
 function! s:get_git_output(git_cmd)
   let l:git_cmd = "git --git-dir=%s --work-tree=%s %s"
+  let l:git_dir = ide#git#git_dir()
+  if empty(l:git_dir)
+    return []
+  endif
   let l:git_cmd_formatted = printf(l:git_cmd,
-        \                     b:git_dir,
-        \                     fnamemodify(b:git_dir, ":p:h:h"),
+        \                     l:git_dir.expand("/.git"),
+        \                     l:git_dir,
         \                     a:git_cmd)
   let l:git_output = split(execute("!".l:git_cmd_formatted), "\n")
   let l:git_output = map(l:git_output, { _, line -> trim(line)})
@@ -90,6 +94,15 @@ function! s:git_changed_files()
   return l:git_output
 endfunction
 
+function! s:git_repo_path()
+  let l:repo_path = ide#git#git_dir()
+  if empty(l:repo_path)
+    return 'Not in git repository'
+  endif
+  let l:repo_path = fnamemodify(l:repo_path, ":~")
+  return l:repo_path
+endfunction
+
 if !exists('g:info_sections')
   let g:info_sections = {}
 endif
@@ -98,7 +111,7 @@ let g:info_sections["git"] = {
       \ "subsections": [
       \   {
       \     "name": "Repository path",
-      \     "function": { -> fnamemodify(b:git_dir, ":~:h") }
+      \     "function": function("s:git_repo_path")
       \   },
       \   {
       \     "name": "Status",

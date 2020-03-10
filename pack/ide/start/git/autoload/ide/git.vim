@@ -26,3 +26,14 @@ function! ide#git#list_branches()
   let l:branch_list = filter(l:branch_list, { _, branch -> branch !~# '\v^\s*remotes/[^/]*/HEAD\s+-\>\s+'})
   return l:branch_list
 endfunction
+
+function! ide#git#git_dir()
+  let l:git_dir = FugitiveGitDir()
+  if empty(l:git_dir)
+    return ""
+  endif
+  if fnamemodify(l:git_dir, ":t") =~# '.git'
+    let l:git_dir = fnamemodify(l:git_dir, ":h")
+  endif
+  return l:git_dir
+endfunction
