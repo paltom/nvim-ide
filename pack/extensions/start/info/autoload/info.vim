@@ -122,8 +122,7 @@ function! s:display(lines)
   " maximum width = half of screen width
   " maximum height = 75% of screen height
   " put window in right bottom corner
-  " TODO make focusable and automatically go into window if lines do not fit
-  " into window - different closing behavior
+  " automatically go into window if lines do not fit inside window
   let l:max_win_width = &columns / 2
   let l:max_win_height = &lines * 3 / 4
   " +1 is for right border
@@ -142,9 +141,17 @@ function! s:display(lines)
         \ 'style': 'minimal',
         \})
   call nvim_win_set_option(l:info_win, 'winblend', 30)
+  " TODO make buffer nomodifiable
   if l:will_fit
     execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
+  else
+    call nvim_buf_set_keymap(l:info_buffer, "n", "<left>", "col('.') == 1 ? '<c-w>p' : '<left>'", {"expr": v:true})
+    call nvim_buf_set_keymap(l:info_buffer, "n", "h", "col('.') == 1 ? '<c-w>p' : 'h'", {"expr": v:true})
+    call nvim_buf_set_keymap(l:info_buffer, "n", "<up>", "line('.') == 1 ? '<c-w>p' : '<up>'", {"expr": v:true})
+    call nvim_buf_set_keymap(l:info_buffer, "n", "k", "line('.') == 1 ? '<c-w>p' : 'k'", {"expr": v:true})
+    execute "autocmd WinLeave <buffer=".l:info_buffer."> ++once silent quit!"
   endif
+  " TODO wipeout buffer
 endfunction
 
 " Show info
