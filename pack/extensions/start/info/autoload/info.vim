@@ -141,7 +141,7 @@ function! s:display(lines)
         \ 'style': 'minimal',
         \})
   call nvim_win_set_option(l:info_win, 'winblend', 30)
-  " TODO make buffer nomodifiable
+  call nvim_buf_set_option(l:info_buffer, "modifiable", v:false)
   if l:will_fit
     execute "autocmd CursorMoved * ++once silent call nvim_win_close(".l:info_win.", v:true)"
   else
@@ -151,7 +151,7 @@ function! s:display(lines)
     call nvim_buf_set_keymap(l:info_buffer, "n", "k", "line('.') == 1 ? '<c-w>p' : 'k'", {"expr": v:true})
     execute "autocmd WinLeave <buffer=".l:info_buffer."> ++once silent quit!"
   endif
-  " TODO wipeout buffer
+  execute "autocmd BufWinLeave <buffer=".l:info_buffer."> ++once bwipeout ".l:info_buffer
 endfunction
 
 " Show info
