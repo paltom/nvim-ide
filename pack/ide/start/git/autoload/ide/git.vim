@@ -45,3 +45,7 @@ endfunction
 function! ide#git#commit()
   Gcommit
 endfunction
+
+function! ide#git#push()
+  Gpush
+endfunction

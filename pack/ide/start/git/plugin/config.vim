@@ -50,6 +50,10 @@ let g:custom_menu["IDE"] = add(
       \     {
       \       "cmd": "commit",
       \       "action": function("ide#git#commit")
+      \     },
+      \     {
+      \       "cmd": "push",
+      \       "action": function("ide#git#push")
       \     }
       \   ]
       \ }
