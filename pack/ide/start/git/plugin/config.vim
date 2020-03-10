@@ -20,11 +20,22 @@ function! s:branches_complete(arg_lead, args)
       \   { _, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$')})
 endfunction
 
+function! s:git_add_complete(arg_lead, args)
+  " multiple paths can be completed
+  let l:git_output = s:get_git_output("ls-files --modified --others --exclude-standard")
+  if empty(l:git_output)
+    return []
+  endif
+  " filter out already added paths
+  let l:paths = filter(l:git_output, { _, path -> index(a:args, path) < 0})
+  return l:paths
+endfunction
+
 if !exists('g:custom_menu')
   let g:custom_menu = {}
 endif
-let g:custom_menu["IDE"] = add(
-      \ get(g:custom_menu, "IDE", []),
+let g:custom_menu["Ide"] = add(
+      \ get(g:custom_menu, "Ide", []),
       \ {
       \   "cmd": "git",
       \   "menu": [
@@ -75,7 +86,7 @@ let g:custom_menu["IDE"] = add(
       \     {
       \       "cmd": "add",
       \       "action": function("ide#git#add"),
-      \       "complete": ""
+      \       "complete": function("s:git_add_complete")
       \     }
       \   ]
       \ }
@@ -120,7 +131,7 @@ function! s:git_changes()
 endfunction
 
 function! s:git_changed_files()
-  let l:git_output = s:get_git_output("diff --name-only")
+  let l:git_output = s:get_git_output("ls-files --modified")
   return l:git_output
 endfunction
 

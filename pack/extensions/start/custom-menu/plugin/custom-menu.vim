@@ -14,31 +14,6 @@
 " - Note that both "action" and "menu" may be specified
 " Requirement: if user wants to add command, he must modify g:custom_menu variable directly
 " and invoke custom_menu#update_commands afterwards
-"let g:custom_menu.Test = [
-      "\ {
-      "\   "cmd": "level1action",
-      "\   "action": "echo 'Level 1 action'",
-      "\ },
-      "\ {
-      "\   "cmd": "level1submenu",
-      "\   "menu": [
-      "\     {
-      "\       "cmd": "level2action",
-      "\       "action": "echo 'Level 2 action'",
-      "\     },
-      "\     {
-      "\       "cmd": "level2actionwithsubmenu",
-      "\       "action": "echo 'Level 2 action (submenu available)'",
-      "\       "menu": [
-      "\         {
-      "\           "cmd": "level3action",
-      "\           "action": "echo 'Level 3 action'",
-      "\         }
-      "\       ]
-      "\     }
-      "\   ]
-      "\ }
-      "\]
 if exists('g:loaded_custom_menu')
   finish
 endif

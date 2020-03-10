@@ -62,21 +62,6 @@ function! ide#git#fetch()
   Gfetch
 endfunction
 
-function! ide#git#add(paths)
-  execute "Git add ".join(a:paths, " ")
-endfunction
-
-function! ide#git#test(arg_lead, cmdline, curpos)
-  " git ls-files --modified --others --exclude-standard
-  let l:git_root = ide#git#git_dir()
-  if empty(l:git_root)
-    return ""
-  endif
-  let l:relative_basedir = fnamemodify(a:arg_lead, ":h")
-  let l:globs = split(globpath(l:relative_basedir, "*"), "\n")
-  " Remove leading ./ if any
-  let l:globs = map(l:globs, { _, elem -> matchstr(elem, '\v^(\./)?\zs.*\ze')})
-  " Add slash at the end if elem is directory
-  let l:globs = map(l:globs, { _, elem -> isdirectory(elem) ? elem.expand("/") : elem})
-  return join(l:globs, "\n")
+function! ide#git#add(...)
+  execute "Git add ".join(a:000, " ")
 endfunction
