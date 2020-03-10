@@ -59,9 +59,6 @@ function! s:get_git_output(git_cmd)
         \                     a:git_cmd)
   let l:git_output = split(execute("!".l:git_cmd_formatted), "\n")
   let l:git_output = map(l:git_output, { _, line -> trim(line)})
-  if empty(l:git_output)
-    return []
-  endif
   " Remove Neovim-added lines
   let l:git_output = l:git_output[2:]
   return l:git_output
@@ -69,18 +66,22 @@ endfunction
 
 function! s:git_changes()
   let l:git_output = s:get_git_output("diff --stat")
-  if empty(l:git_output)
-    let l:files = 0
-    let l:added = 0
-    let l:removed = 0
-  else
-    let l:summary = l:git_output[-1]
-    let [l:files, _, l:added, _, l:removed] =
-          \ matchlist(l:summary, '\v((\d+) files? changed,)( (\d+) insertions?\(\+\),)?( (\d+) deletions?\(\-\))?')[2:6]
-    let l:files = empty(l:files) ? 0 : l:files
-    let l:added = empty(l:added) ? 0 : l:added
-    let l:removed = empty(l:removed) ? 0 : l:removed
-  endif
+  function! s:get_summary_values(output)
+    if empty(a:output)
+      let l:files = 0
+      let l:added = 0
+      let l:removed = 0
+    else
+      let l:summary = a:output[-1]
+      let [l:files, _, l:added, _, l:removed] =
+            \ matchlist(l:summary, '\v((\d+) files? changed)(, (\d+) insertions?\(\+\))?(, (\d+) deletions?\(\-\))?')[2:6]
+      let l:files = empty(l:files) ? 0 : l:files
+      let l:added = empty(l:added) ? 0 : l:added
+      let l:removed = empty(l:removed) ? 0 : l:removed
+    endif
+    return [l:files, l:added, l:removed]
+  endfunction
+  let [l:files, l:added, l:removed] = s:get_summary_values(l:git_output)
   return printf("+%d -%d (in %d files)", l:added, l:removed, l:files)
 endfunction
 
