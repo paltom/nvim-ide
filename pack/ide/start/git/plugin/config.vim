@@ -59,16 +59,28 @@ function! s:get_git_output(git_cmd)
         \                     a:git_cmd)
   let l:git_output = split(execute("!".l:git_cmd_formatted), "\n")
   let l:git_output = map(l:git_output, { _, line -> trim(line)})
-  " Remove command line
+  if empty(l:git_output)
+    return []
+  endif
+  " Remove Neovim-added lines
   let l:git_output = l:git_output[2:]
   return l:git_output
 endfunction
 
 function! s:git_changes()
   let l:git_output = s:get_git_output("diff --stat")
-  let l:summary = l:git_output[-1]
-  let [l:files, l:added, l:removed] =
-        \ matchlist(l:summary, '\v(\d+) files changed, (\d+) insertions\(\+\), (\d+) deletions\(\-\)')[1:3]
+  if empty(l:git_output)
+    let l:files = 0
+    let l:added = 0
+    let l:removed = 0
+  else
+    let l:summary = l:git_output[-1]
+    let [l:files, _, l:added, _, l:removed] =
+          \ matchlist(l:summary, '\v((\d+) files? changed,)( (\d+) insertions?\(\+\),)?( (\d+) deletions?\(\-\))?')[2:6]
+    let l:files = empty(l:files) ? 0 : l:files
+    let l:added = empty(l:added) ? 0 : l:added
+    let l:removed = empty(l:removed) ? 0 : l:removed
+  endif
   return printf("+%d -%d (in %d files)", l:added, l:removed, l:files)
 endfunction
 
@@ -82,25 +94,25 @@ if !exists('g:info_sections')
 endif
 let g:info_sections["git"] = {
       \ "name": "Git",
-      \ "subsections": {
-      \   "repository": {
+      \ "subsections": [
+      \   {
       \     "name": "Repository path",
       \     "function": { -> fnamemodify(b:git_dir, ":~:h") }
       \   },
-      \   "status": {
+      \   {
       \     "name": "Status",
-      \     "subsections": {
-      \       "changes summary": {
+      \     "subsections": [
+      \       {
       \         "name": "Changes summary",
       \         "function": function("s:git_changes")
       \       },
-      \       "file list": {
+      \       {
       \         "name": "Files changed",
       \         "function": function("s:git_changed_files")
       \       }
-      \     }
+      \     ]
       \   }
-      \ }
+      \ ]
       \}
 
 call ext#plugins#load(ide#git#plugins)
