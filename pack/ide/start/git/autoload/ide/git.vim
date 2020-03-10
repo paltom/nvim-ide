@@ -66,14 +66,17 @@ function! ide#git#add(paths)
   execute "Git add ".join(a:paths, " ")
 endfunction
 
-function! ide#git#test(arg_lead, args)
-  if a:arg_lead =~# '\v[/\\]$'
-    let l:dir_before = a:arg_lead
-  else
-    let l:dir_before = ""
+function! ide#git#test(arg_lead, cmdline, curpos)
+  " git ls-files --modified --others --exclude-standard
+  let l:git_root = ide#git#git_dir()
+  if empty(l:git_root)
+    return ""
   endif
-  let l:globs = split(globpath(getcwd(), l:dir_before."*"), "\n")
-  let l:globs = map(l:globs, { _, path -> fnamemodify(path, ":t")})
-  let l:globs = map(l:globs, { _, elem -> isdirectory(expand(getcwd()."/".l:dir_before.elem)) ? elem.expand("/") : elem})
+  let l:relative_basedir = fnamemodify(a:arg_lead, ":h")
+  let l:globs = split(globpath(l:relative_basedir, "*"), "\n")
+  " Remove leading ./ if any
+  let l:globs = map(l:globs, { _, elem -> matchstr(elem, '\v^(\./)?\zs.*\ze')})
+  " Add slash at the end if elem is directory
+  let l:globs = map(l:globs, { _, elem -> isdirectory(elem) ? elem.expand("/") : elem})
   return join(l:globs, "\n")
 endfunction
