@@ -47,6 +47,10 @@ let g:custom_menu["IDE"] = add(
       \       "action": function("ide#git#checkout"),
       \       "complete": function("s:checkout_complete")
       \     },
+      \     {
+      \       "cmd": "commit",
+      \       "action": function("ide#git#commit")
+      \     }
       \   ]
       \ }
       \)

@@ -41,3 +41,7 @@ endfunction
 function! ide#git#head()
   return FugitiveHead(8)
 endfunction
+
+function! ide#git#commit()
+  Gcommit
+endfunction
