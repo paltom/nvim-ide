@@ -71,6 +71,11 @@ let g:custom_menu["IDE"] = add(
       \     {
       \       "cmd": "head",
       \       "action": function("ide#git#head")
+      \     },
+      \     {
+      \       "cmd": "add",
+      \       "action": function("ide#git#add"),
+      \       "complete": ""
       \     }
       \   ]
       \ }

@@ -61,3 +61,19 @@ endfunction
 function! ide#git#fetch()
   Gfetch
 endfunction
+
+function! ide#git#add(paths)
+  execute "Git add ".join(a:paths, " ")
+endfunction
+
+function! ide#git#test(arg_lead, args)
+  if a:arg_lead =~# '\v[/\\]$'
+    let l:dir_before = a:arg_lead
+  else
+    let l:dir_before = ""
+  endif
+  let l:globs = split(globpath(getcwd(), l:dir_before."*"), "\n")
+  let l:globs = map(l:globs, { _, path -> fnamemodify(path, ":t")})
+  let l:globs = map(l:globs, { _, elem -> isdirectory(expand(getcwd()."/".l:dir_before.elem)) ? elem.expand("/") : elem})
+  return join(l:globs, "\n")
+endfunction
