@@ -7,7 +7,7 @@ set updatetime=100
 set signcolumn=yes
 let g:gitgutter_diff_args = '--ignore-space-at-eol'
 
-function! s:checkout_complete(arg_lead, args)
+function! s:branches_complete(arg_lead, args)
   " only one argument should be completed, if there are already some args
   " fully entered, there is nothing to complete
   if len(a:args) > 1
@@ -45,7 +45,7 @@ let g:custom_menu["IDE"] = add(
       \     {
       \       "cmd": "checkout",
       \       "action": function("ide#git#checkout"),
-      \       "complete": function("s:checkout_complete")
+      \       "complete": function("s:branches_complete")
       \     },
       \     {
       \       "cmd": "commit",
@@ -54,6 +54,19 @@ let g:custom_menu["IDE"] = add(
       \     {
       \       "cmd": "push",
       \       "action": function("ide#git#push")
+      \     },
+      \     {
+      \       "cmd": "pull",
+      \       "action": function("ide#git#pull")
+      \     },
+      \     {
+      \       "cmd": "merge",
+      \       "action": function("ide#git#merge"),
+      \       "complete": function("s:branches_complete")
+      \     },
+      \     {
+      \       "cmd": "head",
+      \       "action": function("ide#git#head")
       \     }
       \   ]
       \ }

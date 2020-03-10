@@ -49,3 +49,11 @@ endfunction
 function! ide#git#push()
   Gpush
 endfunction
+
+function! ide#git#pull()
+  Gpull
+endfunction
+
+function! ide#git#merge(from_branch)
+  execute "Gmerge ".a:from_branch
+endfunction
