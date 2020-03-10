@@ -37,3 +37,7 @@ function! ide#git#git_dir()
   endif
   return l:git_dir
 endfunction
+
+function! ide#git#head()
+  return FugitiveHead(8)
+endfunction

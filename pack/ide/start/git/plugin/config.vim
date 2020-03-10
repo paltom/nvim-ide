@@ -117,6 +117,10 @@ let g:info_sections["git"] = {
       \     "name": "Status",
       \     "subsections": [
       \       {
+      \         "name": "Current HEAD",
+      \         "function": function("ide#git#head")
+      \       },
+      \       {
       \         "name": "Changes summary",
       \         "function": function("s:git_changes")
       \       },
