@@ -4,3 +4,9 @@
 [submodule "ext/plugins/vim-instant-markdown"]
 	path = ext/plugins/vim-instant-markdown
 	url = https://github.com/suan/vim-instant-markdown
+[submodule "ext/plugins/vim-fugitive"]
+	path = ext/plugins/vim-fugitive
+	url = https://github.com/tpope/vim-fugitive
+[submodule "ext/plugins/vim-gitgutter"]
+	path = ext/plugins/vim-gitgutter
+	url = https://github.com/airblade/vim-gitgutter

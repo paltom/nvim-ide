@@ -166,6 +166,21 @@ function! s:stl_filename_filetype(context)
           \ l:special_filetype.filename_function(a:context.bufname))
   endif
 endfunction
+let g:statusline_filename_special_patterns = []
+function! s:filename_special_pattern(context)
+  let l:full_bufname = fnamemodify(a:context.bufname, ":p")
+  let l:special_patterns_map = copy(g:statusline_filename_special_patterns)
+  let l:special_pattern = filter(l:special_patterns_map,
+        \ { _, pattern_obj -> l:full_bufname =~# pattern_obj["pattern"]}
+        \)
+  unlet l:special_patterns_map
+  if !empty(l:special_pattern)
+    " last matched pattern entry is used in case of multiple hits
+    let l:special_pattern = l:special_pattern[-1]
+    call s:filename_set_result(a:context,
+          \ l:special_pattern["filename_function"](l:full_bufname))
+  endif
+endfunction
 " Empty filename handling (buffer not written to disk)
 function! s:filename_no_name(context)
   if empty(a:context.bufname)
@@ -193,6 +208,7 @@ endfunction
 let s:stl_filename_funcs = [
       \ 's:stl_filename_filetype',
       \ 's:filename_no_name',
+      \ 's:filename_special_pattern',
       \ 's:filename_shorten_relative_path',
       \]
 function! s:stl_filename(winid)
