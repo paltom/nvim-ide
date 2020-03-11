@@ -175,4 +175,32 @@ let g:info_sections["git"] = {
       \ ]
       \}
 
+function! s:git_diff_filename(bufname)
+  let l:git_buf_type = matchstr(fnamemodify(a:bufname, ":p"), '\v\.git[/\\]{2}\zs\c[0-9a-f]+\ze[/\\]')
+  if empty(l:git_buf_type)
+    return bufname
+  endif
+  if l:git_buf_type == "0"
+    let l:git_type = "index"
+  elseif l:git_buf_type == "2"
+    let l:git_type = "current"
+  elseif l:git_buf_type == "3"
+    let l:git_type = "incoming"
+  else
+    let l:git_type = "(".l:git_buf_type[:7].")"
+  endif
+  let l:git_diff_filename = fnamemodify(a:bufname, ":t")." @ ".l:git_type
+  return l:git_diff_filename
+endfunction
+
+if !exists("g:statusline_filename_special_patterns")
+  let g:statusline_filename_special_patterns = []
+endif
+let g:statusline_filename_special_patterns =
+      \ add(g:statusline_filename_special_patterns, {
+      \   "pattern": '\v^fugitive:[/\\]{2}',
+      \   "filename_function": function("s:git_diff_filename")
+      \ }
+      \)
+
 call ext#plugins#load(ide#git#plugins)
