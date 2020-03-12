@@ -15,9 +15,7 @@ augroup ide_terminal_autoinsert
 augroup end
 
 let s:tab_terminals_map = {}
-function! TabTerminal()
-  return s:tab_terminals_map
-endfunction
+" move to autoload?
 function! s:terminal_new()
   Tnew
   let s:tab_terminals_map[tabpagenr()] = g:neoterm.last_id
