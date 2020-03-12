@@ -8,6 +8,11 @@ let g:neoterm_autoscroll = v:true
 " TODO test it
 let g:neoterm_term_per_tab = v:true
 let g:neoterm_autoinsert = v:true
+augroup ide_terminal_autoinsert
+  autocmd!
+  autocmd BufEnter term://* startinsert
+  autocmd BufLeave term://* stopinsert
+augroup end
 
 if !exists('g:custom_menu')
   let g:custom_menu = {}
@@ -22,6 +27,26 @@ let g:custom_menu["Ide"] = add(
       \       "action": "Tnew"
       \     }
       \   ]
+      \ }
+      \)
+
+function! s:terminal_filename(bufname)
+  let l:bufname = fnamemodify(a:bufname, ":p")
+  let l:shell_name = matchstr(split(l:bufname)[0], '\v\/\zs[^/]*$')
+  let l:filename = l:shell_name
+  if exists("t:neoterm_id")
+    let l:filename = l:shell_name.":#".t:neoterm_id
+  endif
+  return "term:".l:filename
+endfunction
+
+if !exists("g:statusline_filename_special_patterns")
+  let g:statusline_filename_special_patterns = []
+endif
+let g:statusline_filename_special_patterns =
+      \ add(g:statusline_filename_special_patterns, {
+      \   "pattern": '\v^term:',
+      \   "filename_function": function("s:terminal_filename")
       \ }
       \)
 
