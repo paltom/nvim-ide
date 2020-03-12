@@ -14,6 +14,15 @@ augroup ide_terminal_autoinsert
   autocmd BufLeave term://* stopinsert
 augroup end
 
+let s:tab_terminals_map = {}
+function! TabTerminal()
+  return s:tab_terminals_map
+endfunction
+function! s:terminal_new()
+  Tnew
+  let s:tab_terminals_map[tabpagenr()] = g:neoterm.last_id
+endfunction
+
 if !exists('g:custom_menu')
   let g:custom_menu = {}
 endif
