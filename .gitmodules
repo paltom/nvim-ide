@@ -10,3 +10,9 @@
 [submodule "ext/plugins/vim-gitgutter"]
 	path = ext/plugins/vim-gitgutter
 	url = https://github.com/airblade/vim-gitgutter
+[submodule "ext/plugins/fzf"]
+	path = ext/plugins/fzf
+	url = https://github.com/junegunn/fzf
+[submodule "ext/plugins/fzf.vim"]
+	path = ext/plugins/fzf.vim
+	url = https://github.com/junegunn/fzf.vim
