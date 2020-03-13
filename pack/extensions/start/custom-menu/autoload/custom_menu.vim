@@ -102,7 +102,7 @@ function! s:menu_completions(cmd_lead, cmdline, cursor_pos)
             \(a:cmd_lead, add(l:path_left, a:cmd_lead))
     endif
   endif
-  return join(l:completions, "\n")
+  return join(sort(l:completions), "\n")
 endfunction
 
 " Execute action from cmd object

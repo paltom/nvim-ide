@@ -65,3 +65,7 @@ endfunction
 function! ide#git#add(...)
   execute "Git add ".join(a:000, " ")
 endfunction
+
+function! ide#git#diff()
+  execute "tab vertical Gdiffsplit"
+endfunction

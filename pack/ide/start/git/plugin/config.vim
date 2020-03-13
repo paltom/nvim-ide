@@ -88,6 +88,10 @@ let g:custom_menu["Ide"] = add(
       \       "cmd": "add",
       \       "action": function("ide#git#add"),
       \       "complete": function("s:git_add_complete")
+      \     },
+      \     {
+      \       "cmd": "diff",
+      \       "action": function("ide#git#diff"),
       \     }
       \   ]
       \ }
