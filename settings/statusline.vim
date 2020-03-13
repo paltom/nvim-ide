@@ -6,20 +6,22 @@ function! s:update_statusline_colors()
     " Helper function to get color of given attribute of given highlight group
     function! s:follow_links(highlight_name)
       let l:output = execute("highlight ".a:highlight_name)
-      if l:output =~# ' links to '
+      if l:output =~# " links to "
         let l:linked_highlight = matchstr(l:output, '\v\w*$')
         return s:follow_links(l:linked_highlight)
       else
         return split(l:output)
       endif
     endfunction
-    let l:attribute_entry = filter(
-        \   map(
-        \     filter(
-        \       s:follow_links(a:highlight_name),
-        \     'v:val =~ "="'),
-        \   'split(v:val, "=")'),
-        \ 'v:val[0] ==? "'.a:attribute.'"')
+    let l:raw_attributes = filter(s:follow_links(a:highlight_name),
+          \ { _, output_part -> output_part =~ "="}
+          \)
+    let l:attribute_entries = map(l:raw_attributes,
+          \ { _, raw_attribute -> split(raw_attribute, "=")}
+          \)
+    let l:attribute_entry = filter(l:attribute_entries,
+          \ { _, attribute_entry -> attribute_entry[0] ==? a:attribute}
+          \)
     if empty(l:attribute_entry)
       return ""
     else
@@ -52,8 +54,8 @@ augroup end
 " }}}
 
 " Utility functions {{{
-function s:sid()
-  return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
+function! s:sid()
+  return matchstr(expand("<sfile>"), '<SNR>\zs\d\+\ze_SID$')
 endfun
 function! s:highlight_stl_part(part, highlight_group)
   " Helper function for highlighting statusline part
@@ -75,12 +77,12 @@ endfunction
 " Statusline file status flags part
 " When file is not modifiable or readonly, display lockpad character
 " When file is modified, display centered asterisk character
-function! s:stl_file_flags(winid)
-  let l:bufnr = winbufnr(a:winid)
-  let l:modifiable = getbufvar(l:bufnr, '&modifiable')
-  let l:readonly = getbufvar(l:bufnr, '&readonly')
+function! s:stl_file_flags(winnr)
+  let l:bufnr = winbufnr(a:winnr)
+  let l:modifiable = getbufvar(l:bufnr, "&modifiable")
+  let l:readonly = getbufvar(l:bufnr, "&readonly")
   if l:modifiable && !l:readonly
-    let l:modified = getbufvar(l:bufnr, '&modified')
+    let l:modified = getbufvar(l:bufnr, "&modified")
     if l:modified
       let l:flag = " \u274b"
     else
@@ -98,135 +100,97 @@ function! s:stl_file_flags(winid)
 endfunction
 
 " Filename part functions {{{
-function s:stl_filename_set_cwd_context(context)
-  " Store cwd context of current active window
-  let a:context.original_cwd = getcwd()
-  " Is it locally-set directory?
-  if haslocaldir()
-    let a:context.cwd_type = 'local'
-  elseif haslocaldir(-1)
-    let a:context.cwd_type = 'tabpage'
-  else
-    let a:context.cwd_type = 'global'
-  endif
-  " Set local working directory to window for which stl is drawn
-  " This is for correct context of filename-modifiers
-  silent execute "lcd ".getcwd(a:context.winid)
-endfunction
-function! s:stl_filename_restore_cwd_context(context)
-  " Restore original cwd of current active window
-  if a:context.cwd_type ==# 'local'
-    let l:cwd_type_char = 'l'
-  elseif a:context.cwd_type ==# 'tabpage'
-    let l:cwd_type_char = 't'
-  elseif a:context.cwd_type ==# 'global'
-    let l:cwd_type_char = ''
-  endif
-  silent execute l:cwd_type_char."cd ".a:context.original_cwd
-endfunction
-function! s:filename_set_result(context, result)
-  " Helper function for marking that filename function returned result (early
-  " exit)
-  let a:context.has_result = 1
-  let a:context.filename = a:result
-endfunction
-function! s:filename_handle_all_cases(context, file_name_funcs)
-  " Helper function for trying all cases of filename handling functions
-  " As soon as on of functions returns result, return it and don't try
-  " remaining functions
-  for fn in a:file_name_funcs
-    call function(fn)(a:context)
-    if a:context.has_result
-      return a:context.filename
-    endif
-  endfor
-endfunction
 " Special cases for filename stl part
 " Filetypes that should display custom file name
-" Those can be registered by plugin later
-" Function handling filename displaying for given filetype will receive
-" bufname as argument
+" See call#first_if for object structure
 let g:statusline_filename_special_filetypes = []
-let g:statusline_filename_special_filetypes =
-      \ add(g:statusline_filename_special_filetypes, {
-      \   "filetype": "help",
-      \   "filename_function": { bufname -> fnamemodify(bufname, ':t') }
-      \})
-function! s:stl_filename_filetype(context)
-  " Function for handling custom filetype handling
-  let l:filetype = getbufvar(a:context.bufnr, '&filetype')
-  let l:special_filetypes_map = copy(g:statusline_filename_special_filetypes)
-  let l:special_filetype = filter(l:special_filetypes_map,
-        \ 'v:val.filetype == l:filetype')
-  unlet l:special_filetypes_map
-  if len(l:special_filetype) > 0
-    " Last entry for given filetype is used
-    let l:special_filetype = l:special_filetype[-1]
-    call s:filename_set_result(a:context,
-          \ l:special_filetype.filename_function(a:context.bufname))
-  endif
-endfunction
-let g:statusline_filename_special_patterns = []
-function! s:filename_special_pattern(context)
-  let l:full_bufname = fnamemodify(a:context.bufname, ":p")
-  let l:special_patterns_map = copy(g:statusline_filename_special_patterns)
-  let l:special_pattern = filter(l:special_patterns_map,
-        \ { _, pattern_obj -> l:full_bufname =~# pattern_obj["pattern"]}
-        \)
-  unlet l:special_patterns_map
-  if !empty(l:special_pattern)
-    " last matched pattern entry is used in case of multiple hits
-    let l:special_pattern = l:special_pattern[-1]
-    call s:filename_set_result(a:context,
-          \ l:special_pattern["filename_function"](l:full_bufname))
-  endif
-endfunction
+let g:statusline_filename_special_filetypes = add(
+      \ g:statusline_filename_special_filetypes,
+      \ {
+      \   "if": { c -> getbufvar(c["bufnr"], "&filetype") == "help" },
+      \   "call": { c -> fnamemodify(c["bufname"], ":t") }
+      \ }
+      \)
+" List of handlers for patterns in bufname (full)
+" See call#first_if for object structure
+let g:statusline_filename_special_name_patterns = []
 " Empty filename handling (buffer not written to disk)
 function! s:filename_no_name(context)
-  if empty(a:context.bufname)
-    call s:filename_set_result(a:context, '[No Name]')
+  if empty(fnamemodify(a:context["bufname"], ":t"))
+    call call#set_result(a:context, "[No Name]")
   endif
 endfunction
 " Regular filename handling
 " Shorten path relatively to current working directory
 " Leave full name of directory containing file
 function! s:filename_shorten_relative_path(context)
-  let l:head_dir = fnamemodify(a:context.bufname, ':.:h')
-  if l:head_dir == '.'
+  let l:head_dir = fnamemodify(a:context["bufname"], ":~:.:h")
+  if l:head_dir == "."
     " If file is in current working directory, do not display cwd
-    call s:filename_set_result(a:context, fnamemodify(a:context.bufname, ':t'))
+    call call#set_result(a:context, fnamemodify(a:context["bufname"], ":t"))
   else
-    call s:filename_set_result(a:context, pathshorten(l:head_dir).'/'.fnamemodify(a:context.bufname, ':t'))
+    call call#set_result(a:context,
+          \ pathshorten(l:head_dir).
+          \ expand("/").
+          \ fnamemodify(a:context["bufname"], ":t")
+          \)
   endif
 endfunction
 " Simple filename
 function! s:filename_simple(context)
-  let l:filename = fnamemodify(a:context.bufname, ":t")
-  call s:filename_set_result(a:context, l:filename)
+  let l:filename = fnamemodify(a:context["bufname"], ":t")
+  call call#set_result(a:context, l:filename)
 endfunction
 " Which functions and in which order (precedence) determine filename part
 let s:stl_filename_funcs = [
-      \ 's:stl_filename_filetype',
-      \ 's:filename_no_name',
-      \ 's:filename_special_pattern',
-      \ 's:filename_shorten_relative_path',
+      \ { c ->
+      \     call#first_if_set_result(
+      \       g:statusline_filename_special_filetypes,
+      \       c
+      \     )
+      \ },
+      \ function("s:filename_no_name"),
+      \ { c ->
+      \     call#first_if_set_result(
+      \       g:statusline_filename_special_name_patterns,
+      \       c
+      \     )
+      \ },
+      \ function("s:filename_shorten_relative_path"),
       \]
-function! s:stl_filename(winid)
-  let l:bufnr = winbufnr(a:winid)
+function! s:stl_filename(winnr)
+  function! s:stl_filename_set_cwd_context(context)
+    " Store cwd context of current active window
+    let a:context["original_cwd"] = getcwd()
+    " Is it locally-set directory?
+    if haslocaldir()
+      let a:context["cwd_type"] = "l"
+    elseif haslocaldir(-1)
+      let a:context["cwd_type"] = "t"
+    else
+      let a:context["cwd_type"] = ""
+    endif
+    " Set local working directory to window for which stl is drawn
+    " This is for correct context of filename-modifiers
+    silent execute "lcd ".getcwd(a:context["winnr"])
+  endfunction
+  function! s:stl_filename_restore_cwd_context(context)
+    " Restore original cwd of current active window
+    silent execute a:context["cwd_type"]."cd ".a:context["original_cwd"]
+  endfunction
+  let l:bufnr = winbufnr(a:winnr)
   " Store context of window for which statusline is drawn
   let l:context  = {
-        \ 'original_cwd': '',
-        \ 'cwd_type': '',
-        \ 'bufnr': l:bufnr,
-        \ 'bufname': bufname(l:bufnr),
-        \ 'winid': a:winid,
-        \ 'has_result': 0,
-        \ 'filename': '',
+        \ "original_cwd": "",
+        \ "cwd_type": "",
+        \ "bufnr": l:bufnr,
+        \ "bufname": fnamemodify(bufname(l:bufnr), ":p"),
+        \ "winnr": a:winnr,
         \}
   " Set correct working directory context (for window for which statusline is
   " drawn, not active window)
   call s:stl_filename_set_cwd_context(l:context)
-  let l:filename = s:filename_handle_all_cases(l:context, s:stl_filename_funcs)
+  let l:filename = call#until_result(s:stl_filename_funcs, l:context)
   " Restore window's original current working directory
   call s:stl_filename_restore_cwd_context(l:context)
   return l:filename
@@ -258,7 +222,9 @@ function! s:stl_location()
   if l:file_lines < l:indicators_count
     return l:location_indicators_list[l:file_lines - 1][l:curline - 1]
   else
-    let l:indicator_index = float2nr(floor(l:indicators_count*(l:curline - 1)/l:file_lines))
+    let l:indicator_index = float2nr(floor(
+          \ l:indicators_count*(l:curline - 1)/l:file_lines
+          \))
     return l:location_indicators_list[-1][l:indicator_index]
   endif
 endfunction
@@ -270,13 +236,13 @@ endfunction
 " }}}
 
 " Active window statusline drawing
-function! s:stl(winid)
+function! s:stl(winnr)
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
-  let l:stl .= s:highlight_stl_part(s:stl_file_flags(a:winid), "STLFlags")
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(a:winnr), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_filename(a:winid)
+  let l:stl .= s:stl_filename(a:winnr)
   let l:stl .= s:stl_sep
   let l:stl .= s:highlight_stl_part("%=", "STLEmpty")
   let l:stl .= s:stl_sep
@@ -289,29 +255,31 @@ function! s:stl(winid)
 endfunction
 
 " Inactive windows statusline drawing
-function! s:stlnc(winid)
+function! s:stlnc(winnr)
   let l:stl = ""
   let l:stl .= s:stl_cwd()
-  let l:stl .= s:highlight_stl_part(s:stl_file_flags(a:winid), "STLFlags")
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(a:winnr), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
-  let l:stl .= s:stl_filename(a:winid)
+  let l:stl .= s:stl_filename(a:winnr)
   let l:stl .= "%="
   let l:stl .= s:stl_win_nr()
   return l:stl
 endfunction
 
-execute "setlocal statusline=%!<snr>".s:sid()."_stl(".win_getid().")"
+execute "setlocal statusline=%!<snr>".s:sid()."_stl(".winnr().")"
 augroup config_statusline_update
   autocmd!
   " Set correct statusline functions for all windows in tabpage when changing
   " windows
   autocmd WinEnter,BufWinEnter *
-        \ for n in range(1, winnr('$'))|
+        \ for n in range(1, winnr("$"))|
         \   if n == winnr()|
-        \     call setwinvar(n, '&statusline', '%!<snr>'.s:sid().'_stl('.win_getid(n).')')|
+        \     call setwinvar(n, "&statusline",
+        \       "%!<snr>".s:sid()."_stl(".n.")")|
         \   else|
-        \     call setwinvar(n, '&statusline', '%!<snr>'.s:sid().'_stlnc('.win_getid(n).')')|
+        \     call setwinvar(n, "&statusline",
+        \       "%!<snr>".s:sid()."_stlnc(".n.")")|
         \   endif|
         \ endfor
 augroup end
@@ -328,30 +296,27 @@ let s:tbl_sep = " "
 
 " Filename tabline part
 let s:tbl_filename_funcs = [
-      \ 's:filename_no_name',
-      \ 's:filename_simple',
+      \ function("s:filename_no_name"),
+      \ function("s:filename_simple"),
       \]
 function! s:tbl_filename(tabpagenr)
   let l:tabpage_curwin = tabpagewinnr(a:tabpagenr)
   let l:curwin_bufnr = tabpagebuflist(a:tabpagenr)[l:tabpage_curwin - 1]
   let l:bufname = bufname(l:curwin_bufnr)
   let l:context = {
-        \ 'bufname': l:bufname,
-        \ 'has_result': 0,
-        \ 'filename': '',
+        \ "bufname": l:bufname,
         \}
-  return s:filename_handle_all_cases(l:context, s:tbl_filename_funcs)
+  return call#until_result(s:tbl_filename_funcs, l:context)
 endfunction
 
 " If any window in tabpage is modified
 function! s:tbl_modified(tabpagenr)
   for winnr in range(1, tabpagewinnr(a:tabpagenr, "$"))
-    if gettabwinvar(a:tabpagenr, winnr, '&modified')
+    if gettabwinvar(a:tabpagenr, winnr, "&modified")
       return "*"
     endif
   endfor
   return " "
-
 endfunction
 
 " All tabpages tabline drawing (:help setting-tabline)
@@ -371,7 +336,7 @@ function! s:tbl()
     let l:tbl .= s:tbl_sep
     let l:tbl .= s:tbl_filename(tpi)
     let l:tbl .= s:tbl_sep
-    let l:tbl .= '['.tpi.']'
+    let l:tbl .= "[".tpi."]"
   endfor
   let l:tbl .= "%#TablineFill#"
   let l:tbl .= "%="

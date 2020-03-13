@@ -63,19 +63,22 @@ function! s:render_section(section, level)
   if has_key(a:section, "text")
     let l:lines = extend(l:lines,
           \ s:indent(function("s:render_text", [a:section.text]),
-          \                     a:level + 1)
+          \   a:level + 1
+          \ )
           \)
   elseif has_key(a:section, "function")
     let l:lines = extend(l:lines,
           \ s:indent(function("s:render_function", [a:section.function]),
-          \                     a:level + 1)
+          \   a:level + 1
+          \ )
           \)
   endif
   if has_key(a:section, "subsections")
     for subsec in a:section.subsections
       let l:lines = extend(l:lines,
             \ s:indent(function("s:render_section", [subsec]),
-            \                     a:level + 1)
+            \   a:level + 1
+            \ )
             \)
     endfor
   endif
@@ -92,7 +95,8 @@ function! s:format(sections)
     let l:sections_to_format = g:info_sections
   else
     " display only explicitly requested sections
-    let l:sections_to_format = filter(copy(g:info_sections),
+    let l:sections_to_format = filter(
+          \ copy(g:info_sections),
           \ { key, _ -> index(a:sections, key) >= 0}
           \)
   endif
@@ -104,7 +108,8 @@ function! s:format(sections)
   for sec in keys(l:sections_to_format)
     let l:section = g:info_sections[sec]
     let l:lines = extend(l:lines,
-          \ s:indent(function("s:render_section", [l:section]), 0))
+          \ s:indent(function("s:render_section", [l:section]), 0)
+          \)
     " last line will serve as bottom border
     let l:lines = add(l:lines, "")
   endfor
@@ -138,27 +143,55 @@ function! s:display(lines)
   let l:will_fit = l:max_line_width < l:max_win_width &&
         \ l:lines_count < l:max_win_height
   let l:info_win = nvim_open_win(l:info_buffer, !l:will_fit, {
-        \ 'relative': 'editor',
-        \ 'anchor': 'SE',
-        \ 'width': min([l:max_line_width, l:max_win_width]),
-        \ 'height': min([l:lines_count, l:max_win_height]),
-        \ 'row': (&lines - &cmdheight - 1) - 1,
-        \ 'col': &columns - 2,
-        \ 'focusable': !l:will_fit,
-        \ 'style': 'minimal',
+        \ "relative": "editor",
+        \ "anchor": "SE",
+        \ "width": min([l:max_line_width, l:max_win_width]),
+        \ "height": min([l:lines_count, l:max_win_height]),
+        \ "row": (&lines - &cmdheight - 1) - 1,
+        \ "col": &columns - 2,
+        \ "focusable": !l:will_fit,
+        \ "style": "minimal",
         \})
-  call nvim_win_set_option(l:info_win, 'winblend', 30)
+  call nvim_win_set_option(l:info_win, "winblend", 30)
   call nvim_buf_set_option(l:info_buffer, "modifiable", v:false)
   if l:will_fit
-    execute "autocmd CursorMoved,CursorMovedI * ++once silent! call nvim_win_close(".l:info_win.", v:true)"
+    execute "autocmd CursorMoved,CursorMovedI * ".
+          \   "++once silent! call nvim_win_close(".l:info_win.", v:true)"
   else
-    call nvim_buf_set_keymap(l:info_buffer, "n", "<left>", "col('.') == 1 ? '<c-w>p' : '<left>'", {"expr": v:true})
-    call nvim_buf_set_keymap(l:info_buffer, "n", "h", "col('.') == 1 ? '<c-w>p' : 'h'", {"expr": v:true})
-    call nvim_buf_set_keymap(l:info_buffer, "n", "<up>", "line('.') == 1 ? '<c-w>p' : '<up>'", {"expr": v:true})
-    call nvim_buf_set_keymap(l:info_buffer, "n", "k", "line('.') == 1 ? '<c-w>p' : 'k'", {"expr": v:true})
+    call nvim_buf_set_keymap(
+          \ l:info_buffer,
+          \ "n",
+          \ "<left>",
+          \ "col('.') == 1 ? '<c-w>p' : '<left>'",
+          \ {"expr": v:true}
+          \)
+    call nvim_buf_set_keymap(
+          \ l:info_buffer,
+          \ "n",
+          \ "h",
+          \ "col('.') == 1 ? '<c-w>p' : 'h'",
+          \ {"expr": v:true}
+          \)
+    call nvim_buf_set_keymap(
+          \ l:info_buffer,
+          \ "n",
+          \ "<up>",
+          \ "line('.') == 1 ? '<c-w>p' : '<up>'",
+          \ {"expr": v:true}
+          \)
+    call nvim_buf_set_keymap(
+          \ l:info_buffer,
+          \ "n",
+          \ "k",
+          \ "line('.') == 1 ? '<c-w>p' : 'k'",
+          \ {"expr": v:true}
+          \)
     execute "autocmd WinLeave <buffer=".l:info_buffer."> ++once silent quit!"
   endif
-  execute "autocmd BufWinLeave <buffer=".l:info_buffer."> ++once bwipeout ".l:info_buffer
+  execute "autocmd BufWinLeave <buffer=".
+        \   l:info_buffer.
+        \   "> ++once bwipeout ".
+        \   l:info_buffer
 endfunction
 
 " Show info

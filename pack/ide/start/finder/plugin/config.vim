@@ -1,13 +1,13 @@
-if exists('g:loaded_ide_finder')
+if exists("g:loaded_ide_finder")
   finish
 endif
 let g:loaded_ide_finder = v:true
 
 let g:fzf_layout = {"window": "botright 12 split enew"}
 let g:fzf_action = {
-      \ 'ctrl-t': 'tab split',
-      \ 'ctrl-s': 'split',
-      \ 'ctrl-v': 'vsplit'
+      \ "ctrl-t": "tab split",
+      \ "ctrl-s": "split",
+      \ "ctrl-v": "vsplit",
       \}
 
 function! s:find_git_branches()
@@ -31,7 +31,7 @@ function! s:find_git_branches()
 endfunction
 
 " Ide custom menu configuration
-if !exists('g:custom_menu')
+if !exists("g:custom_menu")
   let g:custom_menu = {}
 endif
 let g:custom_menu["Ide"] = add(
