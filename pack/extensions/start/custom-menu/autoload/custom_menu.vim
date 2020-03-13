@@ -68,9 +68,10 @@ function! s:menu_completions(cmd_lead, cmdline, cursor_pos)
   " completion when entered command is unambiguous, it doesn't have to be
   " fully enetered
   " it is guaranteed here that there is exactly one matching command name
-  let l:command = filter(keys(g:custom_menu),
-          \ { _, comm -> comm =~# '\v^'.l:command}
-          \)[0]
+  let l:command = filter(
+        \ keys(g:custom_menu),
+        \ { _, comm -> comm =~# '\v^'.l:command}
+        \)[0]
   " get command sub object from all custom menus by full command name
   let l:command_menu = g:custom_menu[l:command]
   if empty(l:path)
@@ -135,8 +136,9 @@ function! s:menu_action(command, menu_path)
   " identify which cmd object to use for action, get additional arguments to
   " be passed to action function
   let [l:cmd_obj, l:cmd_args] = s:get_cmd_by_path(
-        \                         g:custom_menu[a:command],
-        \                         a:menu_path)
+        \ g:custom_menu[a:command],
+        \ a:menu_path
+        \)
   if empty(l:cmd_obj)
     " cmd object couldn't be identified
     call s:warning_msg("Cannot find object")

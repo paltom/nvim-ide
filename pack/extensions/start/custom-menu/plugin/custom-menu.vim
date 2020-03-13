@@ -14,12 +14,12 @@
 " - Note that both "action" and "menu" may be specified
 " Requirement: if user wants to add command, he must modify g:custom_menu variable directly
 " and invoke custom_menu#update_commands afterwards
-if exists('g:loaded_custom_menu')
+if exists("g:loaded_custom_menu")
   finish
 endif
 let g:loaded_custom_menu = v:true
 
-if !exists('g:custom_menu')
+if !exists("g:custom_menu")
   let g:custom_menu = {}
 endif
 

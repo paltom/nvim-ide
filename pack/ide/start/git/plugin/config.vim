@@ -1,11 +1,11 @@
-if exists('g:loaded_ide_git')
+if exists("g:loaded_ide_git")
   finish
 endif
 let g:loaded_ide_git = v:true
 
 set updatetime=100
 set signcolumn=yes
-let g:gitgutter_diff_args = '--ignore-space-at-eol'
+let g:gitgutter_diff_args = "--ignore-space-at-eol"
 
 function! s:branches_complete(arg_lead, args)
   " only one argument should be completed, if there are already some args
@@ -25,7 +25,9 @@ endfunction
 
 function! s:git_add_complete(arg_lead, args)
   " multiple paths can be completed
-  let l:git_output = s:get_git_output("ls-files --modified --others --exclude-standard")
+  let l:git_output = s:get_git_output(
+        \ "ls-files --modified --others --exclude-standard"
+        \)
   if empty(l:git_output)
     return []
   endif
@@ -34,7 +36,7 @@ function! s:git_add_complete(arg_lead, args)
   return sort(l:paths)
 endfunction
 
-if !exists('g:custom_menu')
+if !exists("g:custom_menu")
   let g:custom_menu = {}
 endif
 let g:custom_menu["Ide"] = add(
@@ -105,10 +107,12 @@ function! s:get_git_output(git_cmd)
   if empty(l:git_dir)
     return []
   endif
-  let l:git_cmd_formatted = printf(l:git_cmd,
-        \                     l:git_dir.expand("/.git"),
-        \                     l:git_dir,
-        \                     a:git_cmd)
+  let l:git_cmd_formatted = printf(
+        \ l:git_cmd,
+        \ l:git_dir.expand("/.git"),
+        \ l:git_dir,
+        \ a:git_cmd
+        \)
   let l:git_output = systemlist(l:git_cmd_formatted)
   let l:git_output = map(l:git_output, { _, line -> trim(line)})
   return l:git_output
@@ -123,8 +127,12 @@ function! s:git_changes()
       let l:removed = 0
     else
       let l:summary = a:output[-1]
-      let [l:files, _, l:added, _, l:removed] =
-            \ matchlist(l:summary, '\v((\d+) files? changed)(, (\d+) insertions?\(\+\))?(, (\d+) deletions?\(\-\))?')[2:6]
+      let [l:files, _, l:added, _, l:removed] = matchlist(
+            \ l:summary,
+            \ '\v((\d+) files? changed)'.
+            \   '(, (\d+) insertions?\(\+\))?'.
+            \   '(, (\d+) deletions?\(\-\))?'
+            \)[2:6]
       let l:files = empty(l:files) ? 0 : l:files
       let l:added = empty(l:added) ? 0 : l:added
       let l:removed = empty(l:removed) ? 0 : l:removed
@@ -143,13 +151,13 @@ endfunction
 function! s:git_repo_path()
   let l:repo_path = ide#git#git_dir()
   if empty(l:repo_path)
-    return 'Not in git repository'
+    return "Not in git repository"
   endif
   let l:repo_path = fnamemodify(l:repo_path, ":~")
   return l:repo_path
 endfunction
 
-if !exists('g:info_sections')
+if !exists("g:info_sections")
   let g:info_sections = {}
 endif
 let g:info_sections["git"] = {
@@ -206,7 +214,12 @@ endif
 let g:statusline_filename_special_name_patterns = add(
       \ g:statusline_filename_special_name_patterns,
       \ {
-      \   "if": { c -> fnamemodify(c["bufname"], ":p") =~# '\v^fugitive:[/\\]{2,}'},
+      \   "if": { c ->
+      \             fnamemodify(
+      \               c["bufname"],
+      \               ":p"
+      \             ) =~# '\v^fugitive:[/\\]{2,}'
+      \   },
       \   "call": { c -> s:git_diff_filename(c["bufname"]) }
       \ }
       \)

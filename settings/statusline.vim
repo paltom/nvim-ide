@@ -124,7 +124,7 @@ endfunction
 " Shorten path relatively to current working directory
 " Leave full name of directory containing file
 function! s:filename_shorten_relative_path(context)
-  let l:head_dir = fnamemodify(a:context["bufname"], ":.:h")
+  let l:head_dir = fnamemodify(a:context["bufname"], ":~:.:h")
   if l:head_dir == "."
     " If file is in current working directory, do not display cwd
     call call#set_result(a:context, fnamemodify(a:context["bufname"], ":t"))
@@ -143,9 +143,19 @@ function! s:filename_simple(context)
 endfunction
 " Which functions and in which order (precedence) determine filename part
 let s:stl_filename_funcs = [
-      \ { c -> call#first_if_set_result(g:statusline_filename_special_filetypes, c) },
+      \ { c ->
+      \     call#first_if_set_result(
+      \       g:statusline_filename_special_filetypes,
+      \       c
+      \     )
+      \ },
       \ function("s:filename_no_name"),
-      \ { c -> call#first_if_set_result(g:statusline_filename_special_name_patterns, c) },
+      \ { c ->
+      \     call#first_if_set_result(
+      \       g:statusline_filename_special_name_patterns,
+      \       c
+      \     )
+      \ },
       \ function("s:filename_shorten_relative_path"),
       \]
 function! s:stl_filename(winnr)
@@ -265,9 +275,11 @@ augroup config_statusline_update
   autocmd WinEnter,BufWinEnter *
         \ for n in range(1, winnr("$"))|
         \   if n == winnr()|
-        \     call setwinvar(n, "&statusline", "%!<snr>".s:sid()."_stl(".n.")")|
+        \     call setwinvar(n, "&statusline",
+        \       "%!<snr>".s:sid()."_stl(".n.")")|
         \   else|
-        \     call setwinvar(n, "&statusline", "%!<snr>".s:sid()."_stlnc(".n.")")|
+        \     call setwinvar(n, "&statusline",
+        \       "%!<snr>".s:sid()."_stlnc(".n.")")|
         \   endif|
         \ endfor
 augroup end
