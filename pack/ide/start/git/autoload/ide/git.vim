@@ -23,7 +23,10 @@ function! ide#git#list_branches()
   " Remove empty lines
   let l:branch_list = filter(l:branch_list, { _, line -> !empty(line) })
   " Remove remote HEAD reference
-  let l:branch_list = filter(l:branch_list, { _, branch -> branch !~# '\v^\s*remotes/[^/]*/HEAD\s+-\>\s+'})
+  let l:branch_list = filter(
+        \ l:branch_list,
+        \ { _, branch -> branch !~# '\v^\s*remotes/[^/]*/HEAD\s+-\>\s+'}
+        \)
   return l:branch_list
 endfunction
 
@@ -32,7 +35,7 @@ function! ide#git#git_dir()
   if empty(l:git_dir)
     return ""
   endif
-  if fnamemodify(l:git_dir, ":t") =~# '.git'
+  if fnamemodify(l:git_dir, ":t") =~# ".git"
     let l:git_dir = fnamemodify(l:git_dir, ":h")
   endif
   return l:git_dir
@@ -64,4 +67,8 @@ endfunction
 
 function! ide#git#add(...)
   execute "Git add ".join(a:000, " ")
+endfunction
+
+function! ide#git#diff()
+  execute "tab vertical Gdiffsplit"
 endfunction

@@ -34,6 +34,7 @@ endfunction
 " set, function must invoke call#set_result function passing context and
 " result value. Return value of functions is discarded. Functions may modify
 " context object, however, "_result_" key is reserved.
+" If no function set result, "No result" exception is thrown.
 let s:result_key = "_result_"
 function! call#until_result(functions, context)
   for Fn in a:functions
@@ -42,6 +43,7 @@ function! call#until_result(functions, context)
       return a:context[s:result_key]
     endif
   endfor
+  throw "No result"
 endfunction
 
 function! call#set_result(context, result)

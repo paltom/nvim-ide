@@ -1,4 +1,4 @@
-if exists('g:loaded_info')
+if exists("g:loaded_info")
   finish
 endif
 let g:loaded_info = v:true
@@ -45,7 +45,8 @@ endfunction
 " }}}
 
 " Public interface {{{
-command! -nargs=* -bang -complete=custom,s:info_complete Info call info#show(<bang>v:false, [<f-args>])
+command! -nargs=* -bang -complete=custom,s:info_complete Info
+      \ call info#show(<bang>v:false, [<f-args>])
 " }}}
 
 " vim:foldmethod=marker
