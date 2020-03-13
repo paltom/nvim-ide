@@ -13,13 +13,15 @@ function! s:update_statusline_colors()
         return split(l:output)
       endif
     endfunction
-    let l:attribute_entry = filter(
-        \   map(
-        \     filter(
-        \       s:follow_links(a:highlight_name),
-        \     'v:val =~ "="'),
-        \   'split(v:val, "=")'),
-        \ 'v:val[0] ==? "'.a:attribute.'"')
+    let l:raw_attributes = filter(s:follow_links(a:highlight_name),
+          \ { _, output_part -> output_part =~ "="}
+          \)
+    let l:attribute_entries = map(l:raw_attributes,
+          \ { _, raw_attribute -> split(raw_attribute, "=")}
+          \)
+    let l:attribute_entry = filter(l:attribute_entries,
+          \ { _, attribute_entry -> attribute_entry[0] ==? a:attribute}
+          \)
     if empty(l:attribute_entry)
       return ""
     else
@@ -52,7 +54,7 @@ augroup end
 " }}}
 
 " Utility functions {{{
-function s:sid()
+function! s:sid()
   return matchstr(expand('<sfile>'), '<SNR>\zs\d\+\ze_SID$')
 endfun
 function! s:highlight_stl_part(part, highlight_group)
@@ -98,118 +100,72 @@ function! s:stl_file_flags(winid)
 endfunction
 
 " Filename part functions {{{
-function s:stl_filename_set_cwd_context(context)
+function! s:stl_filename_set_cwd_context(context)
   " Store cwd context of current active window
-  let a:context.original_cwd = getcwd()
+  let a:context["original_cwd"] = getcwd()
   " Is it locally-set directory?
   if haslocaldir()
-    let a:context.cwd_type = 'local'
+    let a:context["cwd_type"] = 'l'
   elseif haslocaldir(-1)
-    let a:context.cwd_type = 'tabpage'
+    let a:context["cwd_type"] = 't'
   else
-    let a:context.cwd_type = 'global'
+    let a:context["cwd_type"] = ''
   endif
   " Set local working directory to window for which stl is drawn
   " This is for correct context of filename-modifiers
-  silent execute "lcd ".getcwd(a:context.winid)
+  silent execute "lcd ".getcwd(a:context["winid"])
 endfunction
 function! s:stl_filename_restore_cwd_context(context)
   " Restore original cwd of current active window
-  if a:context.cwd_type ==# 'local'
-    let l:cwd_type_char = 'l'
-  elseif a:context.cwd_type ==# 'tabpage'
-    let l:cwd_type_char = 't'
-  elseif a:context.cwd_type ==# 'global'
-    let l:cwd_type_char = ''
-  endif
-  silent execute l:cwd_type_char."cd ".a:context.original_cwd
-endfunction
-function! s:filename_set_result(context, result)
-  " Helper function for marking that filename function returned result (early
-  " exit)
-  let a:context.has_result = 1
-  let a:context.filename = a:result
-endfunction
-function! s:filename_handle_all_cases(context, file_name_funcs)
-  " Helper function for trying all cases of filename handling functions
-  " As soon as on of functions returns result, return it and don't try
-  " remaining functions
-  for fn in a:file_name_funcs
-    call function(fn)(a:context)
-    if a:context.has_result
-      return a:context.filename
-    endif
-  endfor
+  silent execute a:context["cwd_type"]."cd ".a:context["original_cwd"]
 endfunction
 " Special cases for filename stl part
 " Filetypes that should display custom file name
-" Those can be registered by plugin later
-" Function handling filename displaying for given filetype will receive
-" bufname as argument
+" See call#first_if for object structure
 let g:statusline_filename_special_filetypes = []
-let g:statusline_filename_special_filetypes =
-      \ add(g:statusline_filename_special_filetypes, {
-      \   "filetype": "help",
-      \   "filename_function": { bufname -> fnamemodify(bufname, ':t') }
-      \})
-function! s:stl_filename_filetype(context)
-  " Function for handling custom filetype handling
-  let l:filetype = getbufvar(a:context.bufnr, '&filetype')
-  let l:special_filetypes_map = copy(g:statusline_filename_special_filetypes)
-  let l:special_filetype = filter(l:special_filetypes_map,
-        \ 'v:val.filetype == l:filetype')
-  unlet l:special_filetypes_map
-  if len(l:special_filetype) > 0
-    " Last entry for given filetype is used
-    let l:special_filetype = l:special_filetype[-1]
-    call s:filename_set_result(a:context,
-          \ l:special_filetype.filename_function(a:context.bufname))
-  endif
-endfunction
+let g:statusline_filename_special_filetypes = add(
+      \ g:statusline_filename_special_filetypes,
+      \ {
+      \   "if": { c -> getbufvar(c["bufnr"], '&filetype') == "help" },
+      \   "call": { c -> fnamemodify(c["bufname"], ':t') }
+      \ }
+      \)
+" List of handlers for patterns in bufname (full)
+" See call#first_if for object structure
 let g:statusline_filename_special_patterns = []
-function! s:filename_special_pattern(context)
-  let l:full_bufname = fnamemodify(a:context.bufname, ":p")
-  let l:special_patterns_map = copy(g:statusline_filename_special_patterns)
-  let l:special_pattern = filter(l:special_patterns_map,
-        \ { _, pattern_obj -> l:full_bufname =~# pattern_obj["pattern"]}
-        \)
-  unlet l:special_patterns_map
-  if !empty(l:special_pattern)
-    " last matched pattern entry is used in case of multiple hits
-    let l:special_pattern = l:special_pattern[-1]
-    call s:filename_set_result(a:context,
-          \ l:special_pattern["filename_function"](l:full_bufname))
-  endif
-endfunction
 " Empty filename handling (buffer not written to disk)
 function! s:filename_no_name(context)
-  if empty(a:context.bufname)
-    call s:filename_set_result(a:context, '[No Name]')
+  if empty(a:context["bufname"])
+    call call#set_result(a:context, "[No Name]")
   endif
 endfunction
 " Regular filename handling
 " Shorten path relatively to current working directory
 " Leave full name of directory containing file
 function! s:filename_shorten_relative_path(context)
-  let l:head_dir = fnamemodify(a:context.bufname, ':.:h')
+  let l:head_dir = fnamemodify(a:context["bufname"], ":.:h")
   if l:head_dir == '.'
     " If file is in current working directory, do not display cwd
-    call s:filename_set_result(a:context, fnamemodify(a:context.bufname, ':t'))
+    call call#set_result(a:context, fnamemodify(a:context["bufname"], ":t"))
   else
-    call s:filename_set_result(a:context, pathshorten(l:head_dir).'/'.fnamemodify(a:context.bufname, ':t'))
+    call call#set_result(a:context,
+          \ pathshorten(l:head_dir).
+          \ expand("/").
+          \ fnamemodify(a:context["bufname"], ":t")
+          \)
   endif
 endfunction
 " Simple filename
 function! s:filename_simple(context)
-  let l:filename = fnamemodify(a:context.bufname, ":t")
-  call s:filename_set_result(a:context, l:filename)
+  let l:filename = fnamemodify(a:context["bufname"], ":t")
+  call call#set_result(a:context, l:filename)
 endfunction
 " Which functions and in which order (precedence) determine filename part
 let s:stl_filename_funcs = [
-      \ 's:stl_filename_filetype',
-      \ 's:filename_no_name',
-      \ 's:filename_special_pattern',
-      \ 's:filename_shorten_relative_path',
+      \ { c -> call#first_if_set_result(g:statusline_filename_special_filetypes, c) },
+      \ function('s:filename_no_name'),
+      \ { c -> call#first_if_set_result(g:statusline_filename_special_patterns, c) },
+      \ function('s:filename_shorten_relative_path'),
       \]
 function! s:stl_filename(winid)
   let l:bufnr = winbufnr(a:winid)
@@ -226,7 +182,7 @@ function! s:stl_filename(winid)
   " Set correct working directory context (for window for which statusline is
   " drawn, not active window)
   call s:stl_filename_set_cwd_context(l:context)
-  let l:filename = s:filename_handle_all_cases(l:context, s:stl_filename_funcs)
+  let l:filename = call#until_result(s:stl_filename_funcs, l:context)
   " Restore window's original current working directory
   call s:stl_filename_restore_cwd_context(l:context)
   return l:filename
@@ -328,8 +284,8 @@ let s:tbl_sep = " "
 
 " Filename tabline part
 let s:tbl_filename_funcs = [
-      \ 's:filename_no_name',
-      \ 's:filename_simple',
+      \ function('s:filename_no_name'),
+      \ function('s:filename_simple'),
       \]
 function! s:tbl_filename(tabpagenr)
   let l:tabpage_curwin = tabpagewinnr(a:tabpagenr)
@@ -340,7 +296,7 @@ function! s:tbl_filename(tabpagenr)
         \ 'has_result': 0,
         \ 'filename': '',
         \}
-  return s:filename_handle_all_cases(l:context, s:tbl_filename_funcs)
+  return call#until_result(s:tbl_filename_funcs, l:context)
 endfunction
 
 " If any window in tabpage is modified
