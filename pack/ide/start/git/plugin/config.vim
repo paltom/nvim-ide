@@ -107,15 +107,13 @@ function! s:get_git_output(git_cmd)
         \                     l:git_dir.expand("/.git"),
         \                     l:git_dir,
         \                     a:git_cmd)
-  let l:git_output = split(execute("!".l:git_cmd_formatted), "\n")
+  let l:git_output = systemlist(l:git_cmd_formatted)
   let l:git_output = map(l:git_output, { _, line -> trim(line)})
-  " Remove Neovim-added lines
-  let l:git_output = l:git_output[2:]
   return l:git_output
 endfunction
 
 function! s:git_changes()
-  let l:git_output = s:get_git_output("diff --stat")
+  let l:git_output = s:get_git_output("diff --stat HEAD")
   function! s:get_summary_values(output)
     if empty(a:output)
       let l:files = 0
@@ -200,13 +198,13 @@ function! s:git_diff_filename(bufname)
   return l:git_diff_filename
 endfunction
 
-if !exists("g:statusline_filename_special_patterns")
-  let g:statusline_filename_special_patterns = []
+if !exists("g:statusline_filename_special_name_patterns")
+  let g:statusline_filename_special_name_patterns = []
 endif
-let g:statusline_filename_special_patterns = add(
-      \ g:statusline_filename_special_patterns,
+let g:statusline_filename_special_name_patterns = add(
+      \ g:statusline_filename_special_name_patterns,
       \ {
-      \   "if": { c -> fnamemodify(c["bufname"], ":p") =~# '\v^fugitive:[/\\]{2}'},
+      \   "if": { c -> fnamemodify(c["bufname"], ":p") =~# '\v^fugitive:[/\\]{2,}'},
       \   "call": { c -> s:git_diff_filename(c["bufname"]) }
       \ }
       \)

@@ -113,7 +113,7 @@ let g:statusline_filename_special_filetypes = add(
       \)
 " List of handlers for patterns in bufname (full)
 " See call#first_if for object structure
-let g:statusline_filename_special_patterns = []
+let g:statusline_filename_special_name_patterns = []
 " Empty filename handling (buffer not written to disk)
 function! s:filename_no_name(context)
   if empty(fnamemodify(a:context["bufname"], ":t"))
@@ -145,7 +145,7 @@ endfunction
 let s:stl_filename_funcs = [
       \ { c -> call#first_if_set_result(g:statusline_filename_special_filetypes, c) },
       \ function("s:filename_no_name"),
-      \ { c -> call#first_if_set_result(g:statusline_filename_special_patterns, c) },
+      \ { c -> call#first_if_set_result(g:statusline_filename_special_name_patterns, c) },
       \ function("s:filename_shorten_relative_path"),
       \]
 function! s:stl_filename(winnr)
@@ -212,7 +212,9 @@ function! s:stl_location()
   if l:file_lines < l:indicators_count
     return l:location_indicators_list[l:file_lines - 1][l:curline - 1]
   else
-    let l:indicator_index = float2nr(floor(l:indicators_count*(l:curline - 1)/l:file_lines))
+    let l:indicator_index = float2nr(floor(
+          \ l:indicators_count*(l:curline - 1)/l:file_lines
+          \))
     return l:location_indicators_list[-1][l:indicator_index]
   endif
 endfunction
