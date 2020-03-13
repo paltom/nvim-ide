@@ -176,7 +176,10 @@ let g:info_sections["git"] = {
       \}
 
 function! s:git_diff_filename(bufname)
-  let l:git_buf_type = matchstr(fnamemodify(a:bufname, ":p"), '\v\.git[/\\]{2}\zs\c[0-9a-f]+\ze[/\\]')
+  let l:git_buf_type = matchstr(
+        \ fnamemodify(a:bufname, ":p"),
+        \ '\v\.git[/\\]{2}\zs\c[0-9a-f]+\ze[/\\]'
+        \)
   if empty(l:git_buf_type)
     return bufname
   endif
@@ -196,10 +199,11 @@ endfunction
 if !exists("g:statusline_filename_special_patterns")
   let g:statusline_filename_special_patterns = []
 endif
-let g:statusline_filename_special_patterns =
-      \ add(g:statusline_filename_special_patterns, {
-      \   "pattern": '\v^fugitive:[/\\]{2}',
-      \   "filename_function": function("s:git_diff_filename")
+let g:statusline_filename_special_patterns = add(
+      \ g:statusline_filename_special_patterns,
+      \ {
+      \   "if": { c -> fnamemodify(c["bufname"], ":p") =~# '\v^fugitive:[/\\]{2}'},
+      \   "call": { c -> s:git_diff_filename(c["bufname"]) }
       \ }
       \)
 
