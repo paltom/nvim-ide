@@ -13,12 +13,14 @@ function! s:branches_complete(arg_lead, args)
   if len(a:args) > 1
     return []
   endif
-  " TODO sort completions (also below function)
-  return map(
-      \   filter(
-      \     ide#git#list_branches(),
-      \     { _, branch -> branch !~# '\v^\s*\*\s+'}),
-      \   { _, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$')})
+  let l:other_branches = filter(ide#git#list_branches(),
+        \ { _, branch -> branch !~# '\v^\s*\*\s+' }
+        \)
+  let l:other_branches_remote_removed = map(
+        \ l:other_branches,
+        \ { _, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$') }
+        \)
+  return sort(l:other_branches_remote_removed)
 endfunction
 
 function! s:git_add_complete(arg_lead, args)
@@ -29,7 +31,7 @@ function! s:git_add_complete(arg_lead, args)
   endif
   " filter out already added paths
   let l:paths = filter(l:git_output, { _, path -> index(a:args, path) < 0})
-  return l:paths
+  return sort(l:paths)
 endfunction
 
 if !exists('g:custom_menu')
