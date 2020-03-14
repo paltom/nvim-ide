@@ -69,7 +69,7 @@ function! ide#git#add(...)
   if empty(a:000)
     let l:files_to_add = ["%"]
   else
-    l:files_to_add = a:000
+    let l:files_to_add = a:000
   endif
   execute "Git add ".join(l:files_to_add, " ")
 endfunction
