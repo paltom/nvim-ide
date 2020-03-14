@@ -47,13 +47,14 @@ function! s:terminal_filename(bufname)
   return "term:".l:filename
 endfunction
 
-if !exists("g:statusline_filename_special_patterns")
-  let g:statusline_filename_special_patterns = []
+if !exists("g:statusline_filename_special_name_patterns")
+  let g:statusline_filename_special_name_patterns = []
 endif
-let g:statusline_filename_special_patterns =
-      \ add(g:statusline_filename_special_patterns, {
-      \   "pattern": '\v^term:',
-      \   "filename_function": function("s:terminal_filename")
+let g:statusline_filename_special_name_patterns = add(
+      \ g:statusline_filename_special_name_patterns,
+      \ {
+      \   "if": { c -> fnamemodify(c["bufname"], ":p") =~# '\v^term:' },
+      \   "call": { c -> s:terminal_filename(c["bufname"]) }
       \ }
       \)
 
