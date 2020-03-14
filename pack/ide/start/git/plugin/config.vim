@@ -98,8 +98,17 @@ let g:custom_menu["Ide"] = add(
       \       "action": function("ide#git#diff"),
       \     },
       \     {
-      \       "cmd": "file_history",
-      \       "action": { -> ide#git#file_log(bufname())},
+      \       "cmd": "file",
+      \       "menu": [
+      \         {
+      \           "cmd": "history",
+      \           "action": { -> ide#git#file_log(bufname())},
+      \         },
+      \         {
+      \           "cmd": "edit",
+      \           "action": { -> ide#git#edit_working_file(bufname())},
+      \         },
+      \       ]
       \     }
       \   ]
       \ }

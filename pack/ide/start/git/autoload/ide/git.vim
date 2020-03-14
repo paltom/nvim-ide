@@ -81,3 +81,7 @@ endfunction
 function! ide#git#file_log(filename)
   execute "tabedit ".a:filename."|0Gllog"
 endfunction
+
+function! ide#git#edit_working_file(filename)
+  execute "Gedit :(top)".a:filename
+endfunction
