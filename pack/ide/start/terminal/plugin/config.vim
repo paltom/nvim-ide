@@ -21,7 +21,7 @@ function! s:terminal_new()
   let s:tab_terminals_map[tabpagenr()] = g:neoterm["last_id"]
 endfunction
 
-if !exists('g:custom_menu')
+if !exists("g:custom_menu")
   let g:custom_menu = {}
 endif
 let g:custom_menu["Ide"] = add(
@@ -39,12 +39,18 @@ let g:custom_menu["Ide"] = add(
 
 function! s:terminal_filename(bufname)
   let l:bufname = fnamemodify(a:bufname, ":p")
-  let l:shell_name = matchstr(split(l:bufname)[0], '\v\/\zs[^/]*$')
-  let l:filename = l:shell_name
+  " term://.//15871:/bin/bash ;#neoterm
+  " get rid of ' ;#neoterm' part
+  let l:term_uri = split(l:bufname)[0]
+  let l:filename_elems = matchlist(
+        \ l:term_uri,
+        \ '\v^(.{-}):.*/([0-9]+):(.*)$'
+        \)[1:3]
+  " FIXME handle tabpage's terminal
   if exists("t:neoterm_id")
-    let l:filename = l:shell_name.":#".t:neoterm_id
+    let l:filename_elems = add(l:filename_elems, "#".t:neoterm_id)
   endif
-  return "term:".l:filename
+  return join(l:filename_elems, ":")
 endfunction
 
 if !exists("g:statusline_filename_special_name_patterns")
