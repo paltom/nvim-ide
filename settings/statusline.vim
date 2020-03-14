@@ -114,6 +114,12 @@ let g:statusline_filename_special_filetypes = add(
 " List of handlers for patterns in bufname (full)
 " See call#first_if for object structure
 let g:statusline_filename_special_name_patterns = []
+function! s:filename_special_name_patterns(context)
+  call call#first_if_set_result(
+        \ g:statusline_filename_special_name_patterns,
+        \ a:context
+        \)
+endfunction
 " Empty filename handling (buffer not written to disk)
 function! s:filename_no_name(context)
   if empty(fnamemodify(a:context["bufname"], ":t"))
@@ -150,12 +156,7 @@ let s:stl_filename_funcs = [
       \     )
       \ },
       \ function("s:filename_no_name"),
-      \ { c ->
-      \     call#first_if_set_result(
-      \       g:statusline_filename_special_name_patterns,
-      \       c
-      \     )
-      \ },
+      \ function("s:filename_special_name_patterns"),
       \ function("s:filename_shorten_relative_path"),
       \]
 function! s:stl_filename(winnr)
@@ -297,6 +298,7 @@ let s:tbl_sep = " "
 " Filename tabline part
 let s:tbl_filename_funcs = [
       \ function("s:filename_no_name"),
+      \ function("s:filename_special_name_patterns"),
       \ function("s:filename_simple"),
       \]
 function! s:tbl_filename(tabpagenr)
