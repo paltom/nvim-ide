@@ -96,6 +96,10 @@ let g:custom_menu["Ide"] = add(
       \     {
       \       "cmd": "diff",
       \       "action": function("ide#git#diff"),
+      \     },
+      \     {
+      \       "cmd": "file_history",
+      \       "action": { -> ide#git#file_log(bufname())},
       \     }
       \   ]
       \ }
@@ -187,13 +191,13 @@ let g:info_sections["git"] = {
       \ ]
       \}
 
-function! s:git_diff_filename(bufname)
+function! s:git_buf_filename(bufname)
   let l:git_buf_type = matchstr(
         \ fnamemodify(a:bufname, ":p"),
-        \ '\v\.git[/\\]{2}\zs\c[0-9a-f]+\ze[/\\]'
+        \ '\v\.git[/\\]{2}\zs\c[0-9a-f]+\ze'
         \)
   if empty(l:git_buf_type)
-    return bufname
+    return a:bufname
   endif
   if l:git_buf_type == "0"
     let l:git_type = "index"
@@ -220,7 +224,7 @@ let g:statusline_filename_special_name_patterns = add(
       \               ":p"
       \             ) =~# '\v^fugitive:[/\\]{2,}'
       \   },
-      \   "call": { c -> s:git_diff_filename(c["bufname"]) }
+      \   "call": { c -> s:git_buf_filename(c["bufname"]) }
       \ }
       \)
 

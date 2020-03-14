@@ -107,18 +107,34 @@ nnoremap <silent> <c-t><c-t> :tabnext<cr>
 " register
 function! s:search_forward()
   if len(getloclist(0)) > 0
-    lnext
+    try
+      lnext
+    catch /E553/
+      lfirst
+    endtry
   elseif len(getqflist()) > 0
-    cnext
+    try
+      cnext
+    catch /E553/
+      cfirst
+    endtry
   else
     execute "normal! n"
   endif
 endfunction
 function! s:search_backward()
   if len(getloclist(0)) > 0
-    lprevious
+    try
+      lprevious
+    catch /E553/
+      llast
+    endtry
   elseif len(getqflist()) > 0
-    cprevious
+    try
+      cprevious
+    catch /E553/
+      clast
+    endtry
   else
     execute "normal! N"
   endif

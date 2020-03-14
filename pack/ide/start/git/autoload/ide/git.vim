@@ -72,3 +72,7 @@ endfunction
 function! ide#git#diff()
   execute "tab vertical Gdiffsplit"
 endfunction
+
+function! ide#git#file_log(filename)
+  execute "tabedit ".a:filename."|0Gllog"
+endfunction
