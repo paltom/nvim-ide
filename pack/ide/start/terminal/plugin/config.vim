@@ -1,4 +1,4 @@
-if exists('g:loaded_ide_terminal')
+if exists("g:loaded_ide_terminal")
   finish
 endif
 let g:loaded_ide_terminal = v:true
@@ -18,7 +18,7 @@ let s:tab_terminals_map = {}
 " move to autoload?
 function! s:terminal_new()
   Tnew
-  let s:tab_terminals_map[tabpagenr()] = g:neoterm.last_id
+  let s:tab_terminals_map[tabpagenr()] = g:neoterm["last_id"]
 endfunction
 
 if !exists('g:custom_menu')
