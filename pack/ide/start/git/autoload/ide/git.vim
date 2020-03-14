@@ -66,7 +66,12 @@ function! ide#git#fetch()
 endfunction
 
 function! ide#git#add(...)
-  execute "Git add ".join(a:000, " ")
+  if empty(a:000)
+    let l:files_to_add = ["%"]
+  else
+    l:files_to_add = a:000
+  endif
+  execute "Git add ".join(l:files_to_add, " ")
 endfunction
 
 function! ide#git#diff()
