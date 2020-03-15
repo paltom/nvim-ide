@@ -14,13 +14,6 @@ augroup ide_terminal_autoinsert
   autocmd BufLeave term://* stopinsert
 augroup end
 
-let s:tab_terminals_map = {}
-" move to autoload?
-function! s:terminal_new()
-  Tnew
-  let s:tab_terminals_map[tabpagenr()] = g:neoterm["last_id"]
-endfunction
-
 if !exists("g:custom_menu")
   let g:custom_menu = {}
 endif
@@ -31,7 +24,7 @@ let g:custom_menu["Ide"] = add(
       \   "menu": [
       \     {
       \       "cmd": "new",
-      \       "action": "Tnew"
+      \       "action": function("ide#terminal#new")
       \     }
       \   ]
       \ }
@@ -47,8 +40,9 @@ function! s:terminal_filename(bufname)
         \ '\v^(.{-}):.*/([0-9]+):(.*)$'
         \)[1:3]
   " FIXME handle tabpage's terminal
-  if exists("t:neoterm_id")
-    let l:filename_elems = add(l:filename_elems, "#".t:neoterm_id)
+  let l:buffer_term_id = getbufvar(a:bufname, "neoterm_id")
+  if !empty(l:buffer_term_id)
+    let l:filename_elems = add(l:filename_elems, "#".l:buffer_term_id)
   endif
   return join(l:filename_elems, ":")
 endfunction
