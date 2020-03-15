@@ -116,7 +116,7 @@ let g:custom_menu["Ide"] = add(
 
 function! s:get_git_output(git_cmd)
   let l:git_cmd = "git --git-dir=%s --work-tree=%s %s"
-  let l:git_dir = ide#git#git_dir()
+  let l:git_dir = ide#git#root_dir()
   if empty(l:git_dir)
     return []
   endif
@@ -162,7 +162,7 @@ function! s:git_changed_files()
 endfunction
 
 function! s:git_repo_path()
-  let l:repo_path = ide#git#git_dir()
+  let l:repo_path = ide#git#root_dir()
   if empty(l:repo_path)
     return "Not in git repository"
   endif

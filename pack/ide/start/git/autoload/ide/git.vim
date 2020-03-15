@@ -30,7 +30,7 @@ function! ide#git#list_branches()
   return l:branch_list
 endfunction
 
-function! ide#git#git_dir()
+function! ide#git#root_dir()
   let l:git_dir = FugitiveGitDir()
   if empty(l:git_dir)
     return ""
