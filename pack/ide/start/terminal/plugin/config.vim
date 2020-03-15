@@ -5,14 +5,25 @@ let g:loaded_ide_terminal = v:true
 
 let g:neoterm_default_mod = "botright"
 let g:neoterm_autoscroll = v:true
-" TODO test it
-let g:neoterm_term_per_tab = v:true
 let g:neoterm_autoinsert = v:true
 augroup ide_terminal_autoinsert
   autocmd!
   autocmd BufEnter term://* startinsert
   autocmd BufLeave term://* stopinsert
 augroup end
+
+function! s:tabpage_term_ids_complete(arg_lead, args)
+  " complete only if there are no arguments already given
+  if len(a:args) > 1
+    return []
+  endif
+  let l:term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
+  echomsg string(l:term_ids)
+  if empty(l:term_ids)
+    return []
+  endif
+  return l:term_ids
+endfunction
 
 if !exists("g:custom_menu")
   let g:custom_menu = {}
@@ -25,6 +36,11 @@ let g:custom_menu["Ide"] = add(
       \     {
       \       "cmd": "new",
       \       "action": function("ide#terminal#new")
+      \     },
+      \     {
+      \       "cmd": "open",
+      \       "action": function("ide#terminal#open"),
+      \       "complete": function("s:tabpage_term_ids_complete")
       \     }
       \   ]
       \ }
