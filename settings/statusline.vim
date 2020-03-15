@@ -103,7 +103,9 @@ endfunction
 " Special cases for filename stl part
 " Filetypes that should display custom file name
 " See call#first_if for object structure
-let g:statusline_filename_special_filetypes = []
+if !exists("g:statusline_filename_special_filetypes")
+  let g:statusline_filename_special_filetypes = []
+endif
 let g:statusline_filename_special_filetypes = add(
       \ g:statusline_filename_special_filetypes,
       \ {
@@ -113,7 +115,9 @@ let g:statusline_filename_special_filetypes = add(
       \)
 " List of handlers for patterns in bufname (full)
 " See call#first_if for object structure
-let g:statusline_filename_special_name_patterns = []
+if !exists("g:statusline_filename_special_name_patterns")
+  let g:statusline_filename_special_name_patterns = []
+endif
 function! s:filename_special_name_patterns(context)
   call call#first_if_set_result(
         \ g:statusline_filename_special_name_patterns,
@@ -173,11 +177,17 @@ function! s:stl_filename(winnr)
     endif
     " Set local working directory to window for which stl is drawn
     " This is for correct context of filename-modifiers
-    silent execute "lcd ".getcwd(a:context["winnr"])
+    if a:context["winnr"] <= winnr("$")
+      silent execute "lcd ".getcwd(a:context["winnr"])
+    endif
   endfunction
   function! s:stl_filename_restore_cwd_context(context)
     " Restore original cwd of current active window
     silent execute a:context["cwd_type"]."cd ".a:context["original_cwd"]
+    " update all windows if one was closed (window numbers has changed)
+    if a:context["winnr"] <= winnr("$")
+      call s:update_statusline_for_all_windows()
+    endif
   endfunction
   let l:bufnr = winbufnr(a:winnr)
   " Store context of window for which statusline is drawn
@@ -269,20 +279,22 @@ function! s:stlnc(winnr)
 endfunction
 
 execute "setlocal statusline=%!<snr>".s:sid()."_stl(".winnr().")"
+function! s:update_statusline_for_all_windows()
+  for n in range(1, winnr("$"))
+    if n == winnr()
+      call setwinvar(n, "&statusline",
+            \ "%!<snr>".s:sid()."_stl(".n.")")
+    else
+      call setwinvar(n, "&statusline",
+            \ "%!<snr>".s:sid()."_stlnc(".n.")")
+    endif
+  endfor
+endfunction
 augroup config_statusline_update
   autocmd!
   " Set correct statusline functions for all windows in tabpage when changing
   " windows
-  autocmd WinEnter,BufWinEnter *
-        \ for n in range(1, winnr("$"))|
-        \   if n == winnr()|
-        \     call setwinvar(n, "&statusline",
-        \       "%!<snr>".s:sid()."_stl(".n.")")|
-        \   else|
-        \     call setwinvar(n, "&statusline",
-        \       "%!<snr>".s:sid()."_stlnc(".n.")")|
-        \   endif|
-        \ endfor
+  autocmd WinEnter,BufWinEnter * call s:update_statusline_for_all_windows()
 augroup end
 " }}}
 
