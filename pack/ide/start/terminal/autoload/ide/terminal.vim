@@ -12,9 +12,30 @@ function! s:root_dir_if_exists(ide_function, context)
 endfunction
 
 function! s:file_dir_if_not_empty(context)
-  let l:directory = expand("%:p:h")
+  " only if file exists
+  let l:directory = glob(expand("%:p:h"))
   if !empty(l:directory)
     call call#set_result(a:context, l:directory)
+  endif
+endfunction
+
+function! s:shell_eol()
+  if has("win32")
+    return "\u000d"
+  else
+    return ""
+  endif
+endfunction
+function! s:clear_line_keys()
+  if &shell =~# "bash"
+    return "\u0005\u0015" " Ctrl-e Ctrl-u
+  elseif &shell =~# "cmd.exe"
+    return "\u001b" " Esc
+  else
+    echohl WarningMsg
+    echomsg "Clearing command line in ".&shell." shell is not supported."
+    echohl None
+    return ""
   endif
 endfunction
 
@@ -35,7 +56,8 @@ function! ide#terminal#new()
   " wait for shell to initialize
   sleep 200m
   " go to working directory
-  call neoterm#do({"cmd": "cd ".l:working_directory, "target": l:term_id})
+  let l:cd_cmd = "cd ".l:working_directory.s:shell_eol()
+  call neoterm#do({"cmd": l:cd_cmd, "target": l:term_id})
   " add terminal id to list of tabpage's terminals
   call s:add_tabpage_terminal(l:term_id)
   " TODO call command
@@ -106,6 +128,7 @@ function! ide#terminal#open(...)
   " get tabpage's least terminal id
   " as neoterm increments terminal ids, list is already sorted
   let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
+  let Open = { term_id -> neoterm#open({"target": term_id}) }
   if empty(a:000)
     " no optional term id to open was entered
     if empty(l:tabpage_term_ids)
@@ -113,14 +136,37 @@ function! ide#terminal#open(...)
       call ide#terminal#new()
     else
       let l:term_id = l:tabpage_term_ids[0]
-      call neoterm#open({"target": l:term_id})
+      call Open(l:term_id)
     endif
   else
     " there is explicit term id passed as argument
-    " open terminal only if it exists on tabpage terminal list
-    let l:term_to_open = str2nr(a:1)
-    if index(l:tabpage_term_ids, l:term_to_open) >= 0
-      call neoterm#open({"target": l:term_to_open})
+    call s:handle_explicit_arg(a:1, l:tabpage_term_ids, Open)
+  endif
+endfunction
+
+function! ide#terminal#exit(...)
+  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
+  let l:exit_cmd = s:clear_line_keys()."exit".s:shell_eol()
+  let Close = { term_id -> neoterm#do({"cmd": l:exit_cmd, "target": term_id}) }
+  if empty(a:000)
+    if !empty(l:tabpage_term_ids)
+      let l:term_to_exit = l:tabpage_term_ids[0]
+      call Close(l:term_to_exit)
+    endif
+  else
+    call s:handle_explicit_arg(a:1, l:tabpage_term_ids, Close)
+  endif
+endfunction
+
+function! s:handle_explicit_arg(arg, term_ids, handler_func)
+  if a:arg ==? "all"
+    for term_id in a:term_ids
+      call a:handler_func(term_id)
+    endfor
+  else
+    let l:term_id = str2nr(a:arg)
+    if index(a:term_ids, l:term_id) > -1
+      call a:handler_func(l:term_id)
     endif
   endif
 endfunction

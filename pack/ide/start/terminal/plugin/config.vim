@@ -17,11 +17,12 @@ function! s:tabpage_term_ids_complete(arg_lead, args)
   if len(a:args) > 1
     return []
   endif
-  let l:term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
+  let l:term_ids = copy(ide#terminal#get_tabpage_term_ids(tabpagenr()))
   echomsg string(l:term_ids)
   if empty(l:term_ids)
     return []
   endif
+  let l:term_ids = add(l:term_ids, "all")
   return l:term_ids
 endfunction
 
@@ -40,6 +41,11 @@ let g:custom_menu["Ide"] = add(
       \     {
       \       "cmd": "open",
       \       "action": function("ide#terminal#open"),
+      \       "complete": function("s:tabpage_term_ids_complete")
+      \     },
+      \     {
+      \       "cmd": "exit",
+      \       "action": function("ide#terminal#exit"),
       \       "complete": function("s:tabpage_term_ids_complete")
       \     }
       \   ]
