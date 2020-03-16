@@ -81,6 +81,23 @@ function! s:set_tabpage_term_ids(tabpagenr, term_ids)
         \)
 endfunction
 
+function! ide#terminal#get_buf_id_with_term(term_id)
+  " Find a buffer id associated with term_id
+  " Return 0 if buffer not found
+  let l:loaded_bufs = filter(
+        \ nvim_list_bufs(),
+        \ { _, b -> nvim_buf_is_loaded(b) }
+        \)
+  let l:buf_with_term_id = get(
+        \ filter(
+        \   l:loaded_bufs,
+        \   { _, b -> getbufvar(b, "neoterm_id", 0) == a:term_id}
+        \ ),
+        \ 0,
+        \)
+  return l:buf_with_term_id
+endfunction
+
 function! s:add_tabpage_terminal(term_id)
   let l:tabpagenr = tabpagenr()
   let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(l:tabpagenr)
@@ -90,22 +107,6 @@ function! s:add_tabpage_terminal(term_id)
         \)
   call s:set_tabpage_term_ids(l:tabpagenr, l:tabpage_term_ids)
   " set autocmd for when terminal is exited
-  function! s:get_buf_id_with_term(term_id)
-    " Find a buffer id associated with term_id
-    " Return 0 if buffer not found
-    let l:loaded_bufs = filter(
-          \ nvim_list_bufs(),
-          \ { _, b -> nvim_buf_is_loaded(b) }
-          \)
-    let l:buf_with_term_id = get(
-          \ filter(
-          \   l:loaded_bufs,
-          \   { _, b -> getbufvar(b, "neoterm_id", 0) == a:term_id}
-          \ ),
-          \ 0,
-          \)
-    return l:buf_with_term_id
-  endfunction
 
   function! s:remove_tabpage_terminal(term_id)
     let l:tabpagenr = tabpagenr()
@@ -117,7 +118,7 @@ function! s:add_tabpage_terminal(term_id)
     call s:set_tabpage_term_ids(l:tabpagenr, l:tabpage_term_ids)
   endfunction
 
-  let l:buf_id = s:get_buf_id_with_term(a:term_id)
+  let l:buf_id = ide#terminal#get_buf_id_with_term(a:term_id)
   if l:buf_id
     execute "autocmd BufDelete <buffer=".l:buf_id."> ".
           \   "call s:remove_tabpage_terminal(".a:term_id.")"

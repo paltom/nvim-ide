@@ -84,4 +84,41 @@ let g:statusline_filename_special_name_patterns = add(
       \ }
       \)
 
+function! s:tab_terminals_info()
+  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
+  let l:terminals_info = []
+  if has("unix")
+    for term_id in l:tabpage_term_ids
+      let l:buffer_id = ide#terminal#get_buf_id_with_term(term_id)
+      let l:shell_id = getbufvar(l:buffer_id, "terminal_job_pid", 0)
+      let l:child_proc = split(system("ps --ppid ".l:shell_id." -o pid= -o command="))
+      if !empty(l:child_proc)
+        let l:child_info = ": (".l:child_proc[0].") ".l:child_proc[1]
+      else
+        let l:child_info = ""
+      endif
+      let l:terminals_info = add(
+            \ l:terminals_info,
+            \ term_id.l:child_info
+            \)
+    endfor
+  else
+    let l:terminals_info = l:tabpage_term_ids
+  endif
+  return l:terminals_info
+endfunction
+
+if !exists("g:info_sections")
+  let g:info_sections = {}
+endif
+let g:info_sections["terminal"] = {
+      \ "name": "Terminal",
+      \ "subsections": [
+      \   {
+      \     "name": "Terminals in tabpage",
+      \     "function": function("s:tab_terminals_info")
+      \   }
+      \ ]
+      \}
+
 call ext#plugins#load(ide#terminal#plugins)
