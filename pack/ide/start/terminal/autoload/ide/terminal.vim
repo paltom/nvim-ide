@@ -125,48 +125,44 @@ function! s:add_tabpage_terminal(term_id)
 endfunction
 
 function! ide#terminal#open(...)
-  " get tabpage's least terminal id
-  " as neoterm increments terminal ids, list is already sorted
-  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
   let Open = { term_id -> neoterm#open({"target": term_id}) }
-  if empty(a:000)
-    " no optional term id to open was entered
-    if empty(l:tabpage_term_ids)
-      " if no terminals were open in tabpage yet, create a new one
-      call ide#terminal#new()
-    else
-      let l:term_id = l:tabpage_term_ids[0]
-      call Open(l:term_id)
-    endif
-  else
-    " there is explicit term id passed as argument
-    call s:handle_explicit_arg(a:1, l:tabpage_term_ids, Open)
+  if empty(a:000) && empty(ide#terminal#get_tabpage_term_ids(tabpagenr()))
+    " if no terminals were open in tabpage yet and no explicit terminal id to
+    " open was passed, create a new terminal
+    call ide#terminal#new()
   endif
+  call s:call_handling_arguments(a:000, Open)
+endfunction
+
+function! ide#terminal#close(...)
+  let Close = { term_id -> neoterm#close({"force": v:false, "target": term_id}) }
+  call s:call_handling_arguments(a:000, Close)
 endfunction
 
 function! ide#terminal#exit(...)
-  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
   let l:exit_cmd = s:clear_line_keys()."exit".s:shell_eol()
-  let Close = { term_id -> neoterm#do({"cmd": l:exit_cmd, "target": term_id}) }
-  if empty(a:000)
+  let Exit = { term_id -> neoterm#do({"cmd": l:exit_cmd, "target": term_id}) }
+  call s:call_handling_arguments(a:000, Exit)
+endfunction
+
+function! s:call_handling_arguments(args, handler_func)
+  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
+  if empty(a:args)
     if !empty(l:tabpage_term_ids)
-      let l:term_to_exit = l:tabpage_term_ids[0]
-      call Close(l:term_to_exit)
+      call a:handler_func(l:tabpage_term_ids[0])
     endif
   else
-    call s:handle_explicit_arg(a:1, l:tabpage_term_ids, Close)
+    let l:first_arg = a:args[0]
+    if l:first_arg ==? "all"
+      for term_id in l:tabpage_term_ids
+        call a:handler_func(term_id)
+      endfor
+    else
+      let l:term_id = str2nr(l:first_arg)
+      if index(l:tabpage_term_ids, l:term_id) > -1
+        call a:handler_func(l:term_id)
+      endif
+    endif
   endif
 endfunction
 
-function! s:handle_explicit_arg(arg, term_ids, handler_func)
-  if a:arg ==? "all"
-    for term_id in a:term_ids
-      call a:handler_func(term_id)
-    endfor
-  else
-    let l:term_id = str2nr(a:arg)
-    if index(a:term_ids, l:term_id) > -1
-      call a:handler_func(l:term_id)
-    endif
-  endif
-endfunction

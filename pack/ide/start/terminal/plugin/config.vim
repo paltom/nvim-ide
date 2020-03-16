@@ -44,6 +44,11 @@ let g:custom_menu["Ide"] = add(
       \       "complete": function("s:tabpage_term_ids_complete")
       \     },
       \     {
+      \       "cmd": "close",
+      \       "action": function("ide#terminal#close"),
+      \       "complete": function("s:tabpage_term_ids_complete")
+      \     },
+      \     {
       \       "cmd": "exit",
       \       "action": function("ide#terminal#exit"),
       \       "complete": function("s:tabpage_term_ids_complete")
@@ -61,7 +66,6 @@ function! s:terminal_filename(bufname)
         \ l:term_uri,
         \ '\v^(.{-}):.*/([0-9]+):(.*)$'
         \)[1:3]
-  " FIXME handle tabpage's terminal
   let l:buffer_term_id = getbufvar(a:bufname, "neoterm_id")
   if !empty(l:buffer_term_id)
     let l:filename_elems = add(l:filename_elems, "#".l:buffer_term_id)

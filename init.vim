@@ -1,4 +1,5 @@
 filetype plugin indent on
+syntax on
 
 " System clipboard {{{
 " Clipboard tool must be installed (:help clipboard-tool)
