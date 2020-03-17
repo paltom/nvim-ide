@@ -288,7 +288,7 @@ endfunction
 function! config#tabline()
   let l:tbl = ""
   for tabpageidx in range(1, tabpagenr("$"))
-    if tpi == tabpagenr()
+    if tabpageidx == tabpagenr()
       " Active tabpage
       let l:tbl .= "%#TablineSel#"
     else
