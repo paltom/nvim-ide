@@ -167,6 +167,13 @@ function! menu_builder#update_menu_command(menu_name)
   execute l:command_def
 endfunction
 
+function! s:find_cmd_name_in_menu(current_cmd_obj, cmd_name)
+  return filter(
+        \ copy(get(a:current_cmd_obj, "menu", [])),
+        \ { _, cmd_obj -> get(cmd_obj, "cmd", v:false) ==# a:cmd_name },
+        \)
+endfunction
+
 function! menu_builder#find_cmd_obj(menu_name, command_args)
   let l:menu = get(g:menus, a:menu_name, [])
   let l:menu_obj = {"cmd": a:menu_name, "menu": l:menu}
