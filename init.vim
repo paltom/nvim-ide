@@ -1,4 +1,5 @@
 filetype plugin indent on
+syntax on
 
 " System clipboard {{{
 " Clipboard tool must be installed (:help clipboard-tool)
@@ -8,7 +9,7 @@ nnoremap gY "+Y
 " Conveniently paste text from clipboard
 nnoremap gp "+p
 nnoremap gP "+P
-" Move cursor after pasted text
+" Move cursor after pasted text (restore mappings)
 nnoremap gap gp
 nnoremap gaP gP
 " Paste into lines below and above current line
@@ -17,7 +18,7 @@ nnoremap gOp O<esc>"+p
 " Paste from clipboard in insert mode moving cursor after pasted text and stay
 " in insert mode
 inoremap <expr> <c-v> col('.') == 1 ? "\<esc>\"+gPa" : "\<esc>\"+gpa"
-" Preserve a way to insert special characters
+" Preserve a way to insert special characters (restore mapping)
 inoremap <c-g><c-v> <c-v>
 " Yank/paste into/from clipboard in visual mode
 vnoremap gy "+y
@@ -40,10 +41,10 @@ augroup config_remove_trailing_whitespaces
   autocmd!
   " There is possibility to turn off removing trailing whitespaces on buffer
   " writing
-  let g:remove_trailing_whitespaces = v:true
+  let g:config_remove_trailing_whitespaces = v:true
   " Remove trailing whitespaces on buffer writing
   autocmd BufWrite *
-        \ if g:remove_trailing_whitespaces|
+        \ if g:config_remove_trailing_whitespaces|
         \   %s/\v\s+$//e|
         \ endif
 augroup end
@@ -107,18 +108,34 @@ nnoremap <silent> <c-t><c-t> :tabnext<cr>
 " register
 function! s:search_forward()
   if len(getloclist(0)) > 0
-    lnext
+    try
+      lnext
+    catch /E553/
+      lfirst
+    endtry
   elseif len(getqflist()) > 0
-    cnext
+    try
+      cnext
+    catch /E553/
+      cfirst
+    endtry
   else
     execute "normal! n"
   endif
 endfunction
 function! s:search_backward()
   if len(getloclist(0)) > 0
-    lprevious
+    try
+      lprevious
+    catch /E553/
+      llast
+    endtry
   elseif len(getqflist()) > 0
-    cprevious
+    try
+      cprevious
+    catch /E553/
+      clast
+    endtry
   else
     execute "normal! N"
   endif
@@ -179,9 +196,9 @@ set background=dark
 let &fillchars = "vert: "
 
 " Map colorscheme plugin directory to colorscheme name as visible by Vim
-let s:colorscheme_plugins = {"vim-one": "one"}
+let s:colorscheme_plugins = ["vim-one"]
 " Load all colorscheme plugins listed above by plugin directory name
-call ext#plugins#load(keys(s:colorscheme_plugins))
+call ext#plugins#load(s:colorscheme_plugins)
 
 augroup config_colorscheme_update
   autocmd!
@@ -216,39 +233,45 @@ augroup config_colorcolumn_in_active_window
         \ let &l:colorcolumn = join(range(1, 999), ",")
 augroup end
 augroup config_cursorline_in_active_window
+  function! s:disable_cursorline_in_diff(diff_enabled)
+  if a:diff_enabled
+      setlocal nocursorline
+  else
+      setlocal cursorline
+  endif
+  endfunction
   autocmd!
   " Draw cursorline in active window but not when diffs are displayed in the
   " window
   autocmd VimEnter * setlocal cursorline
   autocmd BufNewFile,BufRead,BufWinEnter,WinEnter *
-        \ if !&diff|
-        \   setlocal cursorline|
-        \ else|
-        \   setlocal nocursorline|
-        \ endif
+        \ call s:disable_cursorline_in_diff(&diff)
+  " Disable cursorline when diff option is set manually
+  autocmd OptionSet diff
+        \ call s:disable_cursorline_in_diff(v:option_new)
   " Do not show cursorline in inactive windows
   autocmd WinLeave * setlocal nocursorline
-augroup end
-function! s:disable_cursorline_in_diff(new_option_value)
-  if a:new_option_value
-    setlocal nocursorline
-  else
-    setlocal cursorline
-  endif
-endfunction
-augroup config_cursorline_in_diff_windows
-  autocmd!
-  " Disable cursorline in active window when diff option is set manually
-  autocmd OptionSet diff
-        \ call <sid>disable_cursorline_in_diff(v:option_new)
 augroup end
 
 " Show number column with numbers relative to current line (current line in
 " absolute numbers)
 set number relativenumber numberwidth=5
 
-" Load statusline settings
-" In separate file for clarity
-runtime! settings/statusline.vim
+" Statusline settings
+execute "setlocal statusline=%!config#statusline(".winnr().")"
+augroup config_statusline_update
+  autocmd!
+  " Set correct statusline functions for all windows in tabpage when changing
+  " windows
+  autocmd WinEnter,BufWinEnter * call config#statusline_update_all_windows()
+augroup end
+
+" Tabline settings
+" Display tabline when there are at least two tabpages
+set showtabline=1
+" Do not use GUI external tabline
+set guioptions-=e
+set tabline=%!config#tabline()
+" }}}
 
 " vim:foldmethod=marker
