@@ -96,6 +96,19 @@ let g:custom_menu["Ide"] = add(
       \     {
       \       "cmd": "diff",
       \       "action": function("ide#git#diff"),
+      \     },
+      \     {
+      \       "cmd": "file",
+      \       "menu": [
+      \         {
+      \           "cmd": "history",
+      \           "action": { -> ide#git#file_log(bufname())},
+      \         },
+      \         {
+      \           "cmd": "edit",
+      \           "action": { -> ide#git#edit_working_file(bufname())},
+      \         },
+      \       ]
       \     }
       \   ]
       \ }
@@ -103,7 +116,7 @@ let g:custom_menu["Ide"] = add(
 
 function! s:get_git_output(git_cmd)
   let l:git_cmd = "git --git-dir=%s --work-tree=%s %s"
-  let l:git_dir = ide#git#git_dir()
+  let l:git_dir = ide#git#root_dir()
   if empty(l:git_dir)
     return []
   endif
@@ -149,7 +162,7 @@ function! s:git_changed_files()
 endfunction
 
 function! s:git_repo_path()
-  let l:repo_path = ide#git#git_dir()
+  let l:repo_path = ide#git#root_dir()
   if empty(l:repo_path)
     return "Not in git repository"
   endif
@@ -193,7 +206,7 @@ function! s:git_buf_filename(bufname)
         \ '\v\.git[/\\]{2}\zs\c[0-9a-f]+\ze'
         \)
   if empty(l:git_buf_type)
-    return bufname
+    return a:bufname
   endif
   if l:git_buf_type == "0"
     let l:git_type = "index"

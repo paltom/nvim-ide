@@ -30,7 +30,7 @@ function! ide#git#list_branches()
   return l:branch_list
 endfunction
 
-function! ide#git#git_dir()
+function! ide#git#root_dir()
   let l:git_dir = FugitiveGitDir()
   if empty(l:git_dir)
     return ""
@@ -66,9 +66,22 @@ function! ide#git#fetch()
 endfunction
 
 function! ide#git#add(...)
-  execute "Git add ".join(a:000, " ")
+  if empty(a:000)
+    let l:files_to_add = ["%"]
+  else
+    let l:files_to_add = a:000
+  endif
+  execute "Git add ".join(l:files_to_add, " ")
 endfunction
 
 function! ide#git#diff()
   execute "tab vertical Gdiffsplit"
+endfunction
+
+function! ide#git#file_log(filename)
+  execute "tabedit ".a:filename."|0Gllog"
+endfunction
+
+function! ide#git#edit_working_file(filename)
+  execute "Gedit :(top)".a:filename
 endfunction
