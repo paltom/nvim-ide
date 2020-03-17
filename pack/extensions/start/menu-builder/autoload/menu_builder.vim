@@ -26,9 +26,12 @@ let s:test_cmd_2 = {
       \ "cmd": "command_2",
       \ "exec": "echo 'test'|echo 'after'",
       \}
-let g:menus["Test"] = add(
+let g:menus["Test"] = extend(
       \ g:menus["Test"],
-      \ s:test_cmd_1,
+      \ [
+      \   s:test_cmd_1,
+      \   s:test_cmd_2,
+      \ ]
       \)
 
 " =============================================================================
@@ -59,9 +62,42 @@ function! menu_builder#update_menu_command(menu_name)
   execute l:command_def
 endfunction
 
+function! s:find_cmd_name_in_menu(current_cmd_obj, cmd_name)
+  return filter(
+        \ copy(get(a:current_cmd_obj, "menu", [])),
+        \ { _, cmd_obj -> get(cmd_obj, "cmd", v:false) ==# a:cmd_name },
+        \)
+endfunction
+
 function! menu_builder#find_cmd_obj(menu_name, command_args)
   " TODO implement searching for cmd object
-  return [s:test_cmd_2, a:command_args[1:]]
+  let l:menu = get(g:menus, a:menu_name, [])
+  if empty(a:command_args) || empty(l:menu)
+    return [{}, []]
+  endif
+  function! s:walk_menus(current_cmd_obj, cmd_path)
+    if empty(a:cmd_path)
+      return [a:current_cmd_obj, []]
+    endif
+    if !has_key(a:current_cmd_obj, "menu")
+      return [a:current_cmd_obj, a:cmd_path]
+    endif
+    let [l:next_cmd_name; l:next_cmd_path] = a:cmd_path
+    let l:next_cmd_obj = s:find_cmd_name_in_menu(
+          \ a:current_cmd_obj,
+          \ l:next_cmd_name,
+          \)
+    if len(l:next_cmd_obj) != 1
+      if len(l:next_cmd_obj) > 1
+        echohl WarningMsg
+        echomsg "Cannot find single cmd object with '".l:next_cmd_name."' name"
+        echohl None
+      endif
+      return [a:current_cmd_obj, a:cmd_path]
+    endif
+    return s:walk_menus(l:next_cmd_obj[0], l:next_cmd_path)
+  endfunction
+  return s:walk_menus({"cmd": a:menu_name, "menu": l:menu}, a:command_args)
 endfunction
 
 function! s:invoke_menu_command(
@@ -171,3 +207,5 @@ function! s:complete_menu_cmd(
   let l:cmds_in_menu = []
   return join(l:cmds_in_menu, "\n")
 endfunction
+
+" vim:foldmethod=indent
