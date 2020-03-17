@@ -221,11 +221,8 @@ function! s:git_buf_filename(bufname)
   return l:git_diff_filename
 endfunction
 
-if !exists("g:statusline_filename_special_name_patterns")
-  let g:statusline_filename_special_name_patterns = []
-endif
-let g:statusline_filename_special_name_patterns = add(
-      \ g:statusline_filename_special_name_patterns,
+let config#statusline_filename_special_name_patterns = add(
+      \ config#statusline_filename_special_name_patterns,
       \ {
       \   "if": { c ->
       \             fnamemodify(
