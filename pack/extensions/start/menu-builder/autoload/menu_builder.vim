@@ -18,6 +18,12 @@ function! s:command_1_func(args, flag, range, mods)
 endfunction
 
 let g:menus["Test"] = []
+let g:menus["Test1"] = []
+let g:menus["Test2"] = []
+let s:test_cmd = {
+      \ "cmd": "command",
+      \ "exec": "echo 'command'",
+      \}
 let s:test_cmd_1 = {
       \ "cmd": "command_1",
       \ "exec": function("s:command_1_func"),
@@ -29,7 +35,18 @@ let s:test_cmd_2 = {
 let g:menus["Test"] = extend(
       \ g:menus["Test"],
       \ [
+      \   s:test_cmd,
+      \ ]
+      \)
+let g:menus["Test1"] = extend(
+      \ g:menus["Test1"],
+      \ [
       \   s:test_cmd_1,
+      \ ]
+      \)
+let g:menus["Test2"] = extend(
+      \ g:menus["Test2"],
+      \ [
       \   s:test_cmd_2,
       \ ]
       \)
@@ -192,6 +209,60 @@ function! s:execute_func_command(
   call a:exec(a:args, a:flag, a:range, a:mods)
 endfunction
 
+function! s:get_partial_pattern(word)
+  let l:first_char = a:word[0]
+  let l:rest = a:word[1:]
+  let l:pattern = "(".l:first_char."("
+  let l:partial_matches = []
+  while len(l:rest)
+    let l:partial_matches = add(
+          \ l:partial_matches,
+          \ l:rest
+          \)
+    let l:rest = l:rest[:-2]
+  endwhile
+  let l:pattern .= join(l:partial_matches, "|")
+  let l:pattern .= "?))"
+  return l:pattern
+endfunction
+
+function! s:get_whole_command_name(partial_command_name)
+  let l:command_candidates = filter(
+        \ keys(g:menus),
+        \ { _, c -> c =~# '\v^'.a:partial_command_name }
+        \)
+  if empty(l:command_candidates)
+    return ""
+  endif
+  if len(l:command_candidates) == 1
+    return l:command_candidates[0]
+  endif
+  " there should be exact match and other commands that start with
+  " partial_command_name
+  let l:command_name_index = index(
+        \ l:command_candidates,
+        \ a:partial_command_name
+        \)
+  if l:command_name_index < 0
+    return ""
+  endif
+  return l:command_candidates[l:command_name_index]
+endfunction
+
+function! s:get_command_name(cmdline)
+  for command_name in keys(g:menus)
+    let l:partial_command_name_pattern = s:get_partial_pattern(command_name)
+    let l:partial_command_name = matchstr(
+          \ a:cmdline,
+          \ '\v\C(^|[^\I])\zs'.l:partial_command_name_pattern.'\ze!?\s+'
+          \)
+    if !empty(l:partial_command_name)
+      return s:get_whole_command_name(l:partial_command_name)
+    endif
+  endfor
+  return ""
+endfunction
+
 function! s:complete_menu_cmd(
       \ cmd_being_entered,
       \ cmdline,
@@ -203,6 +274,7 @@ function! s:complete_menu_cmd(
   " menu path entered so far counts from first item after whitespace following
   " command name until last whitespace preceding item_being_entered (which may
   " be empty)
+  let l:cmd_name = s:get_command_name(a:cmdline)
   let l:cmds_in_menu = []
   return join(l:cmds_in_menu, "\n")
 endfunction
