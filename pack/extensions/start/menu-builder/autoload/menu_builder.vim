@@ -70,7 +70,6 @@ function! s:find_cmd_name_in_menu(current_cmd_obj, cmd_name)
 endfunction
 
 function! menu_builder#find_cmd_obj(menu_name, command_args)
-  " TODO implement searching for cmd object
   let l:menu = get(g:menus, a:menu_name, [])
   if empty(a:command_args) || empty(l:menu)
     return [{}, []]
