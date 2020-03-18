@@ -167,10 +167,10 @@ function! menu_builder#update_menu_command(menu_name)
   execute l:command_def
 endfunction
 
-function! s:find_cmd_name_in_menu(current_cmd_obj, cmd_name)
+function! s:find_cmd_names_in_menu(current_cmd_obj, cmd_name)
   return filter(
         \ copy(get(a:current_cmd_obj, "menu", [])),
-        \ { _, cmd_obj -> get(cmd_obj, "cmd", v:false) ==# a:cmd_name },
+        \ { _, cmd_obj -> get(cmd_obj, "cmd", v:false) =~# '\v^'.a:cmd_name },
         \)
 endfunction
 
