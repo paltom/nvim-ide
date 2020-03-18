@@ -22,7 +22,16 @@ let g:menus["Test1"] = []
 let g:menus["Test2"] = []
 let s:test_cmd = {
       \ "cmd": "command",
-      \ "exec": "echo 'command'",
+      \ "menu": [
+      \   {
+      \     "cmd": "second",
+      \     "exec": "echo 'command'",
+      \   },
+      \   {
+      \     "cmd": "sec",
+      \     "exec": "echo 'sec'",
+      \   }
+      \ ]
       \}
 let s:test_cmd_1 = {
       \ "cmd": "command_1",
@@ -79,17 +88,18 @@ function! menu_builder#update_menu_command(menu_name)
   execute l:command_def
 endfunction
 
-function! s:find_cmd_name_in_menu(current_cmd_obj, cmd_name)
+function! s:find_cmd_names_in_menu(current_cmd_obj, cmd_name)
   return filter(
         \ copy(get(a:current_cmd_obj, "menu", [])),
-        \ { _, cmd_obj -> get(cmd_obj, "cmd", v:false) ==# a:cmd_name },
+        \ { _, cmd_obj -> get(cmd_obj, "cmd", v:false) =~# '\v^'.a:cmd_name },
         \)
 endfunction
 
 function! menu_builder#find_cmd_obj(menu_name, command_args)
   let l:menu = get(g:menus, a:menu_name, [])
+  let l:menu_obj = {"cmd": a:menu_name, "menu": l:menu}
   if empty(a:command_args) || empty(l:menu)
-    return [{}, []]
+    return [l:menu_obj, []]
   endif
   function! s:walk_menus(current_cmd_obj, cmd_path)
     if empty(a:cmd_path)
@@ -99,10 +109,17 @@ function! menu_builder#find_cmd_obj(menu_name, command_args)
       return [a:current_cmd_obj, a:cmd_path]
     endif
     let [l:next_cmd_name; l:next_cmd_path] = a:cmd_path
-    let l:next_cmd_obj = s:find_cmd_name_in_menu(
+    let l:next_cmd_obj = s:find_cmd_names_in_menu(
           \ a:current_cmd_obj,
           \ l:next_cmd_name,
           \)
+    " try to find exact match where multiple cmds start with next_cmd_name
+    if len(l:next_cmd_obj) > 1
+      let l:next_cmd_obj = filter(
+            \ l:next_cmd_obj,
+            \ { _, co -> co["cmd"] ==# l:next_cmd_name },
+            \)
+    endif
     if len(l:next_cmd_obj) != 1
       if len(l:next_cmd_obj) > 1
         echohl WarningMsg
@@ -113,7 +130,7 @@ function! menu_builder#find_cmd_obj(menu_name, command_args)
     endif
     return s:walk_menus(l:next_cmd_obj[0], l:next_cmd_path)
   endfunction
-  return s:walk_menus({"cmd": a:menu_name, "menu": l:menu}, a:command_args)
+  return s:walk_menus(l:menu_obj, a:command_args)
 endfunction
 
 function! s:invoke_menu_command(
@@ -135,10 +152,10 @@ function! s:execute_cmd_obj(
       \ mods,
       \)
   try
-    let Cmd_exec = get(a:cmd_obj, "exec")
+    let Cmd_exec = a:cmd_obj["exec"]
   catch /E716/
     echohl WarningMsg
-    echomsg "Execution action ('exec' key) not found in ".string(a:cmd_obj)
+    echomsg "Cannot find action to execute"
     echohl None
     return
   endtry
@@ -257,10 +274,18 @@ function! s:get_command_name(cmdline)
           \ '\v\C(^|[^\I])\zs'.l:partial_command_name_pattern.'\ze!?\s+'
           \)
     if !empty(l:partial_command_name)
-      return s:get_whole_command_name(l:partial_command_name)
+      return l:partial_command_name
     endif
   endfor
   return ""
+endfunction
+
+function! s:get_command_args(command_name, cmdline)
+  let l:args = matchstr(
+        \ a:cmdline,
+        \ '\v\C(^|[^\I])'.a:command_name.'!?\s+\zs(.*)\ze',
+        \)
+  return l:args
 endfunction
 
 function! s:complete_menu_cmd(
@@ -274,8 +299,22 @@ function! s:complete_menu_cmd(
   " menu path entered so far counts from first item after whitespace following
   " command name until last whitespace preceding item_being_entered (which may
   " be empty)
-  let l:cmd_name = s:get_command_name(a:cmdline)
-  let l:cmds_in_menu = []
+  let l:entered_cmd_name = s:get_command_name(a:cmdline)
+  let l:cmd_name = s:get_whole_command_name(l:entered_cmd_name)
+  let l:cmd_path_and_args = s:get_command_args(l:entered_cmd_name, a:cmdline)
+  let l:cmd_path_and_args = split(l:cmd_path_and_args)
+  if !empty(a:cmd_being_entered)
+    let l:cmd_path_and_args = l:cmd_path_and_args[:-2]
+  endif
+  let [l:cmd_obj, l:cmd_args] = menu_builder#find_cmd_obj(
+        \ l:cmd_name,
+        \ l:cmd_path_and_args,
+        \)
+  let l:cmd_objs_in_menu = s:find_cmd_names_in_menu(l:cmd_obj, '.*')
+  let l:cmds_in_menu = map(
+        \ l:cmd_objs_in_menu,
+        \ { _, co -> co["cmd"] },
+        \)
   return join(l:cmds_in_menu, "\n")
 endfunction
 
