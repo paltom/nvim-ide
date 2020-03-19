@@ -1,14 +1,83 @@
+" Menu builder plugin for building custom menu trees as Vim commands with
+" arguments.
+"
+" Data type:
+" cmd_object - Dictionary with following keys:
+"   - cmd - (String) (Sub)command name. Mandatory. Uniquely identifies
+"           cmd_object inside menu. Cannot contain spaces or double-quotes. To
+"           uniquely identify cmd object in menu, shortest prefix is
+"           sufficient. If prefix is also a full cmd value, it identifies this
+"           cmd object.
+"           Example:
+"
+"               [{"cmd": "short"}, {"cmd": "shortest"}]
+"
+"               "short": identifies first cmd object (prefix matches also
+"               second cmd object, but first one is a full match)
+"               "shorte": identifies second cmd object (the only match for
+"               prefix)
+"               "shor": does not uniquely identify any object (prefix matches
+"               both objects)
+"
+"   - menu - (List[cmd_object]) Defines subcommands for given cmd object.
+"            Optional, mandatory if there is no exec attribute in cmd object.
+"            Cmd objects in menu are available only when current cmd object is
+"            selected (by uniquely identifying path). Completion candidates
+"            for Vim command (top-level menu) are selected from cmd attribute
+"            values of cmd objects in menu attribute. If there is no menu
+"            attribute in cmd object, there are no cmd completion candidates
+"            (leaf cmd object).
+"
+"   - exec - (String|Funcref) Action to execute when cmd object is invoked
+"            from cmdline. Optional, mandatory if there is no menu attribute
+"            in cmd object.
+"
+"            String action:
+"            - is executed as Vim command (:help :execute)
+"            - if menu command was invoked with bang flag, it is passed to the
+"            first command in String action.
+"            Example:
+"
+"               "exec": "w|echo 2"
+"
+"               if invoked with bang flag, action will be invoked as
+"               "w!|echo 2"
+"           - if menu command was invoked with range, first command in String
+"           action will be executed with same range.
+"           Example:
+"
+"               "exec": "s/a/b/|echo 2"
+"
+"               if invoked with 1,3 range, action will be invoked as
+"               "1,3s/a/b/|echo 2"
+"           - if menu command was invoked with additional arguments not
+"           consumed by menu path, first command will be invoked with
+"           additional arguments converted to strings and quoted.
+"           Example:
+"
+"               "exec": "echo"
+"
+"               if invoked with additional arguments "abc 123", action will
+"               be invoked as
+"               "echo 'abc' '123'"
+"
+"           Funcref action:
+"           - action function must accept following arguments:
+"             1. list of additional arguments passed to cmd object
+"             2. boolean flag indicating if bang was used to invoke menu
+"             command
+"             3. list containing 0, 1 or 2 ints indicating range with which
+"             menu command was invoked
+"             4. string of command modifiers (:help <mods>)
+"           - action function defines its own way of handling arguments passed
+"           and it does not need to consume them all
+"           - result from action function is discarded
+
 if !exists("g:menus")
   let g:menus = {}
 endif
 
 " =============================================================================
-" Function has to accept 4 arguments:
-" 1. args - List(string), list of additional command arguments
-" 2. flag - boolean, indicates if menu was invoked with <bang>
-" 3. range - List(int), list containing 0, 1 or 2 integers indicating range
-"           on which menu was invoked
-" 4. mods - string, command modifiers string (:help <mods>)
 function! s:command_1_func(args, flag, range, mods)
   echomsg "Command 1 execution:"
   echomsg "args: ".string(a:args)
