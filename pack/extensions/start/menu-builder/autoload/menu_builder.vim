@@ -61,6 +61,16 @@ let g:menus["Test2"] = extend(
       \)
 
 " =============================================================================
+function! s:cmd_names_from_menu_starting_with(
+      \ menu,
+      \ cmd_name_prefix_pattern,
+      \)
+  return filter(
+        \ copy(a:menu),
+        \ { _, cmd_obj -> cmd_obj["cmd"] =~# '\v^'.a:cmd_name_prefix_pattern },
+        \)
+endfunction
+
 function! menu_builder#update_menu_commands()
   for menu_name in keys(g:menus)
     call menu_builder#update_menu_command(menu_name)
@@ -88,13 +98,6 @@ function! menu_builder#update_menu_command(menu_name)
   execute l:command_def
 endfunction
 
-function! s:find_cmd_names_in_menu(current_cmd_obj, cmd_name)
-  return filter(
-        \ copy(get(a:current_cmd_obj, "menu", [])),
-        \ { _, cmd_obj -> get(cmd_obj, "cmd", v:false) =~# '\v^'.a:cmd_name },
-        \)
-endfunction
-
 function! menu_builder#find_cmd_obj(menu_name, command_args)
   let l:menu = get(g:menus, a:menu_name, [])
   let l:menu_obj = {"cmd": a:menu_name, "menu": l:menu}
@@ -109,26 +112,26 @@ function! menu_builder#find_cmd_obj(menu_name, command_args)
       return [a:current_cmd_obj, a:cmd_path]
     endif
     let [l:next_cmd_name; l:next_cmd_path] = a:cmd_path
-    let l:next_cmd_obj = s:find_cmd_names_in_menu(
-          \ a:current_cmd_obj,
+    let l:next_cmd_obj_candidates = s:cmd_names_from_menu_starting_with(
+          \ a:current_cmd_obj["menu"],
           \ l:next_cmd_name,
           \)
     " try to find exact match where multiple cmds start with next_cmd_name
-    if len(l:next_cmd_obj) > 1
-      let l:next_cmd_obj = filter(
-            \ l:next_cmd_obj,
+    if len(l:next_cmd_obj_candidates) > 1
+      let l:next_cmd_obj_candidates = filter(
+            \ l:next_cmd_obj_candidates,
             \ { _, co -> co["cmd"] ==# l:next_cmd_name },
             \)
     endif
-    if len(l:next_cmd_obj) != 1
-      if len(l:next_cmd_obj) > 1
+    if len(l:next_cmd_obj_candidates) != 1
+      if len(l:next_cmd_obj_candidates) > 1
         echohl WarningMsg
         echomsg "Cannot find single cmd object with '".l:next_cmd_name."' name"
         echohl None
       endif
       return [a:current_cmd_obj, a:cmd_path]
     endif
-    return s:walk_menus(l:next_cmd_obj[0], l:next_cmd_path)
+    return s:walk_menus(l:next_cmd_obj_candidates[0], l:next_cmd_path)
   endfunction
   return s:walk_menus(l:menu_obj, a:command_args)
 endfunction
@@ -310,7 +313,10 @@ function! s:complete_menu_cmd(
         \ l:cmd_name,
         \ l:cmd_path_and_args,
         \)
-  let l:cmd_objs_in_menu = s:find_cmd_names_in_menu(l:cmd_obj, '.*')
+  let l:cmd_objs_in_menu = s:cmd_names_from_menu_starting_with(
+        \ get(l:cmd_obj, "menu", []),
+        \ '.*',
+        \)
   let l:cmds_in_menu = map(
         \ l:cmd_objs_in_menu,
         \ { _, co -> co["cmd"] },
