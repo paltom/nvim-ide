@@ -1,7 +1,8 @@
-" TODO: report structure for test instead of messages list
-" - to control in render functions how report is created
 let s:test_suites = {}
 let s:suite_reports = {}
+let s:SUCCESS = 0
+let s:FAILED = 1
+let s:ERROR = 2
 
 function! test#suite(suite_name)
   let s:test_suites[a:suite_name] = {}
@@ -52,63 +53,33 @@ function! s:tests.execute_should_run_all_tests_even_there_are_failures()
         \ "Failing function should be called twice"
         \)
 endfunction
-function! s:tests.execute_should_report_suite_name()
-  let l:suite_name = "suite name"
-  let l:suite = test#suite(l:suite_name)
-  let l:suite.test_function = { -> v:true }
-  call execute("call test#execute('".l:suite_name."')", "silent!")
-  call assert_equal(
-        \ 0,
-        \ index(
-        \   s:suite_reports[l:suite_name]["messages"],
-        \   'Executing suite: "'.l:suite_name.'"'
-        \ ),
-        \ "Suite name should be first entry in report",
-        \)
-endfunction
-function! s:tests.execute_should_report_executed_test_name()
-  let l:suite_name = "test_name"
-  let l:suite = test#suite(l:suite_name)
-  let l:suite.test_function_name = { -> v:true }
-  call execute("call test#execute('".l:suite_name."')", "silent!")
-  call assert_true(
-        \ index(
-        \   s:suite_reports[l:suite_name]["messages"],
-        \   'Executing test: "test function name"'
-        \ ) > 0,
-        \ "Test name should be in report"
-        \)
-endfunction
 function! test#execute(suite_name)
   let l:script_suite = get(
         \ s:test_suites,
         \ a:suite_name,
         \ {},
         \)
-  let l:report = s:new_report()
+  let l:report = {}
   let s:suite_reports[a:suite_name] = l:report
-  call s:report_msg_suite_start(l:report, a:suite_name)
   for func_name in sort(keys(l:script_suite))
-    call s:report_msg_test_start(l:report, func_name)
+    let l:test_report = s:report_add_test(l:report, func_name)
     let v:errors = []
     try
       call l:script_suite[func_name]()
       if empty(v:errors)
-        call s:report_test_success(l:report)
+        call s:report_test_success(l:test_report)
       else
-        call s:report_test_fail(l:report, v:errors)
+        call s:report_test_fail(l:test_report, v:errors)
       endif
     catch
-      echohl ErrorMsg
-      echomsg "ERROR:".string(v:exception)
-      echohl None
+      call s:report_test_error(l:test_report, v:exception)
     finally
     endtry
   endfor
 endfunction
 
 function! test#report(suite_name)
-  return join(get(s:suite_reports[a:suite_name], "messages", []), "\n")
+  return get(s:suite_reports, a:suite_name, {})
 endfunction
 
 function! s:format_function_name(func_name)
@@ -116,42 +87,24 @@ function! s:format_function_name(func_name)
   return substitute(a:func_name, "_", " ", "g")
 endfunction
 
-function! s:report_msg_suite_start(report, suite_name)
-  call add(a:report["messages"], 'Executing suite: "'.a:suite_name.'"')
-endfunction
-
-function! s:report_msg_test_start(report, test_name)
+function! s:report_add_test(report, test_name)
   let l:test_name = s:format_function_name(a:test_name)
-  call add(a:report["messages"], 'Executing test: "'.l:test_name.'"')
-  let a:report["executed"] += 1
+  let a:report[l:test_name] = {}
+  return a:report[l:test_name]
 endfunction
 
 function! s:report_test_success(report)
-  " add [SUCCESS] under last message (name of last test executed)
-  call add(a:report["messages"], "[SUCCESS]")
-  let a:report["passed"] += 1
+  let a:report["result"] = s:SUCCESS
 endfunction
 
 function! s:report_test_fail(report, reasons)
-  " add [FAILED ] under last message (name of last test executed)
-  call add(a:report["messages"], "[FAILED ]".string(a:reasons))
-  let a:report["failed"] += 1
+  let a:report["result"] = s:FAILED
+  let a:report["reason"] = a:reasons
 endfunction
 
 function! s:report_test_error(report, reasons)
-  " add [ ERROR ] under last message (name of last test executed)
-  call add(a:report["messages"], "[ ERROR ]")
-  let a:report["errors"] += 1
-endfunction
-
-function! s:new_report()
-  return {
-        \ "executed": 0,
-        \ "passed": 0,
-        \ "failed": 0,
-        \ "errors": 0,
-        \ "messages": []
-        \}
+  let a:report["result"] = s:ERROR
+  let a:report["reason"] = a:reasons
 endfunction
 
 " vim:fdm=marker:fmr=function!\ s\:tests.,endfunction
