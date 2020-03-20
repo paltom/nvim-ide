@@ -34,7 +34,7 @@ function! s:tests.execute_should_run_all_tests_in_given_suite()
   call assert_inrange(0, 1, index(l:results, 1))
   call assert_inrange(0, 1, index(l:results, 2))
 endfunction
-function! s:tests.execute_should_run_all_tests_even_there_are_failures()
+function! s:tests.execute_should_run_all_tests_even_if_there_are_failures()
   let l:suite = test#suite("execute")
   let l:test_calls = 0
   function! s:tests.increment() closure
@@ -62,20 +62,88 @@ function! test#execute(suite_name)
   let l:report = {}
   let s:suite_reports[a:suite_name] = l:report
   for func_name in sort(keys(l:script_suite))
-    let l:test_report = s:report_add_test(l:report, func_name)
-    let v:errors = []
-    try
-      call l:script_suite[func_name]()
-      if empty(v:errors)
-        call s:report_test_success(l:test_report)
-      else
-        call s:report_test_fail(l:test_report, v:errors)
-      endif
-    catch
-      call s:report_test_error(l:test_report, v:exception)
-    finally
-    endtry
+    call s:execute_test(l:script_suite, func_name, l:report)
   endfor
+endfunction
+
+function! s:tests.test_execution_should_pass_if_there_are_no_assertions_failures()
+  let l:suite_name = "success"
+  let l:suite = test#suite(l:suite_name)
+  let l:test_func_name = "pass_func"
+  let l:suite[l:test_func_name] = { -> v:true }
+  let l:report = {}
+  call s:execute_test(l:suite, l:test_func_name, l:report)
+  let l:test_name = s:format_function_name(l:test_func_name)
+  let l:test_report = l:report[l:test_name]
+  call assert_equal(s:SUCCESS, l:test_report["result"])
+endfunction
+function! s:tests.test_execution_should_report_error_if_there_are_test_function_errors()
+  let l:suite_name = "error"
+  let l:suite = test#suite(l:suite_name)
+  let l:test_func_name = "err_func"
+  function! s:tests.error()
+    call abc()
+  endfunction
+  let l:suite[l:test_func_name] = { -> s:tests.error() }
+  let l:report = {}
+  call s:execute_test(l:suite, l:test_func_name, l:report)
+  let l:test_name = s:format_function_name(l:test_func_name)
+  let l:test_report = l:report[l:test_name]
+  call assert_equal(s:ERROR, l:test_report["result"])
+  call assert_match("Unknown function: abc", l:test_report["reason"])
+endfunction
+function! s:tests.test_execution_should_report_failure_if_there_is_assertion_failure()
+  let l:suite_name = "fail"
+  let l:suite = test#suite(l:suite_name)
+  let l:test_func_name = "fail_func"
+  function! s:tests.fail() closure
+    call assert_true(v:false)
+  endfunction
+  let l:suite[l:test_func_name] = { -> s:tests.fail() }
+  let l:report = {}
+  call s:execute_test(l:suite, l:test_func_name, l:report)
+  let l:test_name = s:format_function_name(l:test_func_name)
+  let l:test_report = l:report[l:test_name]
+  call assert_equal(s:FAILED, l:test_report["result"])
+  call assert_match("Expected True but got v:false", l:test_report["reason"])
+endfunction
+function! s:tests.test_execution_should_pass_if_exception_is_expected()
+  let l:suite_name = "pass"
+  let l:suite = test#suite(l:suite_name)
+  let l:test_func_name = "pass_func"
+  function! s:tests.exception_assertion()
+    function! s:tests.failing()
+      throw "Exception"
+    endfunction
+    try
+      call s:tests.failing()
+      call assert_true(v:false)
+    catch
+      call assert_exception("Exception")
+    endtry
+  endfunction
+  let l:suite[l:test_func_name] = { -> s:tests.exception_assertion() }
+  let l:report = {}
+  call s:execute_test(l:suite, l:test_func_name, l:report)
+  let l:test_name = s:format_function_name(l:test_func_name)
+  let l:test_report = l:report[l:test_name]
+  call assert_equal(s:SUCCESS, l:test_report["result"])
+endfunction
+function! s:execute_test(test_suite, test_name, suite_report)
+  let l:test_report = s:report_add_test(a:suite_report, a:test_name)
+  let v:errors = []
+  try
+    call a:test_suite[a:test_name]()
+    if empty(v:errors)
+      call s:report_test_success(l:test_report)
+    else
+      call s:report_test_fail(l:test_report, v:errors)
+    endif
+  catch
+    call s:report_test_error(l:test_report, v:exception)
+  finally
+    let v:errors = []
+  endtry
 endfunction
 
 function! test#report(suite_name)
@@ -99,7 +167,7 @@ endfunction
 
 function! s:report_test_fail(report, reasons)
   let a:report["result"] = s:FAILED
-  let a:report["reason"] = a:reasons
+  let a:report["reason"] = a:reasons[-1]
 endfunction
 
 function! s:report_test_error(report, reasons)
