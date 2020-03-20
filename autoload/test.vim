@@ -146,8 +146,77 @@ function! s:execute_test(test_suite, test_name, suite_report)
   endtry
 endfunction
 
+function! s:tests.test_report_should_be_formatted()
+  let l:store_suite_reports = copy(s:suite_reports)
+  let l:suite_name = "suite"
+  let s:suite_reports = {
+        \ l:suite_name: {
+        \   "pass": { "result": s:SUCCESS },
+        \   "fail": {
+        \     "result": s:FAILED,
+        \     "reason": "Assertion failure",
+        \   },
+        \   "error": {
+        \     "result": s:ERROR,
+        \     "reason": "Unknown function",
+        \   },
+        \ }
+        \}
+  let l:report = test#report(l:suite_name)
+  let l:expected = 'Suite: "'.l:suite_name.'"'."\n".
+        \   '  Test: "error"'."\n".
+        \   '    [ERROR]: ''Unknown function'''."\n".
+        \   '  Test: "fail"'."\n".
+        \   '    [FAILED]: ''Assertion failure'''."\n".
+        \   '  Test: "pass"'."\n".
+        \   '    [PASSED]'."\n".
+        \   'Tests executed: 3, passed: 1, failed: 1, errors: 1'
+  echo l:expected
+  try
+    call assert_equal(l:expected, l:report)
+  finally
+    let s:suite_reports = l:store_suite_reports
+  endtry
+endfunction
+" TODO refactor
 function! test#report(suite_name)
-  return get(s:suite_reports, a:suite_name, {})
+  let l:suite_report = get(s:suite_reports, a:suite_name, {})
+  let l:report = []
+  call add(l:report, 'Suite: "'.a:suite_name.'"')
+  let l:test_names = keys(l:suite_report)
+  let l:tests_executed = len(l:test_names)
+  let l:tests_passed = 0
+  let l:tests_failed = 0
+  let l:tests_errored = 0
+  for test_name in sort(l:test_names)
+    call add(l:report, '  Test: "'.test_name.'"')
+    let l:test_report = l:suite_report[l:test_name]
+    let l:test_result = l:test_report["result"]
+    if l:test_result == s:SUCCESS
+      call add(l:report, '    [PASSED]')
+      let l:tests_passed += 1
+    else
+      let l:reason = l:test_report["reason"]
+      if l:test_result == s:FAILED
+        call add(l:report, '    [FAILED]: '.string(l:reason))
+        let l:tests_failed += 1
+      elseif l:test_result == s:ERROR
+        call add(l:report, '    [ERROR]: '.string(l:reason))
+        let l:tests_errored += 1
+      endif
+    endif
+  endfor
+  call add(
+        \ l:report,
+        \ printf(
+        \   "Tests executed: %d, passed: %d, failed: %d, errors: %d",
+        \   l:tests_executed,
+        \   l:tests_passed,
+        \   l:tests_failed,
+        \   l:tests_errored,
+        \ ),
+        \)
+  return join(l:report, "\n")
 endfunction
 
 function! s:tests.format_function_name_replaces_all_underscores_with_spaces()
