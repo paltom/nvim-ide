@@ -8,7 +8,7 @@ function! test#suite(suite_name)
   let s:test_suites[a:suite_name] = {}
   return s:test_suites[a:suite_name]
 endfunction
-let s:tests = test#suite(expand("<sfile>"))
+let s:tests = test#suite(expand("<sfile>:p"))
 function! s:tests.suite_should_always_return_new_dict()
   let l:suite = test#suite("suite")
   call assert_equal({}, l:suite)
@@ -171,7 +171,6 @@ function! s:tests.test_report_should_be_formatted()
         \   '  Test: "pass"'."\n".
         \   '    [PASSED]'."\n".
         \   'Tests executed: 3, passed: 1, failed: 1, errors: 1'
-  echo l:expected
   try
     call assert_equal(l:expected, l:report)
   finally
