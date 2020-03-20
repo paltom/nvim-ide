@@ -150,6 +150,16 @@ function! test#report(suite_name)
   return get(s:suite_reports, a:suite_name, {})
 endfunction
 
+function! s:tests.format_function_name_replaces_all_underscores_with_spaces()
+  let l:func_name = "test_function_1"
+  let l:test_name = s:format_function_name(l:func_name)
+  call assert_equal("test function 1", l:test_name)
+endfunction
+function! s:tests.format_function_should_not_changes_name_without_underscores()
+  let l:func_name = "testFunction"
+  let l:test_name = s:format_function_name(l:func_name)
+  call assert_equal(l:func_name, l:test_name)
+endfunction
 function! s:format_function_name(func_name)
   " simply replace '_' with spaces
   return substitute(a:func_name, "_", " ", "g")
