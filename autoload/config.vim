@@ -127,8 +127,8 @@ endfunction
 " Statusline file status flags part
 " When file is not modifiable or readonly, display lockpad character
 " When file is modified, display centered asterisk character
-function! s:stl_file_flags(winnr)
-  let l:bufnr = winbufnr(a:winnr)
+function! s:stl_file_flags(winid)
+  let l:bufnr = winbufnr(a:winid)
   let l:modifiable = getbufvar(l:bufnr, "&modifiable")
   let l:readonly = getbufvar(l:bufnr, "&readonly")
   if l:modifiable && !l:readonly
@@ -180,12 +180,13 @@ function! s:stl_filename(winnr)
   endfunction
   function! s:stl_filename_restore_cwd_context(context)
     " Restore original cwd of current active window
+    silent execute a:context["cwd_type"]."cd ".a:context["original_cwd"]
     " update all windows if one was closed (window numbers has changed)
     if a:context["winnr"] <= winnr("$")
       call config#statusline_update_all_windows()
     endif
   endfunction
-  let l:bufnr = winbufnr(a:winnr)
+  let l:bufnr = winbufnr(win_getid(a:winnr))
   " Store context of window for which statusline is drawn
   let l:context  = {
         \ "bufnr": l:bufnr,
@@ -254,7 +255,7 @@ endfunction
 function! config#statusline(winnr)
   let l:stl = ""
   let l:stl .= s:highlight_stl_part(s:stl_cwd(), "STLCWD")
-  let l:stl .= s:highlight_stl_part(s:stl_file_flags(a:winnr), "STLFlags")
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(win_getid(a:winnr)), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
   let l:stl .= s:stl_filename(a:winnr)
@@ -273,7 +274,7 @@ endfunction
 function! config#statuslinenc(winnr)
   let l:stl = ""
   let l:stl .= s:stl_cwd()
-  let l:stl .= s:highlight_stl_part(s:stl_file_flags(a:winnr), "STLFlags")
+  let l:stl .= s:highlight_stl_part(s:stl_file_flags(win_getid(a:winnr)), "STLFlags")
   let l:stl .= s:stl_sep
   let l:stl .= "%<"
   let l:stl .= s:stl_filename(a:winnr)
