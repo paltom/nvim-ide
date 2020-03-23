@@ -161,7 +161,7 @@ function! s:execute_test(test_suite, test_name, suite_report)
       call s:report_test_fail(l:test_report, v:errors)
     endif
   catch
-    call s:report_test_error(l:test_report, v:exception)
+    call s:report_test_error(l:test_report, v:exception, v:throwpoint)
   finally
     let v:errors = []
   endtry
@@ -269,9 +269,9 @@ function! s:report_test_fail(report, reasons)
   let a:report["reason"] = a:reasons[-1]
 endfunction
 
-function! s:report_test_error(report, reasons)
+function! s:report_test_error(report, reasons, where)
   let a:report["result"] = s:ERROR
-  let a:report["reason"] = a:reasons
+  let a:report["reason"] = a:reasons." @ ".a:where
 endfunction
 
 " vim:fdm=marker:fmr=function!\ s\:tests.,endfunction
