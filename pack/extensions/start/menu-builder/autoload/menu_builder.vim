@@ -74,7 +74,7 @@
 "           - result from action function is discarded
 
 if !exists("g:menus")
-  let g:menus = {}
+  let g:menus = []
 endif
 
 " test suite object
@@ -93,49 +93,6 @@ function! s:command_1_func(args, flag, range, mods)
   echomsg "range: ".string(a:range)
   echomsg "mods: ".a:mods
 endfunction
-
-let g:menus["Test"] = []
-let g:menus["Test1"] = []
-let g:menus["Test2"] = []
-let s:test_cmd = {
-      \ "cmd": "command",
-      \ "menu": [
-      \   {
-      \     "cmd": "second",
-      \     "exec": "echo 'command'",
-      \   },
-      \   {
-      \     "cmd": "sec",
-      \     "exec": "echo 'sec'",
-      \   }
-      \ ]
-      \}
-let s:test_cmd_1 = {
-      \ "cmd": "command_1",
-      \ "exec": function("s:command_1_func"),
-      \}
-let s:test_cmd_2 = {
-      \ "cmd": "command_2",
-      \ "exec": "echo 'test'|echo 'after'",
-      \}
-let g:menus["Test"] = extend(
-      \ g:menus["Test"],
-      \ [
-      \   s:test_cmd,
-      \ ]
-      \)
-let g:menus["Test1"] = extend(
-      \ g:menus["Test1"],
-      \ [
-      \   s:test_cmd_1,
-      \ ]
-      \)
-let g:menus["Test2"] = extend(
-      \ g:menus["Test2"],
-      \ [
-      \   s:test_cmd_2,
-      \ ]
-      \)
 
 " =============================================================================
 function! s:cmd_names_in_menu(menu)
@@ -175,7 +132,7 @@ function! s:tests.update_menu_commands_creates_new_commands_for_all_menus()
 endfunction
 function! menu_builder#update_menu_commands()
   for menu_name in s:cmd_names_in_menu(g:menus)
-    call menu_builder#update_menu_command(menu_name)
+    call s:update_menu_command(menu_name)
   endfor
 endfunction
 
@@ -224,12 +181,61 @@ function! s:update_menu_command(cmd)
   execute l:command_def
 endfunction
 
-function! menu_builder#find_cmd_obj(menu_name, command_args)
-  let l:menu = get(g:menus, a:menu_name, [])
-  let l:menu_obj = {"cmd": a:menu_name, "menu": l:menu}
-  if empty(a:command_args) || empty(l:menu)
-    return [l:menu_obj, []]
-  endif
+function! s:tests.find_cmd_object_returns_cmd_object_in_flat_menu_structure()
+  let l:menu = [
+        \ {
+        \   "cmd": "TestCommand",
+        \ },
+        \ {
+        \   "cmd": "OtherCommand",
+        \ }
+        \]
+  let l:cmd_path = ["TestCommand"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal({"cmd": "TestCommand"}, l:cmd_obj)
+endfunction
+function! s:tests.find_cmd_object_returns_empty_dict_if_no_cmd_obj_found()
+  let l:menu = [
+        \ {
+        \   "cmd": "TestCommand",
+        \ },
+        \ {
+        \   "cmd": "OtherCommand",
+        \ }
+        \]
+  let l:cmd_path = ["LookForMe"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal({}, l:cmd_obj)
+endfunction
+function! s:tests.find_cmd_object_returns_cmd_object_matching_prefix()
+  let l:menu = [
+        \ {
+        \   "cmd": "TestCommand",
+        \ },
+        \ {
+        \   "cmd": "TestMenu",
+        \ }
+        \]
+  let l:cmd_path = ["TestC"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal({"cmd": "TestCommand"}, l:cmd_obj)
+endfunction
+function! s:find_cmd_obj(menu, cmd_path)
+  function! s:get_cmd_obj_from_menu(menu, cmd_name)
+    let l:cmd_obj = filter(
+          \ copy(a:menu),
+          \ { _, cmd_obj -> cmd_obj["cmd"] ==# a:cmd_name },
+          \)
+    if empty(l:cmd_obj)
+      return {}
+    else
+      return l:cmd_obj[0]
+    endif
+  endfunction
+  let l:menu_cmd_names = s:cmd_names_in_menu(a:menu)
+  let l:cmd_name = s:find_by_prefix_single(l:menu_cmd_names, a:cmd_path[0])
+  let l:cmd_obj = s:get_cmd_obj_from_menu(a:menu, l:cmd_name)
+  return l:cmd_obj
   function! s:walk_menus(current_cmd_obj, cmd_path)
     if empty(a:cmd_path)
       return [a:current_cmd_obj, []]
@@ -259,7 +265,57 @@ function! menu_builder#find_cmd_obj(menu_name, command_args)
     endif
     return s:walk_menus(l:next_cmd_obj_candidates[0], l:next_cmd_path)
   endfunction
-  return s:walk_menus(l:menu_obj, a:command_args)
+endfunction
+
+function! s:tests.find_by_prefix_single_returns_name_matching_prefix_unambiguously()
+  let l:names = [
+        \ "name_abc",
+        \ "name_def",
+        \]
+  let l:name_prefix = "name_d"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("name_def", l:name_found)
+endfunction
+function! s:tests.find_by_prefix_single_returns_empty_string_when_no_or_multiple_matches_found()
+  let l:names = [
+        \ "name_abc",
+        \ "name_def",
+        \]
+  let l:name_prefix = "test"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("", l:name_found)
+  let l:name_prefix = "name"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("", l:name_found)
+endfunction
+function! s:tests.find_by_prefix_single_returns_exact_match_when_multiple_matches_found()
+  let l:names = [
+        \ "name_abc",
+        \ "name_def",
+        \ "name",
+        \]
+  let l:name_prefix = "name"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("name", l:name_found)
+endfunction
+function! s:find_by_prefix_single(names, name)
+  let l:names_matching_prefix = filter(
+        \ copy(a:names),
+        \ { _, name -> name =~# '\v^'.a:name },
+        \)
+  if !empty(l:names_matching_prefix)
+    if len(l:names_matching_prefix) == 1
+      return l:names_matching_prefix[0]
+    endif
+    let l:exact_match = filter(
+          \ l:names_matching_prefix,
+          \ { _, name -> name ==# a:name },
+          \)
+    if !empty(l:exact_match)
+      return l:exact_match[0]
+    endif
+  endif
+  return ""
 endfunction
 
 function! s:invoke_menu_command(
