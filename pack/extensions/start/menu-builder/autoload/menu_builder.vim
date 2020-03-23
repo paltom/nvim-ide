@@ -86,29 +86,75 @@ function! s:tests._is_command(name)
 endfunction
 
 " =============================================================================
-function! s:command_1_func(args, flag, range, mods)
-  echomsg "Command 1 execution:"
-  echomsg "args: ".string(a:args)
-  echomsg "flag: ".a:flag
-  echomsg "range: ".string(a:range)
-  echomsg "mods: ".a:mods
-endfunction
 
-" =============================================================================
 function! s:cmd_names_in_menu(menu)
   return map(
         \ copy(a:menu),
         \ { _, cmd_obj -> cmd_obj["cmd"] },
         \)
 endfunction
-function! s:cmd_names_from_menu_starting_with(
-      \ menu,
-      \ cmd_name_prefix_pattern,
-      \)
-  return filter(
+
+function! s:get_cmd_obj_from_menu(menu, cmd_name)
+  let l:cmd_obj = filter(
         \ copy(a:menu),
-        \ { _, cmd_obj -> cmd_obj["cmd"] =~# '\v^'.a:cmd_name_prefix_pattern },
+        \ { _, cmd_obj -> cmd_obj["cmd"] ==# a:cmd_name },
         \)
+  if empty(l:cmd_obj)
+    return {}
+  else
+    return l:cmd_obj[0]
+  endif
+endfunction
+
+function! s:tests.find_by_prefix_single_returns_name_matching_prefix_unambiguously()
+  let l:names = [
+        \ "name_abc",
+        \ "name_def",
+        \]
+  let l:name_prefix = "name_d"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("name_def", l:name_found)
+endfunction
+function! s:tests.find_by_prefix_single_returns_empty_string_when_no_or_multiple_matches_found()
+  let l:names = [
+        \ "name_abc",
+        \ "name_def",
+        \]
+  let l:name_prefix = "test"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("", l:name_found)
+  let l:name_prefix = "name"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("", l:name_found)
+endfunction
+function! s:tests.find_by_prefix_single_returns_exact_match_when_multiple_matches_found()
+  let l:names = [
+        \ "name_abc",
+        \ "name_def",
+        \ "name",
+        \]
+  let l:name_prefix = "name"
+  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
+  call assert_equal("name", l:name_found)
+endfunction
+function! s:find_by_prefix_single(names, name)
+  let l:names_matching_prefix = filter(
+        \ copy(a:names),
+        \ { _, name -> name =~# '\v^'.a:name },
+        \)
+  if !empty(l:names_matching_prefix)
+    if len(l:names_matching_prefix) == 1
+      return l:names_matching_prefix[0]
+    endif
+    let l:exact_match = filter(
+          \ l:names_matching_prefix,
+          \ { _, name -> name ==# a:name },
+          \)
+    if !empty(l:exact_match)
+      return l:exact_match[0]
+    endif
+  endif
+  return ""
 endfunction
 
 function! s:tests.update_menu_commands_creates_new_commands_for_all_menus()
@@ -181,7 +227,7 @@ function! s:update_menu_command(cmd)
   execute l:command_def
 endfunction
 
-function! s:tests.find_cmd_object_returns_cmd_object_in_flat_menu_structure()
+function! s:tests.find_cmd_obj_returns_cmd_object_in_flat_menu_structure()
   let l:menu = [
         \ {
         \   "cmd": "TestCommand",
@@ -194,7 +240,7 @@ function! s:tests.find_cmd_object_returns_cmd_object_in_flat_menu_structure()
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal({"cmd": "TestCommand"}, l:cmd_obj)
 endfunction
-function! s:tests.find_cmd_object_returns_empty_dict_if_no_cmd_obj_found()
+function! s:tests.find_cmd_obj_returns_empty_dict_if_no_cmd_obj_found()
   let l:menu = [
         \ {
         \   "cmd": "TestCommand",
@@ -207,7 +253,20 @@ function! s:tests.find_cmd_object_returns_empty_dict_if_no_cmd_obj_found()
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal({}, l:cmd_obj)
 endfunction
-function! s:tests.find_cmd_object_returns_cmd_object_matching_prefix()
+function! s:tests.find_cmd_obj_returns_empty_dict_if_no_path_given()
+  let l:menu = [
+        \ {
+        \   "cmd": "TestCommand",
+        \ },
+        \ {
+        \   "cmd": "OtherCommand",
+        \ }
+        \]
+  let l:cmd_path = []
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal({}, l:cmd_obj)
+endfunction
+function! s:tests.find_cmd_obj_returns_cmd_object_matching_prefix()
   let l:menu = [
         \ {
         \   "cmd": "TestCommand",
@@ -220,102 +279,129 @@ function! s:tests.find_cmd_object_returns_cmd_object_matching_prefix()
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal({"cmd": "TestCommand"}, l:cmd_obj)
 endfunction
-function! s:find_cmd_obj(menu, cmd_path)
-  function! s:get_cmd_obj_from_menu(menu, cmd_name)
-    let l:cmd_obj = filter(
-          \ copy(a:menu),
-          \ { _, cmd_obj -> cmd_obj["cmd"] ==# a:cmd_name },
-          \)
-    if empty(l:cmd_obj)
-      return {}
-    else
-      return l:cmd_obj[0]
-    endif
-  endfunction
-  let l:menu_cmd_names = s:cmd_names_in_menu(a:menu)
-  let l:cmd_name = s:find_by_prefix_single(l:menu_cmd_names, a:cmd_path[0])
-  let l:cmd_obj = s:get_cmd_obj_from_menu(a:menu, l:cmd_name)
-  return l:cmd_obj
-  function! s:walk_menus(current_cmd_obj, cmd_path)
-    if empty(a:cmd_path)
-      return [a:current_cmd_obj, []]
-    endif
-    if !has_key(a:current_cmd_obj, "menu")
-      return [a:current_cmd_obj, a:cmd_path]
-    endif
-    let [l:next_cmd_name; l:next_cmd_path] = a:cmd_path
-    let l:next_cmd_obj_candidates = s:cmd_names_from_menu_starting_with(
-          \ a:current_cmd_obj["menu"],
-          \ l:next_cmd_name,
-          \)
-    " try to find exact match where multiple cmds start with next_cmd_name
-    if len(l:next_cmd_obj_candidates) > 1
-      let l:next_cmd_obj_candidates = filter(
-            \ l:next_cmd_obj_candidates,
-            \ { _, co -> co["cmd"] ==# l:next_cmd_name },
-            \)
-    endif
-    if len(l:next_cmd_obj_candidates) != 1
-      if len(l:next_cmd_obj_candidates) > 1
-        echohl WarningMsg
-        echomsg "Cannot find single cmd object with '".l:next_cmd_name."' name"
-        echohl None
-      endif
-      return [a:current_cmd_obj, a:cmd_path]
-    endif
-    return s:walk_menus(l:next_cmd_obj_candidates[0], l:next_cmd_path)
-  endfunction
-endfunction
-
-function! s:tests.find_by_prefix_single_returns_name_matching_prefix_unambiguously()
-  let l:names = [
-        \ "name_abc",
-        \ "name_def",
+function! s:tests.find_cmd_obj_returns_cmd_object_in_nested_menu_structure()
+  let l:menu = [
+        \ {
+        \   "cmd": "level1",
+        \   "menu": [
+        \     {
+        \       "cmd": "test",
+        \     },
+        \   ]
+        \ },
+        \ {
+        \   "cmd": "test",
+        \   "menu": [],
+        \ }
         \]
-  let l:name_prefix = "name_d"
-  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
-  call assert_equal("name_def", l:name_found)
+  let l:cmd_path = ["level1", "test"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal({"cmd": "test"}, l:cmd_obj)
+  let l:cmd_path = ["test"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal({"cmd": "test", "menu": []}, l:cmd_obj)
 endfunction
-function! s:tests.find_by_prefix_single_returns_empty_string_when_no_or_multiple_matches_found()
-  let l:names = [
-        \ "name_abc",
-        \ "name_def",
+function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possible()
+  let l:menu = [
+        \ {
+        \   "cmd": "level1",
+        \   "menu": [
+        \     {
+        \       "cmd": "level2",
+        \       "menu": [
+        \         {
+        \           "cmd": "test",
+        \         }
+        \       ]
+        \     },
+        \   ]
+        \ },
         \]
-  let l:name_prefix = "test"
-  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
-  call assert_equal("", l:name_found)
-  let l:name_prefix = "name"
-  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
-  call assert_equal("", l:name_found)
-endfunction
-function! s:tests.find_by_prefix_single_returns_exact_match_when_multiple_matches_found()
-  let l:names = [
-        \ "name_abc",
-        \ "name_def",
-        \ "name",
-        \]
-  let l:name_prefix = "name"
-  let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
-  call assert_equal("name", l:name_found)
-endfunction
-function! s:find_by_prefix_single(names, name)
-  let l:names_matching_prefix = filter(
-        \ copy(a:names),
-        \ { _, name -> name =~# '\v^'.a:name },
+  let l:cmd_path = ["level1"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal(
+        \ {
+        \   "cmd": "level1",
+        \   "menu": [
+        \     {
+        \       "cmd": "level2",
+        \       "menu": [
+        \         {
+        \           "cmd": "test"
+        \         }
+        \       ]
+        \     }
+        \   ]
+        \ },
+        \ l:cmd_obj
         \)
-  if !empty(l:names_matching_prefix)
-    if len(l:names_matching_prefix) == 1
-      return l:names_matching_prefix[0]
-    endif
-    let l:exact_match = filter(
-          \ l:names_matching_prefix,
-          \ { _, name -> name ==# a:name },
-          \)
-    if !empty(l:exact_match)
-      return l:exact_match[0]
-    endif
+  let l:cmd_path = ["level1", "level2"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal(
+        \ {
+        \   "cmd": "level2",
+        \   "menu": [
+        \     {
+        \       "cmd": "test"
+        \     }
+        \   ]
+        \ },
+        \ l:cmd_obj
+        \)
+  let l:cmd_path = ["level1", "level2", "test"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal(
+        \ {
+        \   "cmd": "test"
+        \ },
+        \ l:cmd_obj
+        \)
+  let l:cmd_path = ["level1", "level2", "level3"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal(
+        \ {
+        \   "cmd": "level2",
+        \   "menu": [
+        \     {
+        \       "cmd": "test"
+        \     }
+        \   ]
+        \ },
+        \ l:cmd_obj
+        \)
+  let l:menu = [
+        \ {
+        \   "cmd": "level1",
+        \ }
+        \]
+  let l:cmd_path = ["level1", "level2", "level3"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal(
+        \ {
+        \   "cmd": "level1"
+        \ },
+        \ l:cmd_obj
+        \)
+  let l:cmd_path = ["test"]
+  let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
+  call assert_equal({}, l:cmd_obj)
+endfunction
+function! s:find_cmd_obj(menu, cmd_path)
+  let l:cmd_obj = {}
+  if empty(a:cmd_path)
+    return l:cmd_obj
   endif
-  return ""
+  let l:menu = copy(a:menu)
+  for cmd_step in a:cmd_path
+    let l:menu_cmd_names = s:cmd_names_in_menu(l:menu)
+    let l:cmd_name = s:find_by_prefix_single(l:menu_cmd_names, cmd_step)
+    if empty(l:cmd_name)
+      return l:cmd_obj
+    endif
+    let l:cmd_obj = s:get_cmd_obj_from_menu(l:menu, l:cmd_name)
+    let l:menu = get(l:cmd_obj, "menu", [])
+  endfor
+  return l:cmd_obj
 endfunction
 
 function! s:invoke_menu_command(
