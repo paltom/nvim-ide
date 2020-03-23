@@ -204,7 +204,6 @@ function! s:tests.update_menu_command_fails_on_invalid_name()
 endfunction
 function! s:update_menu_command(cmd)
   let l:command_func_args = [
-        \ '"'.a:cmd.'"',
         \ "<bang>v:false",
         \ "<range>?[<line1>,<line2>][0:<range>-1]:[]",
         \ "split(<q-args>)",
@@ -238,7 +237,7 @@ function! s:tests.find_cmd_obj_returns_cmd_object_in_flat_menu_structure()
         \]
   let l:cmd_path = ["TestCommand"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
-  call assert_equal({"cmd": "TestCommand"}, l:cmd_obj)
+  call assert_equal([{"cmd": "TestCommand"}, []], l:cmd_obj)
 endfunction
 function! s:tests.find_cmd_obj_returns_empty_dict_if_no_cmd_obj_found()
   let l:menu = [
@@ -251,7 +250,7 @@ function! s:tests.find_cmd_obj_returns_empty_dict_if_no_cmd_obj_found()
         \]
   let l:cmd_path = ["LookForMe"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
-  call assert_equal({}, l:cmd_obj)
+  call assert_equal([{}, ["LookForMe"]], l:cmd_obj)
 endfunction
 function! s:tests.find_cmd_obj_returns_empty_dict_if_no_path_given()
   let l:menu = [
@@ -264,7 +263,7 @@ function! s:tests.find_cmd_obj_returns_empty_dict_if_no_path_given()
         \]
   let l:cmd_path = []
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
-  call assert_equal({}, l:cmd_obj)
+  call assert_equal([{}, []], l:cmd_obj)
 endfunction
 function! s:tests.find_cmd_obj_returns_cmd_object_matching_prefix()
   let l:menu = [
@@ -277,7 +276,7 @@ function! s:tests.find_cmd_obj_returns_cmd_object_matching_prefix()
         \]
   let l:cmd_path = ["TestC"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
-  call assert_equal({"cmd": "TestCommand"}, l:cmd_obj)
+  call assert_equal([{"cmd": "TestCommand"}, []], l:cmd_obj)
 endfunction
 function! s:tests.find_cmd_obj_returns_cmd_object_in_nested_menu_structure()
   let l:menu = [
@@ -296,10 +295,22 @@ function! s:tests.find_cmd_obj_returns_cmd_object_in_nested_menu_structure()
         \]
   let l:cmd_path = ["level1", "test"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
-  call assert_equal({"cmd": "test"}, l:cmd_obj)
+  call assert_equal(
+        \ [
+        \   {"cmd": "test"},
+        \   [],
+        \ ],
+        \ l:cmd_obj
+        \)
   let l:cmd_path = ["test"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
-  call assert_equal({"cmd": "test", "menu": []}, l:cmd_obj)
+  call assert_equal(
+        \ [
+        \   {"cmd": "test", "menu": []},
+        \   [],
+        \ ],
+        \ l:cmd_obj
+        \)
 endfunction
 function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possible()
   let l:menu = [
@@ -320,53 +331,65 @@ function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possibl
   let l:cmd_path = ["level1"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal(
-        \ {
-        \   "cmd": "level1",
-        \   "menu": [
-        \     {
-        \       "cmd": "level2",
-        \       "menu": [
-        \         {
-        \           "cmd": "test"
-        \         }
-        \       ]
-        \     }
-        \   ]
-        \ },
+        \ [
+        \   {
+        \     "cmd": "level1",
+        \     "menu": [
+        \       {
+        \         "cmd": "level2",
+        \         "menu": [
+        \           {
+        \             "cmd": "test"
+        \           }
+        \         ]
+        \       }
+        \     ]
+        \   },
+        \   [],
+        \ ],
         \ l:cmd_obj
         \)
   let l:cmd_path = ["level1", "level2"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal(
-        \ {
-        \   "cmd": "level2",
-        \   "menu": [
-        \     {
-        \       "cmd": "test"
-        \     }
-        \   ]
-        \ },
+        \ [
+        \   {
+        \     "cmd": "level2",
+        \     "menu": [
+        \       {
+        \         "cmd": "test"
+        \       }
+        \     ]
+        \   },
+        \   [],
+        \ ],
         \ l:cmd_obj
         \)
   let l:cmd_path = ["level1", "level2", "test"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal(
-        \ {
-        \   "cmd": "test"
-        \ },
+        \ [
+        \   {
+        \     "cmd": "test"
+        \   },
+        \   [],
+        \ ],
         \ l:cmd_obj
         \)
   let l:cmd_path = ["level1", "level2", "level3"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal(
-        \ {
-        \   "cmd": "level2",
-        \   "menu": [
-        \     {
-        \       "cmd": "test"
-        \     }
-        \   ]
-        \ },
+        \ [
+        \   {
+        \     "cmd": "level2",
+        \     "menu": [
+        \       {
+        \         "cmd": "test"
+        \       }
+        \     ]
+        \   },
+        \   ["level3"],
+        \ ],
         \ l:cmd_obj
         \)
   let l:menu = [
@@ -377,42 +400,90 @@ function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possibl
   let l:cmd_path = ["level1", "level2", "level3"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal(
-        \ {
-        \   "cmd": "level1"
-        \ },
+        \ [
+        \   {
+        \     "cmd": "level1"
+        \   },
+        \   ["level2", "level3"],
+        \ ],
         \ l:cmd_obj
         \)
   let l:cmd_path = ["test"]
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
-  call assert_equal({}, l:cmd_obj)
+  call assert_equal([{}, ["test"]], l:cmd_obj)
 endfunction
 function! s:find_cmd_obj(menu, cmd_path)
   let l:cmd_obj = {}
   if empty(a:cmd_path)
-    return l:cmd_obj
+    return [l:cmd_obj, []]
   endif
   let l:menu = copy(a:menu)
-  for cmd_step in a:cmd_path
+  let l:cmd_path = a:cmd_path
+  while !empty(l:cmd_path)
+    let [l:cmd_step; l:cmd_path] = l:cmd_path
     let l:menu_cmd_names = s:cmd_names_in_menu(l:menu)
     let l:cmd_name = s:find_by_prefix_single(l:menu_cmd_names, cmd_step)
     if empty(l:cmd_name)
-      return l:cmd_obj
+      return [l:cmd_obj, insert(l:cmd_path, l:cmd_step)]
     endif
     let l:cmd_obj = s:get_cmd_obj_from_menu(l:menu, l:cmd_name)
     let l:menu = get(l:cmd_obj, "menu", [])
-  endfor
-  return l:cmd_obj
+  endwhile
+  return [l:cmd_obj, l:cmd_path]
 endfunction
 
+function! s:tests.invoke_menu_command_executes_menu_action_found_by_command_args()
+  let l:menus = copy(g:menus)
+  let l:invoked = v:false
+  function! s:tests._action(args, flag, range, mods) closure
+    let l:invoked = v:true
+  endfunction
+  let g:menus = [
+        \ {
+        \   "cmd": "Test",
+        \   "exec": { a, f, r, m -> s:tests._action(a, f, r, m) },
+        \ }
+        \]
+  let l:command_args = ["Test"]
+  call s:invoke_menu_command(
+        \ v:false,
+        \ [],
+        \ l:command_args,
+        \ "",
+        \)
+  call assert_true(l:invoked)
+  let g:menus = l:menus
+endfunction
+function! s:tests.invoke_menu_command_passes_additional_arguments_to_action()
+  let l:menus = copy(g:menus)
+  let l:args = []
+  function! s:tests._action(args, flag, range, mods) closure
+    let l:args = a:args
+  endfunction
+  let g:menus = [
+        \ {
+        \   "cmd": "Test",
+        \   "exec": { a, f, r, m -> s:tests._action(a, f, r, m) },
+        \ }
+        \]
+  let l:command_args = ["Test", "arg1", "arg2", "arg3"]
+  call s:invoke_menu_command(
+        \ v:false,
+        \ [],
+        \ l:command_args,
+        \ "",
+        \)
+  call assert_equal(["arg1", "arg2", "arg3"], l:args)
+  let g:menus = l:menus
+endfunction
 function! s:invoke_menu_command(
-      \ menu_name,
       \ flag,
       \ range,
       \ args,
       \ mods,
       \)
-  let [l:cmd_obj, l:cmd_args] = menu_builder#find_cmd_obj(a:menu_name, a:args)
-  call s:execute_cmd_obj(l:cmd_obj, l:cmd_args, a:flag, a:range, a:mods)
+  let [l:cmd_obj, l:args_left] = s:find_cmd_obj(g:menus, a:args)
+  call s:execute_cmd_obj(l:cmd_obj, l:args_left, a:flag, a:range, a:mods)
 endfunction
 
 function! s:execute_cmd_obj(
