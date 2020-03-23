@@ -77,6 +77,14 @@ if !exists("g:menus")
   let g:menus = {}
 endif
 
+" test suite object
+let s:tests = test#suite(expand("%:p"))
+" test helper functions
+function! s:tests._is_command(name)
+  let l:commands = execute("filter /".a:name.'\>/ command')
+  return !empty(l:commands)
+endfunction
+
 " =============================================================================
 function! s:command_1_func(args, flag, range, mods)
   echomsg "Command 1 execution:"
@@ -130,6 +138,12 @@ let g:menus["Test2"] = extend(
       \)
 
 " =============================================================================
+function! s:cmd_names_in_menu(menu)
+  return map(
+        \ copy(a:menu),
+        \ { _, cmd_obj -> cmd_obj["cmd"] },
+        \)
+endfunction
 function! s:cmd_names_from_menu_starting_with(
       \ menu,
       \ cmd_name_prefix_pattern,
@@ -140,27 +154,70 @@ function! s:cmd_names_from_menu_starting_with(
         \)
 endfunction
 
+function! s:tests.update_menu_commands_creates_new_commands_for_all_menus()
+  let l:menus = copy(g:menus)
+  let l:menu_names = [
+        \ "TestCommand",
+        \ "TestName",
+        \]
+  let g:menus = map(
+        \ copy(l:menu_names),
+        \ { _, name -> {"cmd": name} }
+        \)
+  call menu_builder#update_menu_commands()
+  for cmd_name in l:menu_names
+    call assert_true(s:tests._is_command(cmd_name))
+  endfor
+  for cmd_name in l:menu_names
+    execute "delcommand ".cmd_name
+  endfor
+  let g:menus = l:menus
+endfunction
 function! menu_builder#update_menu_commands()
-  for menu_name in keys(g:menus)
+  for menu_name in s:cmd_names_in_menu(g:menus)
     call menu_builder#update_menu_command(menu_name)
   endfor
 endfunction
 
-function! menu_builder#update_menu_command(menu_name)
+function! s:tests.update_menu_command_given_cmd_name()
+  let l:cmd_name = "TestCommand"
+  call s:update_menu_command(l:cmd_name)
+  call assert_true(s:tests._is_command(l:cmd_name))
+  execute "delcommand ".l:cmd_name
+endfunction
+function! s:tests.update_menu_command_fails_on_invalid_name()
+  let l:cmd_name = "test"
+  try
+    call s:update_menu_command(l:cmd_name)
+  catch
+    call assert_exception('E183:')
+  endtry
+  let l:cmd_name = "te:st"
+  try
+    call s:update_menu_command(l:cmd_name)
+  catch
+    call assert_exception('E182:')
+  endtry
+endfunction
+function! s:update_menu_command(cmd)
+  let l:command_func_args = [
+        \ '"'.a:cmd.'"',
+        \ "<bang>v:false",
+        \ "<range>?[<line1>,<line2>][0:<range>-1]:[]",
+        \ "split(<q-args>)",
+        \ "<q-mods>",
+        \]
+  let l:command_func_args = join(l:command_func_args, ", ")
   let l:command_def = [
         \ "command!",
-        \ "-nargs=+",
+        \ "-nargs=*",
         \ "-complete=custom,s:complete_menu_cmd",
         \ "-range",
         \ "-bang",
         \ "-bar",
-        \ a:menu_name,
+        \ a:cmd,
         \ "call s:invoke_menu_command(",
-        \ '"'.a:menu_name.'",',
-        \ "<bang>v:false,",
-        \ "<range>?[<line1>,<line2>][0:<range>-1]:[],",
-        \ "split(<q-args>),",
-        \ "<q-mods>,",
+        \ l:command_func_args,
         \ ")",
         \]
   let l:command_def = join(l:command_def, " ")
@@ -393,4 +450,4 @@ function! s:complete_menu_cmd(
   return join(l:cmds_in_menu, "\n")
 endfunction
 
-" vim:foldmethod=indent
+" vim:foldmethod=marker:fmr=function!\ s\:tests.,endfunction
