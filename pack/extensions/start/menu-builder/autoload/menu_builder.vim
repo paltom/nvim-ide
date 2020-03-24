@@ -3,31 +3,6 @@
 "
 " Data type:
 " cmd_object - Dictionary with following keys:
-"   - cmd - (String) (Sub)command name. Mandatory. Uniquely identifies
-"           cmd_object inside menu. Cannot contain spaces or double-quotes. To
-"           uniquely identify cmd object in menu, shortest prefix is
-"           sufficient. If prefix is also a full cmd value, it identifies this
-"           cmd object.
-"           Example:
-"
-"               [{"cmd": "short"}, {"cmd": "shortest"}]
-"
-"               "short": identifies first cmd object (prefix matches also
-"               second cmd object, but first one is a full match)
-"               "shorte": identifies second cmd object (the only match for
-"               prefix)
-"               "shor": does not uniquely identify any object (prefix matches
-"               both objects)
-"
-"   - menu - (List[cmd_object]) Defines subcommands for given cmd object.
-"            Optional, mandatory if there is no exec attribute in cmd object.
-"            Cmd objects in menu are available only when current cmd object is
-"            selected (by uniquely identifying path). Completion candidates
-"            for Vim command (top-level menu) are selected from cmd attribute
-"            values of cmd objects in menu attribute. If there is no menu
-"            attribute in cmd object, there are no cmd completion candidates
-"            (leaf cmd object).
-"
 "   - exec - (String|Funcref) Action to execute when cmd object is invoked
 "            from cmdline. Optional, mandatory if there is no menu attribute
 "            in cmd object.
@@ -486,6 +461,23 @@ function! s:invoke_menu_command(
   call s:execute_cmd_obj(l:cmd_obj, l:args_left, a:flag, a:range, a:mods)
 endfunction
 
+function! s:tests.execute_cmd_obj_returns_if_there_is_no_exec()
+  let l:cmd_obj = {
+        \ "cmd": "Test",
+        \}
+  let ExecStringCmd = function("s:execute_string_command")
+  let ExecFuncCmd = function("s:execute_func_command")
+  let l:called_any = v:false
+  function! s:execute_string_command(m, r, e, f, a) closure
+    let l:called_any = v:true
+  endfunction
+  function! s:execute_func_command(e, a, f, r, m) closure
+    let l:called_any = v:true
+  endfunction
+  call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
+  call assert_false(l:called_any)
+  source %
+endfunction
 function! s:execute_cmd_obj(
       \ cmd_obj,
       \ args,
