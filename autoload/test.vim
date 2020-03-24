@@ -53,6 +53,23 @@ function! s:tests.execute_should_run_all_tests_even_if_there_are_failures()
         \ "Failing function should be called twice"
         \)
 endfunction
+function! s:tests.execute_should_skip_test_function_starting_with_underscore() " helpers
+  let l:suite = test#suite("helpers")
+  let l:test_calls = 0
+  function! s:tests._increment() closure
+    let l:test_calls = l:test_calls + 1
+  endfunction
+  function! s:tests._incrementer()
+    call s:tests._increment()
+  endfunction
+  let l:suite._test1 = { -> s:tests._incrementer() }
+  call execute("call test#execute('helpers')", "silent!")
+  call assert_equal(
+        \ 0,
+        \ l:test_calls,
+        \ "Underscored test function should not be called as test",
+        \)
+endfunction
 function! test#execute(suite_name)
   let l:script_suite = get(
         \ s:test_suites,
@@ -61,7 +78,11 @@ function! test#execute(suite_name)
         \)
   let l:report = {}
   let s:suite_reports[a:suite_name] = l:report
-  for func_name in sort(keys(l:script_suite))
+  let l:test_functions_in_suite = filter(
+        \ keys(l:script_suite),
+        \ { _, func_name -> func_name !~# '\v^_' },
+        \)
+  for func_name in sort(l:test_functions_in_suite)
     call s:execute_test(l:script_suite, func_name, l:report)
   endfor
 endfunction
@@ -140,7 +161,7 @@ function! s:execute_test(test_suite, test_name, suite_report)
       call s:report_test_fail(l:test_report, v:errors)
     endif
   catch
-    call s:report_test_error(l:test_report, v:exception)
+    call s:report_test_error(l:test_report, v:exception, v:throwpoint)
   finally
     let v:errors = []
   endtry
@@ -248,9 +269,9 @@ function! s:report_test_fail(report, reasons)
   let a:report["reason"] = a:reasons[-1]
 endfunction
 
-function! s:report_test_error(report, reasons)
+function! s:report_test_error(report, reasons, where)
   let a:report["result"] = s:ERROR
-  let a:report["reason"] = a:reasons
+  let a:report["reason"] = a:reasons." @ ".a:where
 endfunction
 
 " vim:fdm=marker:fmr=function!\ s\:tests.,endfunction
