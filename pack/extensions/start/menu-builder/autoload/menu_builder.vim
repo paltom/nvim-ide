@@ -465,8 +465,12 @@ function! s:tests.execute_cmd_obj_returns_if_there_is_no_exec()
   let l:cmd_obj = {
         \ "cmd": "Test",
         \}
-  let ExecStringCmd = function("s:execute_string_command")
-  let ExecFuncCmd = function("s:execute_func_command")
+  let l:execute_string_command_func_code = execute(
+        \ "function! s:execute_string_command"
+        \)
+  let l:execute_func_command_func_code = execute(
+        \ "function! s:execute_func_command"
+        \)
   let l:called_any = v:false
   function! s:execute_string_command(m, r, e, f, a) closure
     let l:called_any = v:true
@@ -476,7 +480,8 @@ function! s:tests.execute_cmd_obj_returns_if_there_is_no_exec()
   endfunction
   call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
   call assert_false(l:called_any)
-  source %
+  execute(l:execute_string_command_func_code)
+  execute(l:execute_func_command_func_code)
 endfunction
 function! s:execute_cmd_obj(
       \ cmd_obj,
