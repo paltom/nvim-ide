@@ -273,5 +273,3 @@ function! s:report_test_error(report, reasons, where)
   let a:report["result"] = s:ERROR
   let a:report["reason"] = a:reasons." @ ".a:where
 endfunction
-
-" vim:fdm=marker:fmr=function!\ s\:tests.,endfunction

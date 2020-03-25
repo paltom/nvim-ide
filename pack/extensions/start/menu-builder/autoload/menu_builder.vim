@@ -55,10 +55,10 @@ endif
 " test suite object
 let s:tests = test#suite(expand("%:p"))
 " test helper functions
-function! s:tests._is_full_command(name)
+function! s:tests._is_full_command(name) " {{{1
   let l:result = exists(":".a:name)
   return l:result == 2
-endfunction
+endfunction " }}}
 
 " =============================================================================
 
@@ -81,7 +81,7 @@ function! s:get_cmd_obj_from_menu(menu, cmd_name)
   endif
 endfunction
 
-function! s:tests.find_by_prefix_single_returns_name_matching_prefix_unambiguously()
+function! s:tests.find_by_prefix_single_returns_name_matching_prefix_unambiguously() " {{{1
   let l:names = [
         \ "name_abc",
         \ "name_def",
@@ -90,7 +90,7 @@ function! s:tests.find_by_prefix_single_returns_name_matching_prefix_unambiguous
   let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
   call assert_equal("name_def", l:name_found)
 endfunction
-function! s:tests.find_by_prefix_single_returns_empty_string_when_no_or_multiple_matches_found()
+function! s:tests.find_by_prefix_single_returns_empty_string_when_no_or_multiple_matches_found() " {{{1
   let l:names = [
         \ "name_abc",
         \ "name_def",
@@ -102,7 +102,7 @@ function! s:tests.find_by_prefix_single_returns_empty_string_when_no_or_multiple
   let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
   call assert_equal("", l:name_found)
 endfunction
-function! s:tests.find_by_prefix_single_returns_exact_match_when_multiple_matches_found()
+function! s:tests.find_by_prefix_single_returns_exact_match_when_multiple_matches_found() " {{{1
   let l:names = [
         \ "name_abc",
         \ "name_def",
@@ -112,6 +112,7 @@ function! s:tests.find_by_prefix_single_returns_exact_match_when_multiple_matche
   let l:name_found = s:find_by_prefix_single(l:names, l:name_prefix)
   call assert_equal("name", l:name_found)
 endfunction
+" }}}
 function! s:find_by_prefix_single(names, name)
   let l:names_matching_prefix = filter(
         \ copy(a:names),
@@ -132,7 +133,7 @@ function! s:find_by_prefix_single(names, name)
   return ""
 endfunction
 
-function! s:tests.update_menu_commands_creates_new_commands_for_all_menus()
+function! s:tests.update_menu_commands_creates_new_commands_for_all_menus() " {{{1
   let l:menus = copy(g:menus)
   let l:menu_names = [
         \ "TestCommand",
@@ -151,19 +152,20 @@ function! s:tests.update_menu_commands_creates_new_commands_for_all_menus()
   endfor
   let g:menus = l:menus
 endfunction
+" }}}
 function! menu_builder#update_menu_commands()
   for menu_name in s:cmd_names_in_menu(g:menus)
     call s:update_menu_command(menu_name)
   endfor
 endfunction
 
-function! s:tests.update_menu_command_given_cmd_name()
+function! s:tests.update_menu_command_given_cmd_name() " {{{1
   let l:cmd_name = "TestCommand"
   call s:update_menu_command(l:cmd_name)
   call assert_true(s:tests._is_full_command(l:cmd_name))
   execute "delcommand ".l:cmd_name
 endfunction
-function! s:tests.update_menu_command_fails_on_invalid_name()
+function! s:tests.update_menu_command_fails_on_invalid_name() " {{{1
   let l:cmd_name = "test"
   try
     call s:update_menu_command(l:cmd_name)
@@ -177,6 +179,7 @@ function! s:tests.update_menu_command_fails_on_invalid_name()
     call assert_exception('E182:')
   endtry
 endfunction
+" }}}
 function! s:update_menu_command(cmd)
   let l:command_func_args = [
         \ "<bang>v:false",
@@ -201,7 +204,7 @@ function! s:update_menu_command(cmd)
   execute l:command_def
 endfunction
 
-function! s:tests.find_cmd_obj_returns_cmd_object_in_flat_menu_structure()
+function! s:tests.find_cmd_obj_returns_cmd_object_in_flat_menu_structure() " {{{1
   let l:menu = [
         \ {
         \   "cmd": "TestCommand",
@@ -214,7 +217,7 @@ function! s:tests.find_cmd_obj_returns_cmd_object_in_flat_menu_structure()
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal([{"cmd": "TestCommand"}, []], l:cmd_obj)
 endfunction
-function! s:tests.find_cmd_obj_returns_empty_dict_if_no_cmd_obj_found()
+function! s:tests.find_cmd_obj_returns_empty_dict_if_no_cmd_obj_found() " {{{1
   let l:menu = [
         \ {
         \   "cmd": "TestCommand",
@@ -227,7 +230,7 @@ function! s:tests.find_cmd_obj_returns_empty_dict_if_no_cmd_obj_found()
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal([{}, ["LookForMe"]], l:cmd_obj)
 endfunction
-function! s:tests.find_cmd_obj_returns_empty_dict_if_no_path_given()
+function! s:tests.find_cmd_obj_returns_empty_dict_if_no_path_given() " {{{1
   let l:menu = [
         \ {
         \   "cmd": "TestCommand",
@@ -240,7 +243,7 @@ function! s:tests.find_cmd_obj_returns_empty_dict_if_no_path_given()
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal([{}, []], l:cmd_obj)
 endfunction
-function! s:tests.find_cmd_obj_returns_cmd_object_matching_prefix()
+function! s:tests.find_cmd_obj_returns_cmd_object_matching_prefix() " {{{1
   let l:menu = [
         \ {
         \   "cmd": "TestCommand",
@@ -253,7 +256,7 @@ function! s:tests.find_cmd_obj_returns_cmd_object_matching_prefix()
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal([{"cmd": "TestCommand"}, []], l:cmd_obj)
 endfunction
-function! s:tests.find_cmd_obj_returns_cmd_object_in_nested_menu_structure()
+function! s:tests.find_cmd_obj_returns_cmd_object_in_nested_menu_structure() " {{{1
   let l:menu = [
         \ {
         \   "cmd": "level1",
@@ -287,7 +290,7 @@ function! s:tests.find_cmd_obj_returns_cmd_object_in_nested_menu_structure()
         \ l:cmd_obj
         \)
 endfunction
-function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possible()
+function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possible() " {{{1
   let l:menu = [
         \ {
         \   "cmd": "level1",
@@ -387,6 +390,7 @@ function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possibl
   let l:cmd_obj = s:find_cmd_obj(l:menu, l:cmd_path)
   call assert_equal([{}, ["test"]], l:cmd_obj)
 endfunction
+" }}}
 function! s:find_cmd_obj(menu, cmd_path)
   let l:cmd_obj = {}
   if empty(a:cmd_path)
@@ -407,7 +411,7 @@ function! s:find_cmd_obj(menu, cmd_path)
   return [l:cmd_obj, l:cmd_path]
 endfunction
 
-function! s:tests.invoke_menu_command_executes_menu_action_found_by_command_args()
+function! s:tests.invoke_menu_command_executes_menu_action_found_by_command_args() " {{[1
   let l:menus = copy(g:menus)
   let l:invoked = v:false
   function! s:tests._action(args, flag, range, mods) closure
@@ -429,7 +433,7 @@ function! s:tests.invoke_menu_command_executes_menu_action_found_by_command_args
   call assert_true(l:invoked)
   let g:menus = l:menus
 endfunction
-function! s:tests.invoke_menu_command_passes_additional_arguments_to_action()
+function! s:tests.invoke_menu_command_passes_additional_arguments_to_action() " {{[1
   let l:menus = copy(g:menus)
   let l:args = []
   function! s:tests._action(args, flag, range, mods) closure
@@ -451,6 +455,7 @@ function! s:tests.invoke_menu_command_passes_additional_arguments_to_action()
   call assert_equal(["arg1", "arg2", "arg3"], l:args)
   let g:menus = l:menus
 endfunction
+" }}}
 function! s:invoke_menu_command(
       \ flag,
       \ range,
@@ -461,7 +466,7 @@ function! s:invoke_menu_command(
   call s:execute_cmd_obj(l:cmd_obj, l:args_left, a:flag, a:range, a:mods)
 endfunction
 
-function! s:tests.execute_cmd_obj_returns_if_there_is_no_exec()
+function! s:tests.execute_cmd_obj_returns_if_there_is_no_exec() " {{{1
   let l:cmd_obj = {
         \ "cmd": "Test",
         \}
@@ -659,5 +664,3 @@ function! s:complete_menu_cmd(
         \)
   return join(l:cmds_in_menu, "\n")
 endfunction
-
-" vim:foldmethod=marker:fmr=function!\ s\:tests.,endfunction
