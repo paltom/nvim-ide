@@ -614,6 +614,24 @@ function! s:execute_string_command(mods, range, exec, flag, args)
   execute l:command
 endfunction
 
+function! s:tests.execute_func_command_passes_arguments_to_exec_function() " {{{1
+  let l:call_args = []
+  function! s:tests._func_exec(args) closure
+    let l:call_args = a:args
+  endfunction
+  call s:execute_func_command(
+        \ { ... -> s:tests._func_exec(a:000) },
+        \ ["arg1", 2],
+        \ v:true,
+        \ [10, 20],
+        \ "modifiers",
+        \)
+  call assert_equal(
+        \ [["arg1", 2], v:true, [10, 20], "modifiers"],
+        \ l:call_args,
+        \)
+endfunction
+" }}}
 function! s:execute_func_command(
       \ exec,
       \ args,
