@@ -81,6 +81,13 @@ function! s:get_cmd_obj_from_menu(menu, cmd_name)
   endif
 endfunction
 
+function! s:get_all_names_matching_prefix(names, prefix)
+  return filter(
+        \ copy(a:names),
+        \ { _, name -> name =~# '\v^'.a:prefix },
+        \)
+endfunction
+
 function! s:tests.find_by_prefix_single_returns_name_matching_prefix_unambiguously() " {{{1
   let l:names = [
         \ "name_abc",
@@ -114,10 +121,7 @@ function! s:tests.find_by_prefix_single_returns_exact_match_when_multiple_matche
 endfunction
 " }}}
 function! s:find_by_prefix_single(names, name)
-  let l:names_matching_prefix = filter(
-        \ copy(a:names),
-        \ { _, name -> name =~# '\v^'.a:name },
-        \)
+  let l:names_matching_prefix = s:get_all_names_matching_prefix(a:names, a:name)
   if !empty(l:names_matching_prefix)
     if len(l:names_matching_prefix) == 1
       return l:names_matching_prefix[0]
@@ -700,49 +704,31 @@ function! s:execute_func_command(
   call a:exec(a:args, a:flag, a:range, a:mods)
 endfunction
 
-function! s:get_partial_pattern(word)
+function! s:tests.get_partial_command_name_pattern_returns_pattern_that_matches_partially_entered_command_name() " {{{1
+  let l:command_name = "Test"
+  let l:entered_partial_command_with_range_and_bang = "2,3Tes!"
+  let l:expected_command_name = "Tes"
+  let l:pattern = s:get_partial_command_name_pattern(l:command_name)
+  call assert_equal(
+        \ l:expected_command_name,
+        \ matchstr(l:entered_partial_command_with_range_and_bang, l:pattern),
+        \)
+  let l:entered_partial_command = "Te"
+  call assert_equal(
+        \ l:expected_command_name,
+        \ matchstr(l:entered_partial_command_with_range_and_bang, l:pattern),
+        \)
+endfunction
+" }}}
+function! s:get_partial_command_name_pattern(word)
   let l:first_char = a:word[0]
   let l:rest = a:word[1:]
-  let l:pattern = "(".l:first_char."("
-  let l:partial_matches = []
-  while len(l:rest)
-    let l:partial_matches = add(
-          \ l:partial_matches,
-          \ l:rest
-          \)
-    let l:rest = l:rest[:-2]
-  endwhile
-  let l:pattern .= join(l:partial_matches, "|")
-  let l:pattern .= "?))"
-  return l:pattern
+  return '\v('.l:first_char.'%['.l:rest.'])[[:alnum:]]@!'
 endfunction
 
-function! s:get_whole_command_name(partial_command_name)
-  let l:command_candidates = filter(
-        \ keys(g:menus),
-        \ { _, c -> c =~# '\v^'.a:partial_command_name }
-        \)
-  if empty(l:command_candidates)
-    return ""
-  endif
-  if len(l:command_candidates) == 1
-    return l:command_candidates[0]
-  endif
-  " there should be exact match and other commands that start with
-  " partial_command_name
-  let l:command_name_index = index(
-        \ l:command_candidates,
-        \ a:partial_command_name
-        \)
-  if l:command_name_index < 0
-    return ""
-  endif
-  return l:command_candidates[l:command_name_index]
-endfunction
-
-function! s:get_command_name(cmdline)
+function! s:get_command_name_from_cmdline(cmdline)
   for command_name in keys(g:menus)
-    let l:partial_command_name_pattern = s:get_partial_pattern(command_name)
+    let l:partial_command_name_pattern = s:get_partial_command_name_pattern(command_name)
     let l:partial_command_name = matchstr(
           \ a:cmdline,
           \ '\v\C(^|[^\I])\zs'.l:partial_command_name_pattern.'\ze!?\s+'
@@ -773,14 +759,14 @@ function! s:complete_menu_cmd(
   " menu path entered so far counts from first item after whitespace following
   " command name until last whitespace preceding item_being_entered (which may
   " be empty)
-  let l:entered_cmd_name = s:get_command_name(a:cmdline)
-  let l:cmd_name = s:get_whole_command_name(l:entered_cmd_name)
+  let l:entered_cmd_name = s:get_command_name_from_cmdline(a:cmdline)
+  let l:cmd_name = s:find_by_prefix_single(keys(g:menus), l:entered_cmd_name)
   let l:cmd_path_and_args = s:get_command_args(l:entered_cmd_name, a:cmdline)
   let l:cmd_path_and_args = split(l:cmd_path_and_args)
   if !empty(a:cmd_being_entered)
     let l:cmd_path_and_args = l:cmd_path_and_args[:-2]
   endif
-  let [l:cmd_obj, l:cmd_args] = menu_builder#find_cmd_obj(
+  let [l:cmd_obj, l:cmd_args] = s:find_cmd_obj(
         \ l:cmd_name,
         \ l:cmd_path_and_args,
         \)
