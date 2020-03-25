@@ -55,9 +55,9 @@ endif
 " test suite object
 let s:tests = test#suite(expand("%:p"))
 " test helper functions
-function! s:tests._is_command(name)
-  let l:commands = execute("filter /".a:name.'\>/ command')
-  return !empty(l:commands)
+function! s:tests._is_full_command(name)
+  let l:result = exists(":".a:name)
+  return l:result == 2
 endfunction
 
 " =============================================================================
@@ -144,7 +144,7 @@ function! s:tests.update_menu_commands_creates_new_commands_for_all_menus()
         \)
   call menu_builder#update_menu_commands()
   for cmd_name in l:menu_names
-    call assert_true(s:tests._is_command(cmd_name))
+    call assert_true(s:tests._is_full_command(cmd_name))
   endfor
   for cmd_name in l:menu_names
     execute "delcommand ".cmd_name
@@ -160,7 +160,7 @@ endfunction
 function! s:tests.update_menu_command_given_cmd_name()
   let l:cmd_name = "TestCommand"
   call s:update_menu_command(l:cmd_name)
-  call assert_true(s:tests._is_command(l:cmd_name))
+  call assert_true(s:tests._is_full_command(l:cmd_name))
   execute "delcommand ".l:cmd_name
 endfunction
 function! s:tests.update_menu_command_fails_on_invalid_name()
