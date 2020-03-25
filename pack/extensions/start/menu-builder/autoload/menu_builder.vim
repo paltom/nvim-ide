@@ -411,7 +411,7 @@ function! s:find_cmd_obj(menu, cmd_path)
   return [l:cmd_obj, l:cmd_path]
 endfunction
 
-function! s:tests.invoke_menu_command_executes_menu_action_found_by_command_args() " {{[1
+function! s:tests.invoke_menu_command_executes_menu_action_found_by_command_args() " {{{1
   let l:menus = copy(g:menus)
   let l:invoked = v:false
   function! s:tests._action(args, flag, range, mods) closure
@@ -433,7 +433,7 @@ function! s:tests.invoke_menu_command_executes_menu_action_found_by_command_args
   call assert_true(l:invoked)
   let g:menus = l:menus
 endfunction
-function! s:tests.invoke_menu_command_passes_additional_arguments_to_action() " {{[1
+function! s:tests.invoke_menu_command_passes_additional_arguments_to_action() " {{{1
   let l:menus = copy(g:menus)
   let l:args = []
   function! s:tests._action(args, flag, range, mods) closure
