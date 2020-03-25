@@ -488,6 +488,62 @@ function! s:tests.execute_cmd_obj_returns_if_there_is_no_exec() " {{{1
   execute(l:execute_string_command_func_code)
   execute(l:execute_func_command_func_code)
 endfunction
+function! s:tests.execute_cmd_obj_executes_string_action() " {{{1
+  let l:cmd_obj = {
+        \ "cmd": "Test",
+        \ "exec": "echo 1",
+        \}
+  let l:execute_string_command_func_code = execute(
+        \ "function! s:execute_string_command"
+        \)
+  let l:called = v:false
+  function! s:execute_string_command(m, r, e, f, a) closure
+    let l:called = v:true
+  endfunction
+  call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
+  call assert_true(l:called)
+  execute(l:execute_string_command_func_code)
+endfunction
+function! s:tests.execute_cmd_obj_executes_func_action() " {{{1
+  let l:cmd_obj = {
+        \ "cmd": "Test",
+        \ "exec": { -> v:true },
+        \}
+  let l:execute_func_command_func_code = execute(
+        \ "function! s:execute_func_command"
+        \)
+  let l:called = v:false
+  function! s:execute_func_command(e, a, f, r, m) closure
+    let l:called = v:true
+  endfunction
+  call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
+  call assert_true(l:called)
+  execute(l:execute_func_command_func_code)
+endfunction
+function! s:tests.execute_cmd_obj_returns_for_unknown_action_type() " {{{1
+  let l:cmd_obj = {
+        \ "cmd": "Test",
+        \ "exec": 1,
+        \}
+  let l:called = v:false
+  let l:execute_string_command_func_code = execute(
+        \ "function! s:execute_string_command"
+        \)
+  function! s:execute_string_command(m, r, e, f, a) closure
+    let l:called = v:true
+  endfunction
+  let l:execute_func_command_func_code = execute(
+        \ "function! s:execute_func_command"
+        \)
+  function! s:execute_func_command(e, a, f, r, m) closure
+    let l:called = v:true
+  endfunction
+  call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
+  call assert_false(l:called)
+  execute(l:execute_string_command_func_code)
+  execute(l:execute_func_command_func_code)
+endfunction
+" }}}
 function! s:execute_cmd_obj(
       \ cmd_obj,
       \ args,
@@ -509,8 +565,7 @@ function! s:execute_cmd_obj(
     call s:execute_func_command(Cmd_exec, a:args, a:flag, a:range, a:mods)
   else
     echohl WarningMsg
-    echomsg "Unknown type of execution action: ".string(Cmd_exec).
-          \   ": ".type(Cmd_exec)
+    echomsg "Unknown type of execution action: ".string(Cmd_exec)
     echohl None
   endif
 endfunction
