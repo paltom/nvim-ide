@@ -483,7 +483,7 @@ function! s:tests.execute_cmd_obj_returns_if_there_is_no_exec() " {{{1
   function! s:execute_func_command(e, a, f, r, m) closure
     let l:called_any = v:true
   endfunction
-  call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
+  silent! call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
   call assert_false(l:called_any)
   execute(l:execute_string_command_func_code)
   execute(l:execute_func_command_func_code)
@@ -538,7 +538,7 @@ function! s:tests.execute_cmd_obj_returns_for_unknown_action_type() " {{{1
   function! s:execute_func_command(e, a, f, r, m) closure
     let l:called = v:true
   endfunction
-  call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
+  silent! call s:execute_cmd_obj(l:cmd_obj, [], v:false, [], "")
   call assert_false(l:called)
   execute(l:execute_string_command_func_code)
   execute(l:execute_func_command_func_code)
@@ -570,7 +570,64 @@ function! s:execute_cmd_obj(
   endif
 endfunction
 
+function! s:tests.execute_string_command_executes_all_commands_in_action_string() " {{{1
+  let l:action = "echo 1|echo 2"
+  redir => l:output
+  silent call s:execute_string_command("", [], l:action, v:false, [])
+  redir END
+  call assert_equal(
+        \ "\n1\n2",
+        \ l:output,
+        \)
+endfunction
+function! s:tests.execute_string_command_executes_first_command_only_with_mods() " {{{1
+  let l:action = "set verbose|set verbose"
+  let l:mods = "verbose"
+  redir => l:output
+  silent call s:execute_string_command(l:mods, [], l:action, v:false, [])
+  redir END
+  call assert_match(
+        \ "^\n  verbose=1\n  verbose=0$",
+        \ l:output,
+        \)
+endfunction
+function! s:tests.execute_string_command_executes_first_command_only_with_range() " {{{1
+  let l:action = "verbose set verbose|set verbose"
+  let l:range = [10]
+  redir => l:output
+  silent call s:execute_string_command("", l:range, l:action, v:false, [])
+  redir END
+  call assert_match(
+        \ "^\n  verbose=10\n  verbose=0$",
+        \ l:output,
+        \)
+endfunction
+function! s:tests.execute_string_command_executes_first_command_with_bang_if_flag_was_passed() " {{{1
+  let l:action = "function s:execute_string_command"
+  let l:flag = v:true
+  redir => l:output
+  silent call s:execute_string_command("", [], l:action, l:flag, [])
+  redir END
+  " with bang, there are no line numbers in output
+  call assert_notmatch(
+        \ '^\d+',
+        \ l:output,
+        \)
+endfunction
+function! s:tests.execute_string_command_passes_args_to_first_command_only() " {{{1
+  let l:action = "echo 'start'|echo 'end'"
+  let l:args = [1, "arg2"]
+  redir => l:output
+  silent call s:execute_string_command("", [], l:action, v:false, l:args)
+  redir END
+  call assert_equal(
+        \ "\nstart 1 arg2\nend",
+        \ l:output,
+        \)
+endfunction
+" }}}
 function! s:execute_string_command(mods, range, exec, flag, args)
+  " THIS IS EXPERIMENTAL
   " first command in exec string is a command which should receive a flag (as
   " ! if any)
   if empty(a:exec)
