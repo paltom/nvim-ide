@@ -946,8 +946,97 @@ function! s:complete_menu_cmd(
           \ l:cmd_args,
           \)
   else
-    let l:submenu_cmd_objs = get(l:cmd_obj, "menu", [])
-    let l:completion_candidates = s:cmd_names_in_menu(l:submenu_cmd_objs)
+    let l:submenu = get(l:cmd_obj, "menu", [])
+    "call s:update_cmdline_mappings(l:submenu)
+    let l:completion_candidates = s:cmd_names_in_menu(l:submenu)
   endif
   return join(l:completion_candidates, "\n")
+endfunction
+
+function! s:tests.update_cmdline_mappings_should_restore_existing_cmdline_mappings_after_cmdlineleave() " {{{1
+  let l:unmap_later = v:true
+  try
+    execute "cnoremap <unique> <a-x> echo 'test'"
+  catch /E227:/
+    let l:unmap_later = v:false
+  endtry
+  let l:menu = [
+        \ {
+        \   "cmd": "command",
+        \   "alt": "x",
+        \ }
+        \]
+  call s:update_cmdline_mappings(l:menu)
+  call assert_match(
+        \ '\vcommand',
+        \ execute("cmap <a-x>"),
+        \ "Mapping from menu should be defined here",
+        \)
+  silent execute "normal! :\<a-x>\<c-c>"
+  call assert_match(
+        \ '\vtest',
+        \ execute("cmap <a-x>"),
+        \ "Already existing mapping should be defined here",
+        \)
+  if l:unmap_later
+    execute "cunmap <a-x>"
+  endif
+endfunction
+" }}}
+function! s:update_cmdline_mappings(menu)
+  " store existing cmappings
+  let l:cmap_output = split(execute("cmap"), "\n")
+  let l:alt_cmaps = filter(
+        \ l:cmap_output,
+        \ { _, cmap -> cmap =~# '\v^\w\s+\<[AM]-[A-Za-z]\>\s+' },
+        \)
+  let l:old_alt_cmaps = map(
+        \ l:alt_cmaps,
+        \ { _, cmap ->
+        \   matchlist(
+        \     cmap,
+        \     '\v^\w\s+([^ ]*)\s+([\*\&]?)(\@?)\s*(.*)'
+        \   )[1:4]
+        \ },
+        \)
+  " set cmappings for completions
+  function! s:set_completion_cmappings(menu)
+    for cmd_obj in filter(
+          \ copy(a:menu),
+          \ { _, co -> has_key(co, "alt") }
+          \)
+      let l:char = cmd_obj["alt"][0:0]
+      if empty(l:char)
+        continue
+      endif
+      silent execute "cnoremap <a-".l:char."> ".
+            \   "<c-e><c-left><c-right><c-w>".cmd_obj["cmd"]."<c-e>"
+      silent execute "autocmd CmdlineChanged : ++once ".
+            \   "cunmap <a-".l:char.">"
+    endfor
+  endfunction
+  call s:set_completion_cmappings(a:menu)
+  " restore cmappings that existed before completions
+  function! s:restore_cmappings(cmappings)
+    for cmapping in a:cmappings
+      let l:cmap_command = "c"
+      if cmapping[1] =~# '\v^[\*\&]$'
+        let l:cmap_command .= "nore"
+      endif
+      let l:cmap_command .= "map "
+      if cmapping[1] ==# '&'
+        let l:cmap_command .= "<script>"
+      endif
+      if cmapping[2] ==# '@'
+        let l:cmap_command .= "<buffer>"
+      endif
+      let l:cmap_command .= " "
+      let l:cmap_command .= cmapping[0]
+      let l:cmap_command .= " "
+      let l:cmap_command .= cmapping[3]
+      silent execute l:cmap_command
+    endfor
+  endfunction
+  silent execute "autocmd CmdlineLeave : ++once ".
+        \  "call s:restore_cmappings(".string(l:old_alt_cmaps).")"
 endfunction
