@@ -751,7 +751,6 @@ function! s:tests.get_command_name_from_cmdline_returns_potentially_partially_en
         \   "expected": "Test",
         \ },
         \]
-  let l:command_expected = "Tes"
   for data in l:test_data
     let l:command_found = s:get_command_name_from_cmdline(data["cmdline"])
     call assert_equal(
@@ -785,10 +784,32 @@ function! s:get_command_name_from_cmdline(cmdline)
   return ""
 endfunction
 
+function! s:tests.get_command_args_returns_arguments_string_following_entered_command() " {{{1
+  let l:test_data = [
+        \ {
+        \   "cmdline": "Test",
+        \   "cmdname": "Test",
+        \   "expected": "",
+        \ },
+        \ {
+        \   "cmdline": "2Test! arg1 2 3 ",
+        \   "cmdname": "Test",
+        \   "expected": "arg1 2 3",
+        \ },
+        \]
+  for data in l:test_data
+    let l:args_found = s:get_command_args(data["cmdname"], data["cmdline"])
+    call assert_equal(
+          \ data["expected"],
+          \ l:args_found,
+          \)
+  endfor
+endfunction
+" }}}
 function! s:get_command_args(command_name, cmdline)
   let l:args = matchstr(
         \ a:cmdline,
-        \ '\v\C(^|[^\I])'.a:command_name.'!?\s+\zs(.*)\ze',
+        \ '\v\C(^|[^\I])'.a:command_name.'!?\s+\zs(.{-})\ze\s*$',
         \)
   return l:args
 endfunction
