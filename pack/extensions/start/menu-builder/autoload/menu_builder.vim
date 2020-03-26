@@ -726,12 +726,57 @@ function! s:get_partial_command_name_pattern(word)
   return '\v('.l:first_char.'%['.l:rest.'])[[:alnum:]]@!'
 endfunction
 
+function! s:tests.get_command_name_from_cmdline_returns_potentially_partially_entered_command_name_from_cmdline() " {{{1
+  let l:menus = copy(g:menus)
+  let g:menus = [
+        \ {
+        \   "cmd": "Test",
+        \ }
+        \]
+  let l:test_data = [
+        \ {
+        \   "cmdline": "Tes arg1",
+        \   "expected": "Tes",
+        \ },
+        \ {
+        \   "cmdline": "Test!",
+        \   "expected": "Test",
+        \ },
+        \ {
+        \   "cmdline": "2,3Te 1",
+        \   "expected": "Te",
+        \ },
+        \ {
+        \   "cmdline": "verbose silent botright Test",
+        \   "expected": "Test",
+        \ },
+        \]
+  let l:command_expected = "Tes"
+  for data in l:test_data
+    let l:command_found = s:get_command_name_from_cmdline(data["cmdline"])
+    call assert_equal(
+          \ data["expected"],
+          \ l:command_found,
+          \)
+  endfor
+  let g:menus = l:menus
+endfunction
+function! s:tests.get_command_name_from_cmdline_dont_match_externally_defined_commands() " {{{1
+  let l:cmdline = "Explore"
+  let l:expected = ""
+  let l:command_found = s:get_command_name_from_cmdline(l:cmdline)
+  call assert_equal(
+        \ l:expected,
+        \ l:command_found,
+        \)
+endfunction
+" }}}
 function! s:get_command_name_from_cmdline(cmdline)
-  for command_name in keys(g:menus)
+  for command_name in s:cmd_names_in_menu(g:menus)
     let l:partial_command_name_pattern = s:get_partial_command_name_pattern(command_name)
     let l:partial_command_name = matchstr(
           \ a:cmdline,
-          \ '\v\C(^|[^\I])\zs'.l:partial_command_name_pattern.'\ze!?\s+'
+          \ '\v\C(^|[^\I])\zs'.l:partial_command_name_pattern.'\ze'
           \)
     if !empty(l:partial_command_name)
       return l:partial_command_name
