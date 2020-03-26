@@ -941,12 +941,13 @@ function! s:complete_menu_cmd(
   " if l:cmd_obj has 'complete' key, but not 'menu' key (even empty),
   " then use it to provide completions
   if has_key(l:cmd_obj, "complete") && !has_key(l:cmd_obj, "menu")
-    echomsg string(l:cmd_obj)
-    echomsg string(l:cmd_args)
-    let l:cmds_in_menu = l:cmd_obj["complete"](a:cmd_being_entered, l:cmd_args)
-    echomsg string(l:cmds_in_menu)
+    let l:completion_candidates = l:cmd_obj["complete"](
+          \ a:cmd_being_entered,
+          \ l:cmd_args,
+          \)
   else
-    let l:cmds_in_menu = s:cmd_names_in_menu(get(l:cmd_obj, "menu", []))
+    let l:submenu_cmd_objs = get(l:cmd_obj, "menu", [])
+    let l:completion_candidates = s:cmd_names_in_menu(l:submenu_cmd_objs)
   endif
-  return join(l:cmds_in_menu, "\n")
+  return join(l:completion_candidates, "\n")
 endfunction
