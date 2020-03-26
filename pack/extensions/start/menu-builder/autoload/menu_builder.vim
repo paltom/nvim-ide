@@ -295,6 +295,7 @@ function! s:tests.find_cmd_obj_returns_cmd_object_in_nested_menu_structure() " {
         \)
 endfunction
 function! s:tests.find_cmd_obj_returns_cmd_object_walking_path_as_far_as_possible() " {{{1
+  " TODO: utilize test data list to shorten code
   let l:menu = [
         \ {
         \   "cmd": "level1",
@@ -814,6 +815,61 @@ function! s:get_command_args(command_name, cmdline)
   return l:args
 endfunction
 
+function! s:tests.complete_menu_cmd_provides_completions_based_on_arguments_entered_so_far() " {{{1
+  let l:menus = copy(g:menus)
+  let g:menus = [
+        \ {
+        \   "cmd": "TestEmpty"
+        \ },
+        \ {
+        \   "cmd": "Test",
+        \   "menu": [
+        \     {
+        \       "cmd": "first",
+        \       "menu": [
+        \         {
+        \           "cmd": "nested"
+        \         }
+        \       ]
+        \     },
+        \     {
+        \       "cmd": "second",
+        \     },
+        \   ],
+        \ },
+        \]
+  let l:test_data = [
+        \ {
+        \   "entering": "",
+        \   "cmdline": "TestE ",
+        \   "expected": join([], "\n"),
+        \ },
+        \ {
+        \   "entering": "fi",
+        \   "cmdline": "Test fi",
+        \   "expected": join(["first", "second"], "\n"),
+        \ },
+        \ {
+        \   "entering": "sth",
+        \   "cmdline": "Test fi sth",
+        \   "expected": join(["nested"], "\n"),
+        \ },
+        \ {
+        \   "entering": "",
+        \   "cmdline": "Test ",
+        \   "expected": join(["first", "second"], "\n"),
+        \ },
+        \]
+  for data in l:test_data
+    let l:completions = s:complete_menu_cmd(data["entering"], data["cmdline"], 0)
+    call assert_equal(
+          \ data["expected"],
+          \ l:completions,
+          \)
+  endfor
+  let g:menus = l:menus
+endfunction
+" }}}
 function! s:complete_menu_cmd(
       \ cmd_being_entered,
       \ cmdline,
@@ -826,23 +882,20 @@ function! s:complete_menu_cmd(
   " command name until last whitespace preceding item_being_entered (which may
   " be empty)
   let l:entered_cmd_name = s:get_command_name_from_cmdline(a:cmdline)
-  let l:cmd_name = s:find_by_prefix_single(keys(g:menus), l:entered_cmd_name)
+  let l:full_cmd_name = s:find_by_prefix_single(
+        \ s:cmd_names_in_menu(g:menus),
+        \ l:entered_cmd_name,
+        \)
   let l:cmd_path_and_args = s:get_command_args(l:entered_cmd_name, a:cmdline)
   let l:cmd_path_and_args = split(l:cmd_path_and_args)
+  let l:cmd_path_and_args = insert(l:cmd_path_and_args, l:full_cmd_name)
   if !empty(a:cmd_being_entered)
     let l:cmd_path_and_args = l:cmd_path_and_args[:-2]
   endif
   let [l:cmd_obj, l:cmd_args] = s:find_cmd_obj(
-        \ l:cmd_name,
+        \ g:menus,
         \ l:cmd_path_and_args,
         \)
-  let l:cmd_objs_in_menu = s:cmd_names_from_menu_starting_with(
-        \ get(l:cmd_obj, "menu", []),
-        \ '.*',
-        \)
-  let l:cmds_in_menu = map(
-        \ l:cmd_objs_in_menu,
-        \ { _, co -> co["cmd"] },
-        \)
+  let l:cmds_in_menu = s:cmd_names_in_menu(get(l:cmd_obj, "menu", []))
   return join(l:cmds_in_menu, "\n")
 endfunction
