@@ -869,33 +869,84 @@ function! s:tests.complete_menu_cmd_provides_completions_based_on_arguments_ente
   endfor
   let g:menus = l:menus
 endfunction
+function! s:tests.complete_menu_cmd_uses_complete_function_of_found_cmd_object_for_futher_completions() " {{{1
+  let l:menus = copy(g:menus)
+  function! s:tests._should_not_be_called()
+    call assert_true(v:false, "I should not have been called")
+    return []
+  endfunction
+  let g:menus = [
+        \ {
+        \   "cmd": "TestEmpty",
+        \   "menu": [
+        \   ],
+        \   "complete": { a, as -> s:tests._should_not_be_called() },
+        \ },
+        \ {
+        \   "cmd": "Test",
+        \   "menu": [
+        \     {
+        \       "cmd": "custom_completion",
+        \       "complete": { a, as -> ["compl1", "compl2"] },
+        \     },
+        \   ],
+        \   "complete": { a, as -> s:tests._should_not_be_called() },
+        \ },
+        \]
+  let test_data = [
+        \ {
+        \   "entering": "",
+        \   "cmdline": "TestEmpty ",
+        \   "expected": ""
+        \ },
+        \ {
+        \   "entering": "any",
+        \   "cmdline": "Test cus any",
+        \   "expected": join(["compl1", "compl2"], "\n")
+        \ },
+        \]
+  for data in test_data
+    let l:completions = s:complete_menu_cmd(data["entering"], data["cmdline"], 0)
+    call assert_equal(
+          \ data["expected"],
+          \ l:completions,
+          \)
+  endfor
+  let g:menus = l:menus
+endfunction
 " }}}
 function! s:complete_menu_cmd(
       \ cmd_being_entered,
       \ cmdline,
       \ cursorpos,
       \)
-  " possible items in current menu node
-  " current menu mode determined by menu path entered so far, not taking
-  " item_being_entered into account
-  " menu path entered so far counts from first item after whitespace following
-  " command name until last whitespace preceding item_being_entered (which may
-  " be empty)
   let l:entered_cmd_name = s:get_command_name_from_cmdline(a:cmdline)
   let l:full_cmd_name = s:find_by_prefix_single(
         \ s:cmd_names_in_menu(g:menus),
         \ l:entered_cmd_name,
         \)
-  let l:cmd_path_and_args = s:get_command_args(l:entered_cmd_name, a:cmdline)
-  let l:cmd_path_and_args = split(l:cmd_path_and_args)
-  let l:cmd_path_and_args = insert(l:cmd_path_and_args, l:full_cmd_name)
-  if !empty(a:cmd_being_entered)
-    let l:cmd_path_and_args = l:cmd_path_and_args[:-2]
-  endif
+  function! s:menu_path() closure
+    let l:cmd_path_and_args = s:get_command_args(l:entered_cmd_name, a:cmdline)
+    let l:cmd_path_and_args = split(l:cmd_path_and_args)
+    let l:cmd_path_and_args = insert(l:cmd_path_and_args, l:full_cmd_name)
+    if !empty(a:cmd_being_entered)
+      let l:cmd_path_and_args = l:cmd_path_and_args[:-2]
+    endif
+    return l:cmd_path_and_args
+  endfunction
   let [l:cmd_obj, l:cmd_args] = s:find_cmd_obj(
         \ g:menus,
-        \ l:cmd_path_and_args,
+        \ s:menu_path(),
         \)
-  let l:cmds_in_menu = s:cmd_names_in_menu(get(l:cmd_obj, "menu", []))
+  " if l:cmd_obj has 'complete' key, but not 'menu' key (even empty),
+  " then use it to provide completions
+  if has_key(l:cmd_obj, "complete") && !has_key(l:cmd_obj, "menu")
+    echomsg string(l:cmd_obj)
+    echomsg string(l:cmd_args)
+    let l:cmds_in_menu = l:cmd_obj["complete"](a:cmd_being_entered, l:cmd_args)
+    echomsg string(l:cmds_in_menu)
+  else
+    let l:cmds_in_menu = s:cmd_names_in_menu(get(l:cmd_obj, "menu", []))
+  endif
   return join(l:cmds_in_menu, "\n")
 endfunction
