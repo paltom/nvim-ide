@@ -44,9 +44,10 @@ function! s:tests.cmdline_parse_command_name_and_args()
         \ ["silent 4 verbose 3, 5 TestCmd! a Test b", ["TestCmd", ["a", "Test", "b"]]],
         \]
   for data in l:data
+    call self.call_local("cmdline_parse", [data[0]])
     call assert_equal(
           \ data[1],
-          \ self.call_local("cmdline_parse", [data[0]])
+          \ self.call_local("get_cmdline_tokens", [])
           \)
   endfor
 endfunction
