@@ -83,6 +83,11 @@ function! s:tests.get_menu_by_path()
   endfor
 endfunction
 
+function! s:tests.update_commands_creates_commands_based_on_top_level_menu()
+  let g:cmdmenu = self.mock_var("g:cmdmenu")
+  let g:cmdmenu = "abc"
+endfunction
+
 " TODO: should be loaded by ftplugin (special filetype inheriting from vim)
 command! -buffer Test w<bar>so %<bar>call vut#execute_tests(s:script_to_test)
 " vim:fdm=indent
