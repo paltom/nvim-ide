@@ -1,7 +1,5 @@
-execute "source ".s:script_path
-" ==============================================================================
-
-let s:tests = vut#test_script_file("autoload/cmdmenu.vim")
+let s:script_to_test = "autoload/cmdmenu.vim"
+let s:tests = vut#test_script_file(s:script_to_test)
 
 function! s:tests.cmdline_parse_get_command_name()
   let l:data = [
@@ -38,29 +36,4 @@ function! s:tests.cmdline_parse_get_command_args()
   endfor
 endfunction
 
-" ==============================================================================
-
-for test in keys(s:tests)
-  if test == "call_local"
-    continue
-  endif
-  let v:errors = []
-  try
-    echomsg "Executing ".test
-    call s:cases[case]()
-    if empty(v:errors)
-      " passed
-    else
-      for error in v:errors
-        echomsg "Test ".test." FAILED: ".string(error)
-      endfor
-    endif
-  catch
-    echohl ErrorMsg
-    echomsg "Test ".test." ERROR: ".string(v:exception)." @ ".string(v:throwpoint)
-    echohl None
-  finally
-    let v:errors = []
-  endtry
-endfor
-
+command! -buffer Test w<bar>so %<bar>call vut#execute_tests(s:script_to_test)

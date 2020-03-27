@@ -27,3 +27,9 @@ function! func#compose(funcs)
   return function("s:compose", [a:funcs])
 endfunction
 
+function! func#contains(list)
+  function! s:contains(list, elem)
+    return index(a:list, a:elem) >= 0
+  endfunction
+  return function("s:contains", [a:list])
+endfunction
