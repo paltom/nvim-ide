@@ -52,5 +52,37 @@ function! s:tests.cmdline_parse_command_name_and_args()
   endfor
 endfunction
 
+function! s:tests.get_menu_by_path()
+  let l:menu = [
+        \ {
+        \   "cmd": "Flat",
+        \ },
+        \ {
+        \   "cmd": "FirstLevel",
+        \   "menu": [
+        \     {
+        \       "cmd": "SecondLevel",
+        \     },
+        \   ],
+        \ },
+        \ {
+        \   "cmd": "EmptyMenu",
+        \   "menu": [],
+        \ },
+        \]
+  let l:data = [
+        \ [[], [{}, []]],
+        \ [["F"], [{}, ["F"]]],
+        \ [["Flat"], [{"cmd": "Flat"}, []]],
+        \]
+  for data in l:data
+    call assert_equal(
+          \ data[1],
+          \ self.call_local("get_cmd_obj_by_path", [l:menu, data[0]]),
+          \)
+  endfor
+endfunction
+
+" TODO: should be loaded by ftplugin (special filetype inheriting from vim)
 command! -buffer Test w<bar>so %<bar>call vut#execute_tests(s:script_to_test)
 " vim:fdm=indent
