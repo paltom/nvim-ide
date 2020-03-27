@@ -31,3 +31,39 @@ augroup cmdmenu_monitor_cmdline
   autocmd CmdlineChanged : call <sid>cmdline_parse(getcmdline())
   autocmd CmdlineLeave : call <sid>reset_cmdline_tokens()
 augroup end
+
+if !exists("g:cmdmenu")
+  let g:cmdmenu = {}
+endif
+
+function! s:get_cmd_obj_from_menu(menu, cmd)
+  let l:cmd_obj = func#filter(
+        \ { _, c -> c["cmd"] ==# a:cmd },
+        \)
+        \(a:menu)
+  return !empty(l:cmd_obj) ? l:cmd_obj[0] : {}
+endfunction
+
+function! s:get_all_cmds_from_menu(menu)
+  return func#map({ _, c -> c["cmd"] })(a:menu)
+endfunction
+
+function! s:get_cmd_obj_by_path(menu, path)
+  let l:cmd_obj = {}
+  if empty(a:path)
+    return [l:cmd_obj, []]
+  endif
+  let l:menu = copy(a:menu)
+  let l:path = a:path
+  while !empty(l:path)
+    let [l:next_cmd; l:path] = l:path
+    let l:menu_cmds = s:get_all_cmds_from_menu(l:menu)
+    let l:cmd = util#single_matching_prefix(l:next_cmd)(l:menu_cmds)
+    if empty(l:cmd)
+      return [l:cmd_obj, insert(l:path, l:next_cmd)]
+    endif
+    let l:cmd_obj = s:get_cmd_obj_from_menu(l:menu, l:cmd)
+    let l:menu = get(l:cmd_obj, "menu", [])
+  endwhile
+  return [l:cmd_obj, l:path]
+endfunction

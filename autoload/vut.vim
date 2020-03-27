@@ -6,6 +6,7 @@ endfunction
 
 function! vut#test_script_file(path)
   let l:full_script_path = s:get_full_script_file_path(a:path)
+  execute "source ".l:full_script_path
   let l:script_sid = util#sid(l:full_script_path)
   let l:script_snr = "<snr>".l:script_sid."_"
   let s:script_suites[l:full_script_path] = {
@@ -24,7 +25,6 @@ let s:reserved_names = [
 function! vut#execute_tests(script_file)
   let l:full_script_path = s:get_full_script_file_path(a:script_file)
   let l:script_suite = get(s:script_suites, l:full_script_path, {})
-  execute "source ".l:full_script_path
   for test in func#compose([
         \ { _ -> keys(_) },
         \ func#filter({ _, name -> !func#contains(s:reserved_names)(name) }),
