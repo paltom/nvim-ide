@@ -8,3 +8,7 @@ function! s:cmdline_command_args(cmdline)
   let l:args_str = matchstr(a:cmdline, s:command_args_pattern)
   return split(l:args_str, '\v\ +')
 endfunction
+
+function! s:cmdline_parse(cmdline)
+  return [s:cmdline_command_name(a:cmdline), s:cmdline_command_args(a:cmdline)]
+endfunction
