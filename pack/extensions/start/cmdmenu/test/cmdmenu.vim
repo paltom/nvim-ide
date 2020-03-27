@@ -26,14 +26,30 @@ function! s:tests.cmdline_parse_get_command_args()
         \ ["TestCmd", []],
         \ ["TestCmd Test", ["Test"]],
         \ ["TestCmd a b c", ["a", "b", "c"]],
-        \ ["silent 4 verbose 3, 5 TestCmd! a Test b", ["a", "Test", "b"]],
+        \ ["silent 4 verbose 3, 5 TestCmd! a Test b ", ["a", "Test", "b"]],
         \]
-  for cmdline in l:data
+  for data in l:data
     call assert_equal(
-          \ cmdline[1],
-          \ self.call_local("cmdline_command_args", [cmdline[0]])
+          \ data[1],
+          \ self.call_local("cmdline_command_args", [data[0]])
+          \)
+  endfor
+endfunction
+
+function! s:tests.cmdline_parse_command_name_and_args()
+  let l:data = [
+        \ ["TestCmd" ,["TestCmd", []]],
+        \ ["TestCmd Test", ["TestCmd", ["Test"]]],
+        \ ["TestCmd a b c", ["TestCmd", ["a", "b", "c"]]],
+        \ ["silent 4 verbose 3, 5 TestCmd! a Test b", ["TestCmd", ["a", "Test", "b"]]],
+        \]
+  for data in l:data
+    call assert_equal(
+          \ data[1],
+          \ self.call_local("cmdline_parse", [data[0]])
           \)
   endfor
 endfunction
 
 command! -buffer Test w<bar>so %<bar>call vut#execute_tests(s:script_to_test)
+" vim:fdm=indent
