@@ -10,7 +10,8 @@ function! vut#test_script_file(path)
   let l:script_sid = util#sid(l:full_script_path)
   let l:script_snr = "<snr>".l:script_sid."_"
   let s:script_suites[l:full_script_path] = {
-        \ "call_local": function("s:call_local", [l:script_snr])
+        \ "call_local": function("s:call_local", [l:script_snr]),
+        \ "mock_var": function("s:mock_var"),
         \}
   return s:script_suites[l:full_script_path]
 endfunction
@@ -19,8 +20,25 @@ function! s:call_local(snr, func_name, args)
   return call(a:snr.a:func_name, a:args)
 endfunction
 
+let s:mocks_var = []
+function! s:mock_var(var_name)
+  if !exists(a:var_name)
+    return 0
+  endif
+  execute "let l:value = copy(".a:var_name.")"
+  let s:mock_var = add(
+        \ s:mocks_var,
+        \ {
+        \   "name": a:var_name,
+        \   "value": l:value,
+        \ },
+        \)
+  return copy(l:value)
+endfunction
+
 let s:reserved_names = [
       \ "call_local",
+      \ "mock_var",
       \]
 function! vut#execute_tests(script_file)
   let l:full_script_path = s:get_full_script_file_path(a:script_file)
@@ -43,7 +61,7 @@ function! s:execute_test(test_name, test_func)
   catch
     call s:handle_test_error(a:test_name)
   finally
-    let v:errors = []
+    call s:cleanup()
   endtry
 endfunction
 
@@ -67,4 +85,19 @@ function! s:handle_test_error(name)
   echomsg "Test '".a:name."' ERROR: ".
         \ string(v:exception)." @ ".string(v:throwpoint)
   echohl None
+endfunction
+
+function! s:cleanup()
+  let v:errors = []
+  for mock_var in s:mocks_var
+    call s:set_var(
+          \ mock_var["name"],
+          \ mock_var["value"],
+          \)
+  endfor
+  let s:mocks_var = []
+endfunction
+
+function! s:set_var(name, value)
+  execute "let ".a:name." = a:value"
 endfunction
