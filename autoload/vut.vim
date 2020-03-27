@@ -25,7 +25,7 @@ function! s:mock_var(var_name)
   if !exists(a:var_name)
     return 0
   endif
-  execute "let l:value = copy(".a:var_name.")"
+  execute "let l:value = ".a:var_name
   let s:mock_var = add(
         \ s:mocks_var,
         \ {
@@ -33,7 +33,7 @@ function! s:mock_var(var_name)
         \   "value": l:value,
         \ },
         \)
-  return copy(l:value)
+  return deepcopy(l:value)
 endfunction
 
 let s:reserved_names = [
