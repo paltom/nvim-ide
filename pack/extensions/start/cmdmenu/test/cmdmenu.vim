@@ -73,7 +73,13 @@ function! s:tests.get_menu_by_path()
   let l:data = [
         \ [[], [{}, []]],
         \ [["F"], [{}, ["F"]]],
-        \ [["Flat"], [{"cmd": "Flat"}, []]],
+        \ [["Fl"], [{"cmd": "Flat"}, []]],
+        \ [["Fir"], [{"cmd": "FirstLevel", "menu": [{"cmd": "SecondLevel"}]}, []]],
+        \ [["EmptyMenu"], [{"cmd": "EmptyMenu", "menu": []}, []]],
+        \ [["None"], [{}, ["None"]]],
+        \ [["Fl", "a", "b", "c"], [{"cmd": "Flat"}, ["a", "b", "c"]]],
+        \ [["First", "Second", "other"], [{"cmd": "SecondLevel"}, ["other"]]],
+        \ [["Fir", "other"], [{"cmd": "FirstLevel", "menu": [{"cmd": "SecondLevel"}]}, ["other"]]],
         \]
   for data in l:data
     call assert_equal(
