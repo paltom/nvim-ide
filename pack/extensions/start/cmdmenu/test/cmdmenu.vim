@@ -90,7 +90,7 @@ function! s:tests.get_menu_by_path()
 endfunction
 
 function! s:tests.update_commands_creates_commands_based_on_top_level_menu()
-  let g:cmdmenu = self.mock_var("g:cmdmenu")
+  call self.mock_var("g:cmdmenu")
   let l:commands = [
         \ "TestCommand1",
         \ "TestCommand2",
@@ -120,6 +120,32 @@ function! s:tests.update_commands_creates_commands_based_on_top_level_menu()
   for cmd in l:commands
     execute "delcommand ".cmd
   endfor
+endfunction
+
+function! s:tests.update_command_creates_command_accepting_any_number_of_args()
+  let l:command = "TestCommand"
+  call self.call_local("update_command", [l:command])
+  let l:execute_cmd_mock = self.mock_local_func("execute_cmd")
+  execute l:command
+  execute l:command." a"
+  execute l:command." b c 13"
+  call assert_equal(
+        \ 3,
+        \ l:execute_cmd_mock["call_count"],
+        \)
+  call assert_equal(
+        \ 0,
+        \ len(l:execute_cmd_mock["calls"][0][2]),
+        \)
+  call assert_equal(
+        \ 1,
+        \ len(l:execute_cmd_mock["calls"][1][2]),
+        \)
+  call assert_equal(
+        \ 3,
+        \ len(l:execute_cmd_mock["calls"][2][2]),
+        \)
+  execute "delcommand ".l:command
 endfunction
 
 " TODO: should be loaded by ftplugin (special filetype inheriting from vim)
