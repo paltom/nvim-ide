@@ -142,7 +142,7 @@ function! s:tests.update_command_creates_command_passing_any_number_of_args()
     let l:entry = l:data[idx]
     call assert_equal(
           \ l:entry[1],
-          \ l:execute_cmd_mock["calls"][idx][1][1],
+          \ l:execute_cmd_mock["calls"][idx]["args"][1],
           \)
   endfor
   execute "delcommand ".l:command
@@ -171,7 +171,7 @@ function! s:tests.update_command_creates_command_passing_bang_flag()
       let l:assert = "false"
     endif
     execute "call assert_".l:assert."(".
-          \   "l:execute_cmd_mock['calls'][idx][1][0]".
+          \   "l:execute_cmd_mock['calls'][idx]['args'][0]".
           \ ")"
   endfor
   execute "delcommand ".l:command
@@ -199,7 +199,7 @@ function! s:tests.update_command_creates_command_passing_range()
     let l:entry = l:data[idx][1]
     call assert_equal(
           \ l:entry,
-          \ l:execute_cmd_mock["calls"][idx][0],
+          \ l:execute_cmd_mock["calls"][idx]["range"],
           \)
   endfor
   call cursor(l:curline, l:curcol)
