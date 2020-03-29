@@ -67,3 +67,30 @@ function! s:get_cmd_obj_by_path(menu, path)
   endwhile
   return [l:cmd_obj, l:path]
 endfunction
+
+function! cmdmenu#update_commands()
+  for cmd in s:get_all_cmds_from_menu(g:cmdmenu)
+    call s:update_command(cmd)
+  endfor
+endfunction
+
+function! s:update_command(cmd)
+  let l:cmd_rhs_func_args = [
+        \ "<bang>v:false",
+        \ "<range>?[<line1>,<line2>][0:<range>-1]:[]",
+        \ "split(<q-args>)",
+        \ "<q-mods>",
+        \]
+  let l:cmd_rhs_func_args = join(l:cmd_rhs_func_args, ", ")
+  let l:execute_cmd_func = "s:execute_cmd(".l:cmd_rhs_func_args.")"
+  let l:cmd_def = [
+        \ "command!",
+        \ "-nargs=*",
+        \ "-range",
+        \ "-bang",
+        \ a:cmd,
+        \ l:execute_cmd_func,
+        \]
+  let l:cmd_def = join(l:cmd_def, " ")
+  execute l:cmd_def
+endfunction
