@@ -77,12 +77,11 @@ endfunction
 function! s:update_command(cmd)
   let l:cmd_rhs_func_args = [
         \ "<bang>v:false",
-        \ "<range>?[<line1>,<line2>][0:<range>-1]:[]",
         \ "split(<q-args>)",
         \ "<q-mods>",
         \]
   let l:cmd_rhs_func_args = join(l:cmd_rhs_func_args, ", ")
-  let l:execute_cmd_func = "call s:execute_cmd(".l:cmd_rhs_func_args.")"
+  let l:execute_cmd_func = "<line1>,<line2>call s:execute_cmd(".l:cmd_rhs_func_args.")"
   let l:cmd_def = [
         \ "command!",
         \ "-nargs=*",
