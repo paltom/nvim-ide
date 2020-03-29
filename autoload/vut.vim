@@ -80,12 +80,14 @@ endfunction
 
 function! s:execute_test(test_name, test_func)
   let v:errors = []
+  let l:curpos = getcurpos()
   try
     call s:call_test(a:test_name, a:test_func)
     call s:handle_test_result(a:test_name)
   catch
     call s:handle_test_error(a:test_name)
   finally
+    call setpos(".", l:curpos)
     call s:cleanup()
   endtry
 endfunction
