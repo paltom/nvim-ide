@@ -33,7 +33,7 @@ augroup cmdmenu_monitor_cmdline
 augroup end
 
 if !exists("g:cmdmenu")
-  let g:cmdmenu = {}
+  let g:cmdmenu = []
 endif
 
 function! s:get_cmd_obj_from_menu(menu, cmd)
@@ -82,7 +82,7 @@ function! s:update_command(cmd)
         \ "<q-mods>",
         \]
   let l:cmd_rhs_func_args = join(l:cmd_rhs_func_args, ", ")
-  let l:execute_cmd_func = "s:execute_cmd(".l:cmd_rhs_func_args.")"
+  let l:execute_cmd_func = "call s:execute_cmd(".l:cmd_rhs_func_args.")"
   let l:cmd_def = [
         \ "command!",
         \ "-nargs=*",

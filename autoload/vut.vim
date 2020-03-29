@@ -1,17 +1,14 @@
 let s:script_suites = {}
 
-function! s:get_full_script_file_path(script_path)
-  return fnamemodify(findfile(a:script_path, &runtimepath), ":~")
-endfunction
-
 function! vut#test_script_file(path)
-  let l:full_script_path = s:get_full_script_file_path(a:path)
+  let l:full_script_path = util#get_full_script_file_path(a:path)
   execute "source ".l:full_script_path
   let l:script_sid = util#sid(l:full_script_path)
   let l:script_snr = "<snr>".l:script_sid."_"
   let s:script_suites[l:full_script_path] = {
         \ "call_local": function("s:call_local", [l:script_snr]),
         \ "mock_var": function("s:mock_var"),
+        \ "mock_local_func": function("s:mock_local_func", [l:script_snr]),
         \}
   return s:script_suites[l:full_script_path]
 endfunction
@@ -23,7 +20,7 @@ endfunction
 let s:mocks_var = []
 function! s:mock_var(var_name)
   if !exists(a:var_name)
-    return 0
+    return
   endif
   execute "let l:value = ".a:var_name
   let s:mock_var = add(
@@ -33,15 +30,42 @@ function! s:mock_var(var_name)
         \   "value": l:value,
         \ },
         \)
-  return deepcopy(l:value)
+  execute "let ".a:var_name." = deepcopy(l:value)"
+endfunction
+
+let s:mocks_local_func = {}
+let s:MOCKED = 1
+let s:CREATED = 2
+function! s:mock_local_func(snr, func_name)
+  let l:func_name = a:snr.a:func_name
+  function! s:mock_call(args, mock)
+    let a:mock.calls = add(a:mock.calls, a:args)
+    let a:mock.call_count = len(a:mock.calls)
+    return a:mock.return_value
+  endfunction
+  let l:mock = {
+        \ "calls": [],
+        \ "call_count": 0,
+        \ "return_value": 0,
+        \}
+  if exists("*".l:func_name)
+    let s:mocks_local_func[l:func_name] = s:MOCKED
+  else
+    let s:mocks_local_func[l:func_name] = s:CREATED
+  endif
+  execute "function! ".l:func_name."(...) closure\n".
+        \   "return s:mock_call(a:000, l:mock)\n".
+        \ "endfunction"
+  return l:mock
 endfunction
 
 let s:reserved_names = [
       \ "call_local",
       \ "mock_var",
+      \ "mock_local_func",
       \]
 function! vut#execute_tests(script_file)
-  let l:full_script_path = s:get_full_script_file_path(a:script_file)
+  let l:full_script_path = util#get_full_script_file_path(a:script_file)
   let l:script_suite = get(s:script_suites, l:full_script_path, {})
   for test in func#compose([
         \ { _ -> keys(_) },
@@ -89,6 +113,11 @@ endfunction
 
 function! s:cleanup()
   let v:errors = []
+  call s:unmock_vars()
+  call s:unmock_funcs()
+endfunction
+
+function! s:unmock_vars()
   for mock_var in s:mocks_var
     call s:set_var(
           \ mock_var["name"],
@@ -100,4 +129,17 @@ endfunction
 
 function! s:set_var(name, value)
   execute "let ".a:name." = a:value"
+endfunction
+
+function! s:unmock_funcs()
+  for func_name in keys(s:mocks_local_func)
+    let l:mock_type = s:mocks_local_func[func_name]
+    if l:mock_type == s:MOCKED
+      let l:script = util#script_by_sid(matchstr(func_name, '\v\<SNR\>\zs\d+\ze'))
+      execute "source ".l:script
+    elseif l:mock_type == s:CREATED
+      execute "delfunction ".func_name
+    endif
+  endfor
+  let s:mocks_local_func = {}
 endfunction
