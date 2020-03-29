@@ -91,7 +91,35 @@ endfunction
 
 function! s:tests.update_commands_creates_commands_based_on_top_level_menu()
   let g:cmdmenu = self.mock_var("g:cmdmenu")
-  let g:cmdmenu[1] = "abc"
+  let l:commands = [
+        \ "TestCommand1",
+        \ "TestCommand2",
+        \]
+  let l:nested_commands = [
+        \ "Nested1",
+        \ "Nested2",
+        \]
+  let g:cmdmenu = func#map(
+        \ { i, c -> {"cmd": c, "menu": l:nested_commands[i]} },
+        \)
+        \(l:commands)
+  call cmdmenu#update_commands()
+  for cmd in l:commands
+    call assert_equal(
+          \ 2,
+          \ exists(":".cmd)
+          \)
+  endfor
+  for nested in l:nested_commands
+    call assert_equal(
+          \ 0,
+          \ exists(":".nested)
+          \)
+  endfor
+  " cleanup after test
+  for cmd in l:commands
+    execute "delcommand ".cmd
+  endfor
 endfunction
 
 " TODO: should be loaded by ftplugin (special filetype inheriting from vim)
