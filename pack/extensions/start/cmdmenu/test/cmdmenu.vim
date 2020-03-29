@@ -186,8 +186,6 @@ function! s:tests.update_command_creates_command_passing_range()
         \ ["2", [2, 2]],
         \ ["3, 4", [3, 4]],
         \]
-  let l:curline = line(".")
-  let l:curcol = col(".")
   for entry in l:data
     execute entry[0].l:command
   endfor
@@ -202,7 +200,6 @@ function! s:tests.update_command_creates_command_passing_range()
           \ l:execute_cmd_mock["calls"][idx]["range"],
           \)
   endfor
-  call cursor(l:curline, l:curcol)
   execute "delcommand ".l:command
 endfunction
 
