@@ -122,29 +122,87 @@ function! s:tests.update_commands_creates_commands_based_on_top_level_menu()
   endfor
 endfunction
 
-function! s:tests.update_command_creates_command_accepting_any_number_of_args()
+function! s:tests.update_command_creates_command_passing_any_number_of_args()
   let l:command = "TestCommand"
   call self.call_local("update_command", [l:command])
   let l:execute_cmd_mock = self.mock_local_func("execute_cmd")
-  execute l:command
-  execute l:command." a"
-  execute l:command." b c 13"
+  let l:data = [
+        \ ["", []],
+        \ ["a", ["a"]],
+        \ ["b c 13", ["b", "c", "13"]],
+        \]
+  for row in l:data
+    execute l:command." ".row[0]
+  endfor
   call assert_equal(
-        \ 3,
+        \ len(l:data),
         \ l:execute_cmd_mock["call_count"],
         \)
+  for idx in range(len(l:data))
+    let l:entry = l:data[idx]
+    call assert_equal(
+          \ l:entry[1],
+          \ l:execute_cmd_mock["calls"][idx][1][1],
+          \)
+  endfor
+  execute "delcommand ".l:command
+endfunction
+
+function! s:tests.update_command_creates_command_passing_bang_flag()
+  let l:command = "TestCommand"
+  call self.call_local("update_command", [l:command])
+  let l:execute_cmd_mock = self.mock_local_func("execute_cmd")
+  let l:data = [
+        \ ["", v:false],
+        \ ["!", v:true],
+        \]
+  for entry in l:data
+    execute l:command.entry[0]
+  endfor
   call assert_equal(
-        \ 0,
-        \ len(l:execute_cmd_mock["calls"][0][2]),
+        \ len(l:data),
+        \ l:execute_cmd_mock["call_count"],
         \)
+  for idx in range(len(l:data))
+    let l:entry = l:data[idx]
+    if l:entry[1]
+      let l:assert = "true"
+    else
+      let l:assert = "false"
+    endif
+    execute "call assert_".l:assert."(".
+          \   "l:execute_cmd_mock['calls'][idx][1][0]".
+          \ ")"
+  endfor
+  execute "delcommand ".l:command
+endfunction
+
+function! s:tests.update_command_creates_command_passing_range()
+  let l:command = "TestCommand"
+  call self.call_local("update_command", [l:command])
+  let l:execute_cmd_mock = self.mock_local_func("execute_cmd")
+  let l:data = [
+        \ ["", [line("."), line(".")]],
+        \ ["2", [2, 2]],
+        \ ["3, 4", [3, 4]],
+        \]
+  let l:curline = line(".")
+  let l:curcol = col(".")
+  for entry in l:data
+    execute entry[0].l:command
+  endfor
   call assert_equal(
-        \ 1,
-        \ len(l:execute_cmd_mock["calls"][1][2]),
+        \ len(l:data),
+        \ l:execute_cmd_mock["call_count"],
         \)
-  call assert_equal(
-        \ 3,
-        \ len(l:execute_cmd_mock["calls"][2][2]),
-        \)
+  for idx in range(len(l:data))
+    let l:entry = l:data[idx][1]
+    call assert_equal(
+          \ l:entry,
+          \ l:execute_cmd_mock["calls"][idx][0],
+          \)
+  endfor
+  call cursor(l:curline, l:curcol)
   execute "delcommand ".l:command
 endfunction
 
