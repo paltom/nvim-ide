@@ -54,7 +54,7 @@ function! s:mock_local_func(snr, func_name)
     let s:mocks_local_func[l:func_name] = s:CREATED
   endif
   execute "function! ".l:func_name."(...) range\n".
-        \   "let l:args = [[a:firstline, a:lastline], copy(a:000)]\n".
+        \   "let l:args = {'range': [a:firstline, a:lastline], 'args': copy(a:000)}\n".
         \   "return s:mock_call(l:args)\n".
         \ "endfunction"
   return l:mock
