@@ -246,25 +246,23 @@ function! s:tests.execute_cmd_executes_function_associates_with_cmd_object()
         \   ],
         \ },
         \]
-  call cmdmenu#update_commands()
-  silent execute l:command." a b"
+  call self.call_local("execute_cmd", [l:command, v:false, ["a", "b"], ""])
   call assert_equal(
-        \ [[], v:false, "silent"],
+        \ [[], v:false, ""],
         \ l:action_args,
         \)
   let l:action_args = []
-  execute "normal! :".l:command." a\<cr>"
+  redir => l:message
+  call self.call_local("execute_cmd", [l:command, v:false, ["a"], ""])
+  redir END
   call assert_equal(
         \ [],
         \ l:action_args,
         \)
-  let l:last_message = trim(execute("1messages"))
-  execute "1messages clear"
   call assert_equal(
         \ "No action for this command",
-        \ l:last_message,
+        \ trim(l:message),
         \)
-  execute "delcommand TestCommand"
 endfunction
 
 " TODO: should be loaded by ftplugin (special filetype inheriting from vim)
