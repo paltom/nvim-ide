@@ -217,6 +217,56 @@ function! s:tests.update_command_creates_command_passing_range()
   execute "delcommand ".l:command
 endfunction
 
+function! s:tests.execute_cmd_executes_function_associates_with_cmd_object()
+  let l:command = "TestCommand"
+  call self.mock_var("g:cmdmenu")
+  let l:action_args = []
+  function! s:fail(args, flag, mods)
+    throw "Should not be called"
+  endfunction
+  let g:cmdmenu = [
+        \ {
+        \   "cmd": "TestCommand",
+        \   "menu": [
+        \     {
+        \       "cmd": "a",
+        \       "menu": [
+        \         {
+        \           "cmd": "b",
+        \           "action": { a, f, m -> extend(l:action_args, [a, f, m]) },
+        \           "menu": [
+        \             {
+        \               "cmd": "c",
+        \               "action": function("s:fail"),
+        \             },
+        \           ],
+        \         },
+        \       ],
+        \     },
+        \   ],
+        \ },
+        \]
+  call cmdmenu#update_commands()
+  silent execute "normal! :".l:command." a b\<cr>"
+  call assert_equal(
+        \ [[], v:false, "silent"],
+        \ l:action_args,
+        \)
+  let l:action_args = []
+  execute "normal! :".l:command." a\<cr>"
+  call assert_equal(
+        \ [],
+        \ l:action_args,
+        \)
+  let l:last_message = trim(execute("1messages"))
+  execute "1messages clear"
+  call assert_equal(
+        \ "No action for this command",
+        \ l:last_message,
+        \)
+  execute "delcommand TestCommand"
+endfunction
+
 " TODO: should be loaded by ftplugin (special filetype inheriting from vim)
 command! -buffer Test w<bar>so %<bar>call vut#execute_tests(s:script_to_test)
 " vim:fdm=indent
