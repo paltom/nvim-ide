@@ -53,7 +53,7 @@ function! s:tests.cmdline_parse_sets_tokens()
 endfunction
 
 function! s:tests.cmdline_parse_parses_automatically_while_command_is_being_entered()
-  let l:command = "Test a b c"
+  let l:command = "TestCommand a b c"
   let l:mock = self.mock_local_func("cmdline_parse")
   for cmdline_end in range(len(l:command))
     let l:mock["calls"] = []
@@ -155,7 +155,7 @@ function! s:tests.update_command_creates_command_passing_any_number_of_args()
     let l:entry = l:data[idx]
     call assert_equal(
           \ l:entry[1],
-          \ l:execute_cmd_mock["calls"][idx]["args"][1],
+          \ l:execute_cmd_mock["calls"][idx]["args"][2],
           \)
   endfor
   execute "delcommand ".l:command
@@ -184,7 +184,7 @@ function! s:tests.update_command_creates_command_passing_bang_flag()
       let l:assert = "false"
     endif
     execute "call assert_".l:assert."(".
-          \   "l:execute_cmd_mock['calls'][idx]['args'][0]".
+          \   "l:execute_cmd_mock['calls'][idx]['args'][1]".
           \ ")"
   endfor
   execute "delcommand ".l:command
@@ -247,7 +247,7 @@ function! s:tests.execute_cmd_executes_function_associates_with_cmd_object()
         \ },
         \]
   call cmdmenu#update_commands()
-  silent execute "normal! :".l:command." a b\<cr>"
+  silent execute l:command." a b"
   call assert_equal(
         \ [[], v:false, "silent"],
         \ l:action_args,

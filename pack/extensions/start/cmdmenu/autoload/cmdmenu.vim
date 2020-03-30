@@ -31,6 +31,7 @@ augroup cmdmenu_monitor_cmdline
   autocmd!
   autocmd CmdlineEnter : call <sid>reset_cmdline_tokens()
   autocmd CmdlineChanged : call <sid>cmdline_parse(getcmdline(), getcmdpos())
+  autocmd CmdlineLeave : call <sid>reset_cmdline_tokens()
 augroup end
 
 if !exists("g:cmdmenu")
@@ -77,6 +78,7 @@ endfunction
 
 function! s:update_command(cmd)
   let l:cmd_rhs_func_args = [
+        \ "'".a:cmd."'",
         \ "<bang>v:false",
         \ "split(<q-args>)",
         \ "<q-mods>",
@@ -95,9 +97,8 @@ function! s:update_command(cmd)
   execute l:cmd_def
 endfunction
 
-function! s:execute_cmd(flag, cmd_args, mods) range
-  let l:cmdline_tokens = s:get_cmdline_tokens()
-  let l:cmd_path = extend([l:cmdline_tokens["cmd"]], l:cmdline_tokens["args"])
+function! s:execute_cmd(cmd, flag, cmd_args, mods) range
+  let l:cmd_path = extend([copy(a:cmd)], a:cmd_args)
   let [l:cmd_obj, l:args] = s:get_cmd_obj_by_path(g:cmdmenu, l:cmd_path)
   try
     let Cmd_action = l:cmd_obj["action"]
