@@ -31,7 +31,6 @@ augroup cmdmenu_monitor_cmdline
   autocmd!
   autocmd CmdlineEnter : call <sid>reset_cmdline_tokens()
   autocmd CmdlineChanged : call <sid>cmdline_parse(getcmdline(), getcmdpos())
-  autocmd CmdlineLeave : call <sid>reset_cmdline_tokens()
 augroup end
 
 if !exists("g:cmdmenu")
@@ -94,4 +93,19 @@ function! s:update_command(cmd)
         \]
   let l:cmd_def = join(l:cmd_def, " ")
   execute l:cmd_def
+endfunction
+
+function! s:execute_cmd(flag, cmd_args, mods) range
+  let l:cmdline_tokens = s:get_cmdline_tokens()
+  let l:cmd_path = extend([l:cmdline_tokens["cmd"]], l:cmdline_tokens["args"])
+  let [l:cmd_obj, l:args] = s:get_cmd_obj_by_path(g:cmdmenu, l:cmd_path)
+  try
+    let Cmd_action = l:cmd_obj["action"]
+  catch /E716:/
+    echohl WarningMsg
+    echomsg "No action for this command"
+    echohl None
+    return
+  endtry
+  execute a:firstline.",".a:lastline."call Cmd_action(l:args, a:flag, a:mods)"
 endfunction
