@@ -38,10 +38,10 @@ endfunction
 
 function! s:tests.cmdline_parse_command_name_and_args()
   let l:data = [
-        \ ["TestCmd" ,["TestCmd", []]],
-        \ ["TestCmd Test", ["TestCmd", ["Test"]]],
-        \ ["TestCmd a b c", ["TestCmd", ["a", "b", "c"]]],
-        \ ["silent 4 verbose 3, 5 TestCmd! a Test b", ["TestCmd", ["a", "Test", "b"]]],
+        \ ["TestCmd" ,{"cmd": "TestCmd", "args": []}],
+        \ ["TestCmd Test", {"cmd": "TestCmd", "args": ["Test"]}],
+        \ ["TestCmd a b c", {"cmd": "TestCmd", "args": ["a", "b", "c"]}],
+        \ ["silent 4 verbose 3, 5 TestCmd! a Test b", {"cmd": "TestCmd", "args": ["a", "Test", "b"]}],
         \]
   for data in l:data
     call self.call_local("cmdline_parse", [data[0]])
@@ -181,6 +181,7 @@ function! s:tests.update_command_creates_command_passing_range()
   let l:command = "TestCommand"
   call self.call_local("update_command", [l:command])
   let l:execute_cmd_mock = self.mock_local_func("execute_cmd")
+  call setpos(".", [0, 1, 1, 0])
   let l:data = [
         \ ["", [line("."), line(".")]],
         \ ["2", [2, 2]],
