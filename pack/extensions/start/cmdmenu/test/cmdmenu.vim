@@ -52,6 +52,19 @@ function! s:tests.cmdline_parse_sets_tokens()
   endfor
 endfunction
 
+function! s:tests.cmdline_parse_parses_automatically_while_command_is_being_entered()
+  let l:command = "Test a b c"
+  let l:mock = self.mock_local_func("cmdline_parse")
+  for cmdline_end in range(len(l:command))
+    let l:mock["calls"] = []
+    silent execute "normal! :".l:command[0:cmdline_end]
+    call assert_equal(
+          \ cmdline_end + 1,
+          \ l:mock["call_count"],
+          \)
+  endfor
+endfunction
+
 function! s:tests.get_menu_by_path()
   let l:menu = [
         \ {
