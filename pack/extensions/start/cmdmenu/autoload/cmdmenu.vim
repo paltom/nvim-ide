@@ -20,6 +20,7 @@ function! s:reset_cmdline_tokens()
         \ "pos": 0,
         \}
 endfunction
+call s:reset_cmdline_tokens()
 
 function! s:cmdline_parse(cmdline, cmdpos)
   let s:cmdline_tokens["cmd"] = s:cmdline_command_name(a:cmdline)
@@ -100,13 +101,12 @@ endfunction
 function! s:execute_cmd(cmd, flag, cmd_args, mods) range
   let l:cmd_path = extend([copy(a:cmd)], a:cmd_args)
   let [l:cmd_obj, l:args] = s:get_cmd_obj_by_path(g:cmdmenu, l:cmd_path)
-  try
-    let Cmd_action = l:cmd_obj["action"]
-  catch /E716:/
+  if !has_key(l:cmd_obj, "action")
     echohl WarningMsg
     echomsg "No action for this command"
     echohl None
     return
-  endtry
-  execute a:firstline.",".a:lastline."call Cmd_action(l:args, a:flag, a:mods)"
+  endif
+  execute a:firstline.",".a:lastline.
+        \   "call l:cmd_obj['action'](l:args, a:flag, a:mods)"
 endfunction
