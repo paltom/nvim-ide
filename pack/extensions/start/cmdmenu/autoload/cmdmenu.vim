@@ -17,18 +17,20 @@ function! s:reset_cmdline_tokens()
   let s:cmdline_tokens = {
         \ "cmd": "",
         \ "args": [],
+        \ "pos": 0,
         \}
 endfunction
 
-function! s:cmdline_parse(cmdline)
+function! s:cmdline_parse(cmdline, cmdpos)
   let s:cmdline_tokens["cmd"] = s:cmdline_command_name(a:cmdline)
   let s:cmdline_tokens["args"] = s:cmdline_command_args(a:cmdline)
+  let s:cmdline_tokens["pos"] = a:cmdpos
 endfunction
 
 augroup cmdmenu_monitor_cmdline
   autocmd!
   autocmd CmdlineEnter : call <sid>reset_cmdline_tokens()
-  autocmd CmdlineChanged : call <sid>cmdline_parse(getcmdline())
+  autocmd CmdlineChanged : call <sid>cmdline_parse(getcmdline(), getcmdpos())
   autocmd CmdlineLeave : call <sid>reset_cmdline_tokens()
 augroup end
 

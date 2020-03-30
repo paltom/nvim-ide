@@ -36,15 +36,15 @@ function! s:tests.cmdline_parse_get_command_args()
   endfor
 endfunction
 
-function! s:tests.cmdline_parse_command_name_and_args()
+function! s:tests.cmdline_parse_sets_tokens()
   let l:data = [
-        \ ["TestCmd" ,{"cmd": "TestCmd", "args": []}],
-        \ ["TestCmd Test", {"cmd": "TestCmd", "args": ["Test"]}],
-        \ ["TestCmd a b c", {"cmd": "TestCmd", "args": ["a", "b", "c"]}],
-        \ ["silent 4 verbose 3, 5 TestCmd! a Test b", {"cmd": "TestCmd", "args": ["a", "Test", "b"]}],
+        \ ["TestCmd" ,{"cmd": "TestCmd", "args": [], "pos": 7}],
+        \ ["TestCmd Test", {"cmd": "TestCmd", "args": ["Test"], "pos": 12}],
+        \ ["TestCmd a b c", {"cmd": "TestCmd", "args": ["a", "b", "c"], "pos": 13}],
+        \ ["silent 4 verbose 3, 5 TestCmd! a Test b", {"cmd": "TestCmd", "args": ["a", "Test", "b"], "pos": 39}],
         \]
   for data in l:data
-    call self.call_local("cmdline_parse", [data[0]])
+    call self.call_local("cmdline_parse", [data[0], len(data[0])])
     call assert_equal(
           \ data[1],
           \ self.call_local("get_cmdline_tokens", [])
