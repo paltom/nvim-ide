@@ -47,7 +47,7 @@ endfunction
 function! s:display_menu(cmdline_state)
   " open window with list of possible commands given entered path
   let l:cmds = s:get_cmds_from_cmdline_state(a:cmdline_state)
-  echomsg l:cmds
+  echomsg "Cmds: ".string(l:cmds)
 endfunction
 
 function! s:get_cmds_from_cmdline_state(cmdline_state)
@@ -56,7 +56,6 @@ function! s:get_cmds_from_cmdline_state(cmdline_state)
         \ a:cmdline_state["args"]
         \)
   let [l:cmd_obj, l:cmd_args] = s:get_cmd_obj_by_path(g:cmdmenu, l:cmd_path)
-  echomsg string(l:cmd_obj)
   let l:cmds = s:get_all_cmds_from_menu(get(l:cmd_obj, "menu", []))
   return l:cmds
 endfunction
