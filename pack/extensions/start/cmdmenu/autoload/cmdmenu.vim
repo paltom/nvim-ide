@@ -124,6 +124,7 @@ function! s:update_command(cmd)
         \ "-nargs=*",
         \ "-range",
         \ "-bang",
+        \ "-complete=custom,s:complete_cmd",
         \ a:cmd,
         \ l:execute_cmd_func,
         \]
@@ -142,4 +143,10 @@ function! s:execute_cmd(cmd, flag, cmd_args, mods) range
   endif
   execute a:firstline.",".a:lastline.
         \   "call l:cmd_obj['action'](l:args, a:flag, a:mods)"
+endfunction
+
+function! s:complete_cmd(arg_prefix, cmdline, curpos)
+  let l:cmdline_state = s:get_cmdline_state()
+  let l:cmds = s:get_cmds_from_cmdline_state(l:cmdline_state)
+  return join(l:cmds, "\n")
 endfunction
