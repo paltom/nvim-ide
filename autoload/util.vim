@@ -32,6 +32,9 @@ endfunction
 
 function! util#single_matching_prefix(prefix)
   function! s:single_matching_prefix(prefix, names)
+    if empty(a:prefix)
+      return ""
+    endif
     let l:all_names_matching_prefix = func#filter(
           \ { _, n -> n =~# '\v^'.a:prefix },
           \)

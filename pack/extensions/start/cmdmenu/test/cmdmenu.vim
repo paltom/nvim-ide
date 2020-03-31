@@ -1,4 +1,4 @@
-let s:script_to_test = "autoload/cmdmenu.vim"
+  let s:script_to_test = "autoload/cmdmenu.vim"
 let s:tests = vut#test_script_file(s:script_to_test)
 
 function! s:tests.cmdline_parse_get_command_name()
@@ -36,7 +36,7 @@ function! s:tests.cmdline_parse_get_command_args()
   endfor
 endfunction
 
-function! s:tests.cmdline_parse_sets_tokens()
+function! s:tests.cmdline_parse_sets_state()
   let l:data = [
         \ ["TestCmd" ,{"cmd": "TestCmd", "args": [], "pos": 7}],
         \ ["TestCmd Test", {"cmd": "TestCmd", "args": ["Test"], "pos": 12}],
@@ -47,7 +47,7 @@ function! s:tests.cmdline_parse_sets_tokens()
     call self.call_local("cmdline_parse", [data[0], len(data[0])])
     call assert_equal(
           \ data[1],
-          \ self.call_local("get_cmdline_tokens", [])
+          \ self.call_local("get_cmdline_state", [])
           \)
   endfor
 endfunction
@@ -262,6 +262,36 @@ function! s:tests.execute_cmd_executes_function_associates_with_cmd_object()
   call assert_equal(
         \ "No action for this command",
         \ trim(l:message),
+        \)
+endfunction
+
+function! s:tests.is_cmdmenu_command_returns_if_command_entered_is_defined_by_cmdmenu()
+  call self.mock_var("g:cmdmenu")
+  let g:cmdmenu = [
+        \ {
+        \   "cmd": "TestCommand",
+        \ },
+        \ {
+        \   "cmd": "TestOtherCommand",
+        \ },
+        \]
+  let l:cmdline_state = {
+        \ "cmd": "TestC",
+        \}
+  call assert_true(
+        \ self.call_local("is_cmdmenu_command", [l:cmdline_state])
+        \)
+  let l:cmdline_state = {
+        \ "cmd": "Test",
+        \}
+  call assert_false(
+        \ self.call_local("is_cmdmenu_command", [l:cmdline_state])
+        \)
+  let l:cmdline_state = {
+        \ "cmd": "SomethingElse",
+        \}
+  call assert_false(
+        \ self.call_local("is_cmdmenu_command", [l:cmdline_state])
         \)
 endfunction
 

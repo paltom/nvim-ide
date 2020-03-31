@@ -9,30 +9,63 @@ function! s:cmdline_command_args(cmdline)
   return split(l:args_str, '\v\ +')
 endfunction
 
-function! s:get_cmdline_tokens()
-  return s:cmdline_tokens
+function! s:get_cmdline_state()
+  return s:cmdline_state
 endfunction
 
-function! s:reset_cmdline_tokens()
-  let s:cmdline_tokens = {
+function! s:reset_cmdline_state()
+  let s:cmdline_state = {
         \ "cmd": "",
         \ "args": [],
         \ "pos": 0,
         \}
 endfunction
-call s:reset_cmdline_tokens()
+call s:reset_cmdline_state()
 
 function! s:cmdline_parse(cmdline, cmdpos)
-  let s:cmdline_tokens["cmd"] = s:cmdline_command_name(a:cmdline)
-  let s:cmdline_tokens["args"] = s:cmdline_command_args(a:cmdline)
-  let s:cmdline_tokens["pos"] = a:cmdpos
+  let s:cmdline_state["cmd"] = s:cmdline_command_name(a:cmdline)
+  let s:cmdline_state["args"] = s:cmdline_command_args(a:cmdline)
+  let s:cmdline_state["pos"] = a:cmdpos
+endfunction
+
+function! s:is_cmdmenu_command(cmdline_state)
+  let l:cmdline_command = a:cmdline_state["cmd"]
+  let l:full_command_from_menu = util#single_matching_prefix(l:cmdline_command)
+        \(s:get_all_cmds_from_menu(g:cmdmenu))
+  return !empty(l:full_command_from_menu)
+endfunction
+
+function! s:update_cmdmenu(cmdline, cmdpos)
+  call s:cmdline_parse(a:cmdline, a:cmdpos)
+  let l:cmdline_state = s:get_cmdline_state()
+  if !s:is_cmdmenu_command(l:cmdline_state)
+    return
+  endif
+  call s:display_menu(l:cmdline_state)
+endfunction
+
+function! s:display_menu(cmdline_state)
+  " open window with list of possible commands given entered path
+  let l:cmds = s:get_cmds_from_cmdline_state(a:cmdline_state)
+  echomsg l:cmds
+endfunction
+
+function! s:get_cmds_from_cmdline_state(cmdline_state)
+  let l:cmd_path = extend(
+        \ [copy(a:cmdline_state["cmd"])],
+        \ a:cmdline_state["args"]
+        \)
+  let [l:cmd_obj, l:cmd_args] = s:get_cmd_obj_by_path(g:cmdmenu, l:cmd_path)
+  echomsg string(l:cmd_obj)
+  let l:cmds = s:get_all_cmds_from_menu(get(l:cmd_obj, "menu", []))
+  return l:cmds
 endfunction
 
 augroup cmdmenu_monitor_cmdline
   autocmd!
-  autocmd CmdlineEnter : call <sid>reset_cmdline_tokens()
-  autocmd CmdlineChanged : call <sid>cmdline_parse(getcmdline(), getcmdpos())
-  autocmd CmdlineLeave : call <sid>reset_cmdline_tokens()
+  autocmd CmdlineEnter : call <sid>reset_cmdline_state()
+  autocmd CmdlineChanged : call <sid>update_cmdmenu(getcmdline(), getcmdpos())
+  autocmd CmdlineLeave : call <sid>reset_cmdline_state()
 augroup end
 
 if !exists("g:cmdmenu")
