@@ -22,11 +22,7 @@ function! s:compose(funcs)
   function! s:comp(funcs, arg)
     let l:arg = a:arg
     for Func in a:funcs
-      if type(Func) == v:t_func
-        let l:arg = Func(l:arg)
-      elseif type(Func) == v:t_string
-        let l:arg = function(Func)(l:arg)
-      endif
+      let l:arg = g:func#call#.wrap(Func, l:arg)
     endfor
     return l:arg
   endfunction

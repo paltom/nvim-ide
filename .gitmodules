@@ -1,0 +1,3 @@
+[submodule "ext_plugins/vim-one"]
+	path = ext_plugins/vim-one
+	url = https://github.com/rakr/vim-one
