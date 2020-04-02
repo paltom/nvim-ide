@@ -252,13 +252,11 @@ augroup end
 set number relativenumber numberwidth=5
 
 " Statusline settings
-"execute "setlocal statusline=%!config#statusline(".winnr().")"
-"augroup config_statusline_update
-  "autocmd!
-  "" Set correct statusline functions for all windows in tabpage when changing
-  "" windows
-  "autocmd WinEnter,BufWinEnter * call config#statusline_update_all_windows()
-"augroup end
+setlocal statusline=%!config#statusline#.active(winnr())
+augroup config_statusline_update
+  autocmd!
+  autocmd WinEnter,BufWinEnter * call config#statusline#.update()
+augroup end
 "
 "" Tabline settings
 "" Display tabline when there are at least two tabpages
