@@ -1,35 +1,36 @@
-function! func#map(func)
-  function! s:map(func, list)
-    let l:list = copy(a:list)
-    let l:list = map(l:list, a:func)
-    return l:list
+let func# = {}
+
+" Wrap a list accepting function so it can also take varargs as arguments
+" This is just for convenience
+function! func#.list_vararg(funcref)
+  function! s:wrapper(args, ...) closure
+    if a:0 == 0
+      if type(a:args) == v:t_list
+        let l:args = a:args
+      else
+        let l:args = [a:args]
+      endif
+    elseif a:0 > 0
+      let l:args = extend([a:args], a:000)
+    endif
+    return a:funcref(l:args)
   endfunction
-  return function("s:map", [a:func])
+  return funcref("s:wrapper")
 endfunction
 
-function! func#filter(func)
-  function! s:filter(func, list)
-    let l:list = copy(a:list)
-    let l:list = filter(l:list, a:func)
-    return l:list
-  endfunction
-  return function("s:filter", [a:func])
-endfunction
-
-function! func#compose(funcs)
-  function! s:compose(funcs, arg)
-    let l:arg = copy(a:arg)
+function! s:compose(funcs)
+  function! s:comp(funcs, arg)
+    let l:arg = a:arg
     for Func in a:funcs
-      let l:arg = Func(l:arg)
+      if type(Func) == v:t_func
+        let l:arg = Func(l:arg)
+      elseif type(Func) == v:t_string
+        let l:arg = function(Func)(l:arg)
+      endif
     endfor
     return l:arg
   endfunction
-  return function("s:compose", [a:funcs])
+  " create composed function waiting for arg (partial)
+  return funcref("s:comp", [a:funcs])
 endfunction
-
-function! func#contains(list)
-  function! s:contains(list, elem)
-    return index(a:list, a:elem) >= 0
-  endfunction
-  return function("s:contains", [a:list])
-endfunction
+let func#.compose = func#.list_vararg(funcref("s:compose"))
