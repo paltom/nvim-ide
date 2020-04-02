@@ -255,7 +255,8 @@ set number relativenumber numberwidth=5
 setlocal statusline=%!config#statusline#.active()
 augroup config_statusline_update
   autocmd!
-  autocmd WinEnter,BufWinEnter * call config#statusline#.update()
+  autocmd WinEnter,BufWinEnter * setlocal statusline=%!config#statusline#.active()
+  autocmd WinLeave * setlocal statusline=%!config#statusline#.inactive()
 augroup end
 "
 "" Tabline settings

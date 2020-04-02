@@ -27,15 +27,3 @@ function! config#statusline#.inactive()
         \]
   return join(l:stl, "")
 endfunction
-
-function! config#statusline#.update()
-  let l:winnr = winnr()
-  for n in range(1, winnr("$"))
-    if n == l:winnr
-      let l:stl_func = "config#statusline#.active"
-    else
-      let l:stl_func = "config#statusline#.inactive"
-    endif
-    call setwinvar(n, "&statusline", "%!".l:stl_func."()")
-  endfor
-endfunction
