@@ -252,7 +252,7 @@ augroup end
 set number relativenumber numberwidth=5
 
 " Statusline settings
-setlocal statusline=%!config#statusline#.active(winnr())
+setlocal statusline=%!config#statusline#.active()
 augroup config_statusline_update
   autocmd!
   autocmd WinEnter,BufWinEnter * call config#statusline#.update()
