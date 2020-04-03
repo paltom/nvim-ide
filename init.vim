@@ -259,13 +259,13 @@ augroup config_statusline_update
   autocmd WinEnter,BufWinEnter * setlocal statusline=%!config#statusline#.active()
   autocmd WinLeave * setlocal statusline=%!config#statusline#.inactive()
 augroup end
-"
-"" Tabline settings
-"" Display tabline when there are at least two tabpages
-"set showtabline=1
-"" Do not use GUI external tabline
-"set guioptions-=e
-"set tabline=%!config#tabline()
+
+" Tabline settings
+" Display tabline when there are at least two tabpages
+set showtabline=1
+" Do not use GUI external tabline
+set guioptions-=e
+set tabline=%!config#tabline#.tabline()
 " }}}
 
 " vim:foldmethod=marker
