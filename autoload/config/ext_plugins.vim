@@ -30,6 +30,6 @@ endfunction
 
 function! config#ext_plugins#.load(plugins)
   for plugin in a:plugins
-    call g:func#call#.all(funcref("s:update_rtp"), funcref("s:load_plugin"))(plugin)
+    call g:func#.call_all(funcref("s:update_rtp"), funcref("s:load_plugin"))(plugin)
   endfor
 endfunction
