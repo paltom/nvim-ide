@@ -1,13 +1,14 @@
 let config#statusline#parts#filename# = {}
 
 function! s:filename_simple(bufname)
-  call g:func#call#.set_result(g:path#.filename(a:bufname))
+  return g:path#.filename(a:bufname)
 endfunction
 
 function! s:filename_empty(bufname)
   if empty(g:path#.filename(a:bufname))
-    call g:func#call#.set_result("[No Name]")
+    return "[No Name]"
   endif
+  return v:null
 endfunction
 
 function! s:filename_shorten_rel_path(bufname)
@@ -15,9 +16,9 @@ function! s:filename_shorten_rel_path(bufname)
         \(a:bufname)
   let l:filename = g:path#.filename(a:bufname)
   if l:base_rel_dir ==# "."
-    call g:func#call#.set_result(l:filename)
+    return l:filename
   else
-    call g:func#call#.set_result(g:path#.join(pathshorten(l:base_rel_dir), l:filename))
+    return g:path#.join(pathshorten(l:base_rel_dir), l:filename)
   endif
 endfunction
 

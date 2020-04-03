@@ -146,6 +146,7 @@ inoremap <c-k> <c-p>
 
 " More convenient movements through vertical wildmenu
 if has("nvim-0.4.2")
+  set wildcharm=<tab>
   cnoremap <expr> <left>  wildmenumode() ? "\<up>"    : "\<left>"
   cnoremap <expr> <right> wildmenumode() ? "\<down>"  : "\<right>"
   cnoremap <expr> <up>    wildmenumode() ? "\<left>"  : "\<up>"
@@ -185,7 +186,7 @@ vnoremap g/ /
 " Enable rich colors
 set termguicolors
 " Background should be dark (it is possible to switch it to light)
-set background=dark
+set background=light
 " Clear vertical borders between splits
 let &fillchars = "vert: "
 

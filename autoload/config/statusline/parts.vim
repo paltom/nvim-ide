@@ -19,5 +19,5 @@ function! config#statusline#parts#.flags()
 endfunction
 
 function! config#statusline#parts#.filename()
-  return g:func#call#.until_result(g:config#statusline#parts#filename#.funcs)(bufname())
+  return g:func#.until_result(g:config#statusline#parts#filename#.funcs)(bufname())
 endfunction

@@ -30,3 +30,17 @@ function! s:compose(funcs)
   return funcref("s:comp", [a:funcs])
 endfunction
 let func#.compose = func#.list_vararg(funcref("s:compose"))
+
+function! s:until_result(funcs) abort
+  function! s:_until_result(funcs, arg)
+    for F in a:funcs
+      let l:result = g:func#call#.wrap(F, a:arg)
+      if l:result isnot# v:null
+        return l:result
+      endif
+    endfor
+    throw "No result"
+  endfunction
+  return funcref("s:_until_result", [a:funcs])
+endfunction
+let func#.until_result = func#.list_vararg(funcref("s:until_result"))
