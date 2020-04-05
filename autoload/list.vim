@@ -25,7 +25,7 @@ function! s:list_wrapper(list_func, funcref)
     let l:list = copy(a:list)
     return call(a:list_func, [l:list, a:funcref])
   endfunction
-  return funcref("s:_list_wrapper")
+  return g:func#wrap#.list_vararg(funcref("s:_list_wrapper"))
 endfunction
 let list#.map = funcref("s:list_wrapper", ["map"])
 let list#.filter = funcref("s:list_wrapper", ["filter"])
