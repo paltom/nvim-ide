@@ -260,6 +260,14 @@ augroup config_statusline_update
   autocmd WinLeave * setlocal statusline=%!config#statusline#.inactive()
 augroup end
 
+function! s:ft_help_filename(bufname)
+  if getbufvar(a:bufname, "&filetype") ==# "help"
+    return g:config#statusline#parts#filename#.simple(a:bufname)
+  endif
+  return v:null
+endfunction
+call config#statusline#parts#filename#.add_handler(funcref("s:ft_help_filename"))
+
 " Tabline settings
 " Display tabline when there are at least two tabpages
 set showtabline=1

@@ -20,12 +20,12 @@ function! list#.unique_append(list, elem)
   return g:list#.unique_insert(a:list, a:elem, len(a:list))
 endfunction
 
-function! s:_list_wrapper(list_func, funcref, list)
-  let l:list = copy(a:list)
-  return call(a:list_func, [l:list, a:funcref])
-endfunction
 function! s:list_wrapper(list_func, funcref)
-  return funcref("s:_list_wrapper", [a:list_func, a:funcref])
+  function! s:_list_wrapper(list) closure
+    let l:list = copy(a:list)
+    return call(a:list_func, [l:list, a:funcref])
+  endfunction
+  return funcref("s:_list_wrapper")
 endfunction
 let list#.map = funcref("s:list_wrapper", ["map"])
 let list#.filter = funcref("s:list_wrapper", ["filter"])

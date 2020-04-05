@@ -18,9 +18,10 @@ function! config#statusline#parts#.flags()
   endif
 endfunction
 
-let s:filename_funcs_caller = g:func#.until_result(g:config#statusline#parts#filename#.funcs)
 function! config#statusline#parts#.filename()
-  return s:filename_funcs_caller(bufname())
+  " needs to be evaluated every time, because new filename custom handlers may
+  " be added any time
+  return g:func#.until_result(g:config#statusline#parts#filename#.funcs())(bufname())
 endfunction
 
 function! config#statusline#parts#.type()

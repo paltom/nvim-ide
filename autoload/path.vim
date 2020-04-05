@@ -13,7 +13,7 @@ function! path#.basedir(path)
 endfunction
 
 function! path#.relative(basepath)
-  function! s:relative(basepath, path)
+  function! s:relative(path) closure
     let l:basepath_full = g:path#.full(a:basepath)
     if l:basepath_full[-1] !=# g:path#.sep
       let l:basepath_full = l:basepath_full.g:path#.sep
@@ -26,7 +26,7 @@ function! path#.relative(basepath)
       return l:path_relative
     endif
   endfunction
-  return funcref("s:relative", [a:basepath])
+  return funcref("s:relative")
 endfunction
 
 function! path#.filename(path)

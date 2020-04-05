@@ -10,9 +10,12 @@ function! config#tabline#parts#.modified(tabpagenr)
   return ""
 endfunction
 
+
 function! config#tabline#parts#.filename(tabpagenr)
   let l:current_winnr = tabpagewinnr(a:tabpagenr)
   let l:bufnr = tabpagebuflist(a:tabpagenr)[l:current_winnr - 1]
   let l:bufname = bufname(l:bufnr)
-  return g:func#.until_result(g:config#tabline#parts#filename#.funcs)(l:bufname)
+  " needs to be evaluated every time, because new filename custom handlers may
+  " be added any time
+  return g:func#.until_result(g:config#tabline#parts#filename#.funcs())(l:bufname)
 endfunction

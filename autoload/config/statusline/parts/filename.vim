@@ -22,29 +22,13 @@ function! config#statusline#parts#filename#.shorten_rel_path(bufname)
   endif
 endfunction
 
-function! s:ft_help_filename(bufname)
-  if getbufvar(a:bufname, "&filetype") ==# "help"
-    return g:config#statusline#parts#filename#.simple(a:bufname)
-  endif
-  return v:null
-endfunction
+let s:eval_adder = config#statusline#parts#filename#helper#.evaluator_and_adder([])
+let config#statusline#parts#filename#.add_handler = function(s:eval_adder.adder, [], s:eval_adder)
 
-let s:filename_special_cases = [
+function! config#statusline#parts#filename#.funcs()
+  return [
+      \ g:config#statusline#parts#filename#.empty,
+      \ s:eval_adder.evaluator,
+      \ g:config#statusline#parts#filename#.shorten_rel_path,
       \]
-let s:filename_special_cases_caller = { bufname -> v:null }
-function! config#statusline#parts#filename#.add_handler(funcref)
-  let s:filename_special_cases = g:list#.unique_append(s:filename_special_cases, a:funcref)
-  let s:filename_special_cases_caller = g:func#.until_result(s:filename_special_cases)
 endfunction
-
-function! s:filename_special_cases(bufname)
-  return s:filename_special_cases_caller(a:bufname)
-endfunction
-
-call config#statusline#parts#filename#.add_handler(funcref("s:ft_help_filename"))
-
-let config#statusline#parts#filename#.funcs = [
-      \ config#statusline#parts#filename#.empty,
-      \ funcref("s:filename_special_cases"),
-      \ config#statusline#parts#filename#.shorten_rel_path,
-      \]

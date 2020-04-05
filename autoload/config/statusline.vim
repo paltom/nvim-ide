@@ -56,22 +56,22 @@ function! s:highlight(highlight, part)
   return "%#".a:highlight."#".a:part."%#StatusLine#"
 endfunction
 
-function! s:wrap_evaluate(partname)
+function! s:evaluate_part(partname)
   return "%{g:config#statusline#parts#.".a:partname."()}"
 endfunction
 
 function! config#statusline#.active()
   let l:stl = [
-        \ s:highlight("STLCWD", s:wrap_evaluate("cwd")),
-        \ s:highlight("STLFlags", s:wrap_evaluate("flags")),
+        \ s:highlight("STLCWD", s:evaluate_part("cwd")),
+        \ s:highlight("STLFlags", s:evaluate_part("flags")),
         \ g:config#statusline#parts#.sep,
-        \ "%<".s:wrap_evaluate("filename"),
+        \ "%<".s:evaluate_part("filename"),
         \ g:config#statusline#parts#.sep,
         \ s:highlight("STLEmpty", "%="),
         \ g:config#statusline#parts#.sep,
         \ g:config#statusline#parts#.type(),
         \ g:config#statusline#parts#.sep,
-        \ s:highlight("STLLocation", s:wrap_evaluate("location")),
+        \ s:highlight("STLLocation", s:evaluate_part("location")),
         \ g:config#statusline#parts#.sep,
         \ s:highlight("STLWinnr", g:config#statusline#parts#.winnr()),
         \]
@@ -80,10 +80,10 @@ endfunction
 
 function! config#statusline#.inactive()
   let l:stl = [
-        \ s:wrap_evaluate("cwd"),
-        \ s:highlight("STLFlags", s:wrap_evaluate("flags")),
+        \ s:evaluate_part("cwd"),
+        \ s:highlight("STLFlags", s:evaluate_part("flags")),
         \ g:config#statusline#parts#.sep,
-        \ "%<".s:wrap_evaluate("filename"),
+        \ "%<".s:evaluate_part("filename"),
         \ "%=",
         \ g:config#statusline#parts#.winnr(),
         \]
