@@ -28,8 +28,9 @@ function! s:load_plugin(plugin)
   let &runtimepath = l:runtimepath
 endfunction
 
+let s:plugin_loader = g:func#.call_all(funcref("s:update_rtp"), funcref("s:load_plugin"))
 function! config#ext_plugins#.load(plugins)
   for plugin in a:plugins
-    call g:func#.call_all(funcref("s:update_rtp"), funcref("s:load_plugin"))(plugin)
+    call s:plugin_loader(plugin)
   endfor
 endfunction

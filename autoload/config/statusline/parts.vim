@@ -18,8 +18,9 @@ function! config#statusline#parts#.flags()
   endif
 endfunction
 
+let s:filename_funcs_caller = g:func#.until_result(g:config#statusline#parts#filename#.funcs)
 function! config#statusline#parts#.filename()
-  return g:func#.until_result(g:config#statusline#parts#filename#.funcs)(bufname())
+  return s:filename_funcs_caller(bufname())
 endfunction
 
 function! config#statusline#parts#.type()

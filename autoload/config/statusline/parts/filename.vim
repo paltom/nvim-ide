@@ -11,9 +11,9 @@ function! config#statusline#parts#filename#.empty(bufname)
   return v:null
 endfunction
 
+let s:relative_basedir = g:func#.compose(g:path#.full, g:path#.relative(getcwd()), g:path#.basedir)
 function! config#statusline#parts#filename#.shorten_rel_path(bufname)
-  let l:base_rel_dir = g:func#.compose(g:path#.full, g:path#.relative(getcwd()), g:path#.basedir)
-        \(a:bufname)
+  let l:base_rel_dir = s:relative_basedir(a:bufname)
   let l:filename = g:path#.filename(a:bufname)
   if l:base_rel_dir ==# "."
     return l:filename
@@ -31,12 +31,14 @@ endfunction
 
 let s:filename_special_cases = [
       \]
+let s:filename_special_cases_caller = { bufname -> v:null }
 function! config#statusline#parts#filename#.add_handler(funcref)
   let s:filename_special_cases = g:list#.unique_append(s:filename_special_cases, a:funcref)
+  let s:filename_special_cases_caller = g:func#.until_result(s:filename_special_cases)
 endfunction
 
 function! s:filename_special_cases(bufname)
-  return g:func#.until_result(s:filename_special_cases)(a:bufname)
+  return s:filename_special_cases_caller(a:bufname)
 endfunction
 
 call config#statusline#parts#filename#.add_handler(funcref("s:ft_help_filename"))
