@@ -266,7 +266,7 @@ function! s:ft_help_filename(bufname)
   endif
   return v:null
 endfunction
-call config#statusline#parts#filename#.add_handler(funcref("s:ft_help_filename"))
+call config#statusline#.custom_filename_handler(funcref("s:ft_help_filename"))
 
 " Tabline settings
 " Display tabline when there are at least two tabpages

@@ -1,7 +1,7 @@
-let config#statusline#parts#filename#helper# = {}
+let config#statusline#parts#filename#custom# = {}
 
 let s:empty_evaluator = { bufname -> v:null }
-function! config#statusline#parts#filename#helper#.evaluator_and_adder(filename_funcs)
+function! config#statusline#parts#filename#custom#.handlers(filename_funcs)
   let l:filename_funcs = a:filename_funcs
   if empty(l:filename_funcs)
     let Evaluator = s:empty_evaluator

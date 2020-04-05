@@ -89,3 +89,5 @@ function! config#statusline#.inactive()
         \]
   return join(l:stl, "")
 endfunction
+
+let config#statusline#.custom_filename_handler = config#statusline#parts#filename#.add_handler

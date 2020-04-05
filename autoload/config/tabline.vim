@@ -31,3 +31,5 @@ function! config#tabline#.tabline()
   let l:tbl = add(l:tbl, "%=")
   return join(l:tbl, "")
 endfunction
+
+let config#tabline#.custom_filename_handler = config#tabline#parts#filename#.add_handler
