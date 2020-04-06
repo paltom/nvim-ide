@@ -112,9 +112,9 @@ function! s:execute_cmd(cmd, flag, args, mods) range abort
 endfunction
 
 function! s:complete_cmd(arglead, cmdline, curpos)
-  let [l:command, l:args] = s:parse_cmdline(a:cmdline) " XXX
+  let [l:command, l:args] = s:parse_cmdline(a:cmdline)
   let l:command = s:prefix_single_match(l:command)(s:menu_cmds(g:cmdmenu))
-  let l:cmd_menu_path = split(l:args)
+  let l:cmd_menu_path = extend([l:command], split(l:args))
   if !empty(a:arglead)
     let l:cmd_menu_path = l:cmd_menu_path[:-2]
   endif
@@ -129,4 +129,8 @@ function! s:complete_cmd(arglead, cmdline, curpos)
     let l:completion_candidates = s:menu_cmds(l:submenu)
   endif
   return join(l:completion_candidates, "\n")
+endfunction
+
+function! s:parse_cmdline(cmdline)
+  return matchlist(a:cmdline, '\v^\U*(\u\a+)!?\s+(.*)$')[1:2]
 endfunction
