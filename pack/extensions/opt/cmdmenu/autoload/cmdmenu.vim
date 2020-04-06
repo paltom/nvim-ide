@@ -54,7 +54,9 @@ function! s:execute_cmd(cmd, flag, args, mods) range abort
 endfunction
 
 function! s:complete_cmd(arglead, cmdline, curpos)
-  let [l:cmd_obj, l:cmd_args] = cmdmenu#monitoring#cmd_obj(a:cmdline, a:curpos, v:true)
+  let l:cmd_obj_args = cmdmenu#monitoring#get_state()["complete"]
+  let l:cmd_obj = l:cmd_obj_args["cmd_obj"]
+  let l:cmd_args = l:cmd_obj_args["cmd_args"]
   " invoke custom completion function only if there is no possibility to go
   " deeper into submenus, otherwise there is unambiguity in completions
   " provider

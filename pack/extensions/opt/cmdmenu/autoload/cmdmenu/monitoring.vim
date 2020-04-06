@@ -62,19 +62,12 @@ function! s:cmd_obj_by_path(menu, path)
   return [l:cmd_obj, l:path]
 endfunction
 
-function! cmdmenu#monitoring#cmd_obj(cmdline, cmdcurpos, completing)
-  let [l:command, l:args] = s:parse_cmdline(a:cmdline)
-  let l:command = s:prefix_single_match(l:command)(cmdmenu#cmds(get(g:, "cmdmenu", [])))
-  let l:args = split(l:args)
-  let l:cmd_path = extend([l:command], l:args)
-  if a:completing && a:cmdline =~# '\v\S$'
-    let l:cmd_path = l:cmd_path[:-2]
-  endif
-  return s:cmd_obj_by_path(get(g:, "cmdmenu", []), l:cmd_path)
-endfunction
-
 function! cmdmenu#monitoring#reset()
   let s:state = {
+        \ "complete": {
+        \   "cmd_obj": {},
+        \   "cmd_args": [],
+        \ },
         \ "cmd_obj": {},
         \ "cmd_args": [],
         \ "info": {
@@ -85,7 +78,27 @@ function! cmdmenu#monitoring#reset()
 endfunction
 
 function! s:set_state(cmdline, cmdcurpos)
-  let [l:cmd_obj, l:cmd_args] = cmdmenu#monitoring#cmd_obj(a:cmdline, a:cmdcurpos, v:false)
+  let [l:command, l:args] = s:parse_cmdline(a:cmdline)
+  let l:command = s:prefix_single_match(l:command)(cmdmenu#cmds(get(g:, "cmdmenu", [])))
+  let l:args = split(l:args)
+  if a:cmdline =~# '\v\S$'
+    let [l:cmd_path, l:last_arg] = [l:args[:-2], l:args[-1:]]
+  else
+    let [l:cmd_path, l:last_arg] = [l:args, []]
+  endif
+  let l:cmd_path = extend([l:command], l:cmd_path)
+  let [l:complete_cmd_obj, l:complete_cmd_args] = s:cmd_obj_by_path(get(g:, "cmdmenu", []), l:cmd_path)
+  let s:state["complete"]["cmd_obj"] = l:complete_cmd_obj
+  let s:state["complete"]["cmd_args"] = l:complete_cmd_args
+  if !empty(l:last_arg)
+    if has_key(l:complete_cmd_obj, "menu")
+      let [l:cmd_obj, l:cmd_args] = s:cmd_obj_by_path(l:complete_cmd_obj["menu"], l:last_arg)
+    else
+      let [l:cmd_obj, l:cmd_args] = [l:complete_cmd_obj, extend(l:complete_cmd_args, l:last_arg)]
+    endif
+  else
+    let [l:cmd_obj, l:cmd_args] = [l:complete_cmd_obj, l:complete_cmd_args]
+  endif
   let s:state["cmd_obj"] = l:cmd_obj
   let s:state["cmd_args"] = l:cmd_args
 endfunction
