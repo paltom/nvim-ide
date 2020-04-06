@@ -67,11 +67,11 @@ function! config#statusline#active()
         \ g:config#statusline#parts#sep,
         \ s:highlight("STLEmpty", "%="),
         \ g:config#statusline#parts#sep,
-        \ config#statusline#parts#type(),
+        \ s:evaluate_part("type"),
         \ g:config#statusline#parts#sep,
         \ s:highlight("STLLocation", s:evaluate_part("location")),
         \ g:config#statusline#parts#sep,
-        \ s:highlight("STLWinnr", config#statusline#parts#winnr()),
+        \ s:highlight("STLWinnr", s:evaluate_part("winnr")),
         \]
   return join(l:stl, "")
 endfunction
@@ -83,7 +83,7 @@ function! config#statusline#inactive()
         \ g:config#statusline#parts#sep,
         \ "%<".s:evaluate_part("filename"),
         \ "%=",
-        \ config#statusline#parts#winnr(),
+        \ s:evaluate_part("winnr"),
         \]
   return join(l:stl, "")
 endfunction

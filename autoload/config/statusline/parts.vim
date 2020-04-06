@@ -24,10 +24,14 @@ endfunction
 
 function! config#statusline#parts#type()
   let l:wininfo = getwininfo(win_getid())[0]
-  if nvim_win_get_option(0, "previewwindow") || l:wininfo["quickfix"] || l:wininfo["loclist"]
-    return "%(%q%w%)"
+  if nvim_win_get_option(0, "previewwindow")
+    return "[Preview]"
+  elseif l:wininfo["quickfix"]
+    return "[Quickfix List]"
+  elseif l:wininfo["loclist"]
+    return "[Location List]"
   else
-    return "%y"
+    return "[".&filetype."]"
   endif
 endfunction
 
@@ -56,5 +60,5 @@ function! config#statusline#parts#location()
 endfunction
 
 function! config#statusline#parts#winnr()
-  return "[%{winnr()}]"
+  return "[".winnr()."]"
 endfunction
