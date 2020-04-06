@@ -1,12 +1,21 @@
-let cmdmenu# = {}
-
-let g:cmdmenu = []
+if !exists("g:cmdmenu")
+  let g:cmdmenu = []
+endif
 
 function! s:menu_cmds(menu)
-  return g:func#.map({_, co -> co["cmd"]})(a:menu)
+  const l:key = "cmd"
+  return func#compose(
+        \ func#filter({_,co -> has_key(co, l:key)}),
+        \ func#map({_,co -> co[l:key]})
+        \)
+        \(a:menu)
 endfunction
 
-function! cmdmenu#.update_commands()
+function! s:menu_cmd_obj(menu, cmd)
+  return get(list#filter({_, co -> co["cmd"] ==# a:cmd})(a:menu), 0, {})
+endfunction
+
+function! cmdmenu#update_commands()
   for cmd in s:menu_cmds(g:cmdmenu)
     call s:update_command(cmd)
   endfor
@@ -47,15 +56,16 @@ function! s:execute_cmd(cmd, flag, args, mods) range abort
 endfunction
 
 function! s:complete_cmd(arglead, cmdline, curpos)
-  let [l:command, l:args] = s:parse_cmdline(a:cmdline)
-  let l:command = s:prefix_single_match(l:command)(s:menu_cmds(g:cmdmenu))
+  let [l:command, l:args] = s:parse_cmdline(a:cmdline) " XXX
+  let l:command = s:prefix_single_match(l:command)(s:menu_cmds(g:cmdmenu)) " XXX
   let l:cmd_menu_path = split(l:args)
   if !empty(a:arglead)
     let l:cmd_menu_path = l:cmd_menu_path[:-2]
   endif
   let [l:cmd_obj, l:cmd_args] = s:cmd_obj_by_path(g:cmdmenu, l:cmd_menu_path)
   " invoke custom completion function only if there is no possibility to go
-  " deeper into submenus, otherwise which completion should be chosen?
+  " deeper into submenus, otherwise there is unambiguity in completions
+  " provider
   if !has_key(l:cmd_obj, "menu") && has_key(l:cmd_obj, "complete")
     let l:completion_candidates = l:cmd_obj["complete"](a:arglead, l:cmd_args)
   else
@@ -76,9 +86,11 @@ function! s:cmd_obj_by_path(menu, path)
     let [l:next_cmd; l:next_path] = l:path
     let l:cmd = s:prefix_single_match(l:next_cmd)(s:menu_cmds(l:menu))
     if empty(l:cmd)
-      return [l:cmd_obj, l:path]
+      break
     endif
-    let l:cmd_obj = g:list#.filter({_, co -> co["cmd"] ==# l:cmd})(l:menu)
+    let l:cmd_obj = s:menu_cmd_obj(l:menu, l:cmd)
+    let l:menu = get(l:cmd_obj, "menu", [])
+    let l:path = l:next_path
   endwhile
   return [l:cmd_obj, l:path]
 endfunction
