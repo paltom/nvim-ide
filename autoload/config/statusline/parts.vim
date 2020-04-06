@@ -1,12 +1,10 @@
-let config#statusline#parts# = {}
+let config#statusline#parts#sep = " "
 
-let config#statusline#parts#.sep = " "
-
-function! config#statusline#parts#.cwd()
-  return pathshorten(g:path#.full(getcwd())).":"
+function! config#statusline#parts#cwd()
+  return pathshorten(path#full(getcwd())).":"
 endfunction
 
-function! config#statusline#parts#.flags()
+function! config#statusline#parts#flags()
   if &modifiable && !&readonly
     if &modified
       return "  \u274b"
@@ -18,13 +16,13 @@ function! config#statusline#parts#.flags()
   endif
 endfunction
 
-function! config#statusline#parts#.filename()
+function! config#statusline#parts#filename()
   " needs to be evaluated every time, because new filename custom handlers may
   " be added any time
-  return g:func#.until_result(g:config#statusline#parts#filename#.funcs())(bufname())
+  return func#until_result(config#statusline#parts#filename#funcs())(bufname())
 endfunction
 
-function! config#statusline#parts#.type()
+function! config#statusline#parts#type()
   let l:wininfo = getwininfo(win_getid())[0]
   if nvim_win_get_option(0, "previewwindow") || l:wininfo["quickfix"] || l:wininfo["loclist"]
     return "%(%q%w%)"
@@ -46,7 +44,7 @@ let s:location_indicators_list = [
       \]
 " convert to float number
 let s:indicators_count = eval(len(s:location_indicators_list).".0")
-function! config#statusline#parts#.location()
+function! config#statusline#parts#location()
   let l:current_line = line(".")
   let l:file_lines = line("$")
   if l:file_lines < s:indicators_count
@@ -57,6 +55,6 @@ function! config#statusline#parts#.location()
   endif
 endfunction
 
-function! config#statusline#parts#.winnr()
+function! config#statusline#parts#winnr()
   return "[%{winnr()}]"
 endfunction

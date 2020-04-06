@@ -1,5 +1,3 @@
-let config#statusline# = {}
-
 function! s:get_hl_attr(highlight, attribute)
   return get(nvim_get_hl_by_name(a:highlight, &termguicolors), a:attribute)
 endfunction
@@ -18,7 +16,7 @@ function! s:add_hl(highlight, options)
   endfunction
   function! s:make_other_attrs() closure
     let l:other_attrs = filter(keys(a:options),
-          \ { _, a -> !g:list#.contains(["background", "foreground"], a) })
+          \ { _, a -> !list#contains(["background", "foreground"], a) })
     if empty(l:other_attrs)
       return ""
     endif
@@ -57,37 +55,39 @@ function! s:highlight(highlight, part)
 endfunction
 
 function! s:evaluate_part(partname)
-  return "%{g:config#statusline#parts#.".a:partname."()}"
+  return "%{g:config#statusline#parts#".a:partname."()}"
 endfunction
 
-function! config#statusline#.active()
+function! config#statusline#active()
   let l:stl = [
         \ s:highlight("STLCWD", s:evaluate_part("cwd")),
         \ s:highlight("STLFlags", s:evaluate_part("flags")),
-        \ g:config#statusline#parts#.sep,
+        \ g:config#statusline#parts#sep,
         \ "%<".s:evaluate_part("filename"),
-        \ g:config#statusline#parts#.sep,
+        \ g:config#statusline#parts#sep,
         \ s:highlight("STLEmpty", "%="),
-        \ g:config#statusline#parts#.sep,
-        \ g:config#statusline#parts#.type(),
-        \ g:config#statusline#parts#.sep,
+        \ g:config#statusline#parts#sep,
+        \ config#statusline#parts#type(),
+        \ g:config#statusline#parts#sep,
         \ s:highlight("STLLocation", s:evaluate_part("location")),
-        \ g:config#statusline#parts#.sep,
-        \ s:highlight("STLWinnr", g:config#statusline#parts#.winnr()),
+        \ g:config#statusline#parts#sep,
+        \ s:highlight("STLWinnr", config#statusline#parts#winnr()),
         \]
   return join(l:stl, "")
 endfunction
 
-function! config#statusline#.inactive()
+function! config#statusline#inactive()
   let l:stl = [
         \ s:evaluate_part("cwd"),
         \ s:highlight("STLFlags", s:evaluate_part("flags")),
-        \ g:config#statusline#parts#.sep,
+        \ g:config#statusline#parts#sep,
         \ "%<".s:evaluate_part("filename"),
         \ "%=",
-        \ g:config#statusline#parts#.winnr(),
+        \ config#statusline#parts#winnr(),
         \]
   return join(l:stl, "")
 endfunction
 
-let config#statusline#.custom_filename_handler = config#statusline#parts#filename#.add_handler
+function! config#statusline#custom_filename_handler(handler)
+  return config#statusline#parts#filename#add_handler(a:handler)
+endfunction

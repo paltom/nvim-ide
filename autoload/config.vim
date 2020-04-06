@@ -1,3 +1,1 @@
-let config# = {}
-
-let config#.vim_home = func#.compose(path#.full, path#.basedir)($MYVIMRC)
+let config#vim_home = func#compose("path#full", "path#basedir")($MYVIMRC)

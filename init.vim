@@ -191,7 +191,7 @@ set background=light
 let &fillchars = "vert: "
 
 " Load all colorscheme plugins listed above by plugin directory name
-call config#ext_plugins#.load(["vim-one"])
+call config#ext_plugins#load("vim-one")
 
 augroup config_colorscheme_update
   autocmd!
@@ -253,27 +253,27 @@ augroup end
 set number relativenumber numberwidth=5
 
 " Statusline settings
-setlocal statusline=%!config#statusline#.active()
+setlocal statusline=%!config#statusline#active()
 augroup config_statusline_update
   autocmd!
-  autocmd WinEnter,BufWinEnter * setlocal statusline=%!config#statusline#.active()
-  autocmd WinLeave * setlocal statusline=%!config#statusline#.inactive()
+  autocmd WinEnter,BufWinEnter * setlocal statusline=%!config#statusline#active()
+  autocmd WinLeave * setlocal statusline=%!config#statusline#inactive()
 augroup end
 
 function! s:ft_help_filename(bufname)
   if getbufvar(a:bufname, "&filetype") ==# "help"
-    return g:config#statusline#parts#filename#.simple(a:bufname)
+    return g:config#statusline#parts#filename#simple(a:bufname)
   endif
   return v:null
 endfunction
-call config#statusline#.custom_filename_handler(funcref("s:ft_help_filename"))
+call config#statusline#custom_filename_handler(funcref("s:ft_help_filename"))
 
 " Tabline settings
 " Display tabline when there are at least two tabpages
 set showtabline=1
 " Do not use GUI external tabline
 set guioptions-=e
-set tabline=%!config#tabline#.tabline()
+set tabline=%!config#tabline#tabline()
 " }}}
 
 " vim:foldmethod=marker

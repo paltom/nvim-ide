@@ -1,34 +1,39 @@
-let config#statusline#parts#filename# = {}
-
-function! config#statusline#parts#filename#.simple(bufname)
-  return g:path#.filename(a:bufname)
+function! config#statusline#parts#filename#simple(bufname)
+  return path#filename(a:bufname)
 endfunction
 
-function! config#statusline#parts#filename#.empty(bufname)
-  if empty(g:path#.filename(a:bufname))
+function! config#statusline#parts#filename#empty(bufname)
+  if empty(path#filename(a:bufname))
     return "[No Name]"
   endif
   return v:null
 endfunction
 
-let s:relative_basedir = g:func#.compose(g:path#.full, g:path#.relative(getcwd()), g:path#.basedir)
-function! config#statusline#parts#filename#.shorten_rel_path(bufname)
-  let l:base_rel_dir = s:relative_basedir(a:bufname)
-  let l:filename = g:path#.filename(a:bufname)
-  if l:base_rel_dir ==# "."
+function! config#statusline#parts#filename#shorten_rel_path(bufname)
+  " needs to be evaluated each time because of getcwd
+  let l:relative_basedir = func#compose(
+        \ "path#full",
+        \ path#relative(getcwd()),
+        \ "path#basedir",
+        \)
+        \(a:bufname)
+  let l:filename = path#filename(a:bufname)
+  if l:relative_basedir ==# "."
     return l:filename
   else
-    return g:path#.join(pathshorten(l:base_rel_dir), l:filename)
+    return path#join(pathshorten(l:relative_basedir), l:filename)
   endif
 endfunction
 
-let s:eval_adder = config#statusline#parts#filename#custom#.handlers([])
-let config#statusline#parts#filename#.add_handler = function(s:eval_adder.adder, [], s:eval_adder)
+let s:eval_adder = config#statusline#parts#filename#custom#handlers([])
+function! config#statusline#parts#filename#add_handler(handler)
+  return function(s:eval_adder.adder)(a:handler)
+endfunction
 
-function! config#statusline#parts#filename#.funcs()
+function! config#statusline#parts#filename#funcs()
   return [
-      \ g:config#statusline#parts#filename#.empty,
+      \ "config#statusline#parts#filename#empty",
       \ s:eval_adder.evaluator,
-      \ g:config#statusline#parts#filename#.shorten_rel_path,
+      \ "config#statusline#parts#filename#shorten_rel_path",
       \]
 endfunction

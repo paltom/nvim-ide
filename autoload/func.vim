@@ -1,7 +1,5 @@
-let func# = {}
-
-function! s:compose(funcs)
-  function! s:_compose(arg) closure
+function! s:compose(funcs) abort
+  function! s:_compose(arg) closure abort
     let l:arg = a:arg
     for Func in a:funcs
       let l:arg = call(Func, [l:arg])
@@ -10,7 +8,9 @@ function! s:compose(funcs)
   endfunction
   return funcref("s:_compose")
 endfunction
-let func#.compose = func#wrap#.list_vararg(funcref("s:compose"))
+function! func#compose(...) abort
+  return func#wrap#list_vararg(funcref("s:compose"))(a:000)
+endfunction
 
 function! s:until_result(funcs)
   function! s:_until_result(...) closure
@@ -24,7 +24,9 @@ function! s:until_result(funcs)
   endfunction
   return funcref("s:_until_result")
 endfunction
-let func#.until_result = func#wrap#.list_vararg(funcref("s:until_result"))
+function! func#until_result(...)
+  return func#wrap#list_vararg(funcref("s:until_result"))(a:000)
+endfunction
 
 function! s:all(funcs)
   function! s:_all(...) closure
@@ -36,4 +38,6 @@ function! s:all(funcs)
   endfunction
   return funcref("s:_all")
 endfunction
-let func#.call_all = func#wrap#.list_vararg(funcref("s:all"))
+function! func#call_all(...)
+  return func#wrap#list_vararg(funcref("s:all"))(a:000)
+endfunction

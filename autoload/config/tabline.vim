@@ -1,6 +1,4 @@
-let config#tabline# = {}
-
-let config#tabline#.sep = " "
+let config#tabline#sep = " "
 
 function! s:tabpage_label(tabpagenr)
   if a:tabpagenr == tabpagenr()
@@ -12,17 +10,17 @@ function! s:tabpage_label(tabpagenr)
   endif
   let l:label = extend(l:label, [
         \ "%".a:tabpagenr."T",
-        \ g:config#tabline#.sep,
-        \ g:config#tabline#parts#.modified(a:tabpagenr),
-        \ g:config#tabline#.sep,
-        \ g:config#tabline#parts#.filename(a:tabpagenr),
-        \ g:config#tabline#.sep,
+        \ g:config#tabline#sep,
+        \ config#tabline#parts#modified(a:tabpagenr),
+        \ g:config#tabline#sep,
+        \ config#tabline#parts#filename(a:tabpagenr),
+        \ g:config#tabline#sep,
         \ "[".a:tabpagenr."]",
         \])
   return l:label
 endfunction
 
-function! config#tabline#.tabline()
+function! config#tabline#tabline()
   let l:tbl = []
   for tabpagenr in range(1, tabpagenr("$"))
     let l:tbl = extend(l:tbl, s:tabpage_label(tabpagenr))
@@ -32,4 +30,6 @@ function! config#tabline#.tabline()
   return join(l:tbl, "")
 endfunction
 
-let config#tabline#.custom_filename_handler = config#tabline#parts#filename#.add_handler
+function! config#tabline#custom_filename_handler(handler)
+  return config#tabline#parts#filename#add_handler(a:handler)
+endfunction

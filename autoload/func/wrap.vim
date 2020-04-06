@@ -1,18 +1,20 @@
-let func#wrap# = {}
-
 " Wrap a list accepting function so it can also take varargs as arguments
-function! func#wrap#.list_vararg(funcref)
-  function! s:list_vararg_wrapper(args, ...) closure
-    if a:0 == 0
-      if type(a:args) == v:t_list
-        let l:args = a:args
+function! s:list_vararg_wrapper(funcref, args, ...)
+  if a:0 == 0
+    if type(a:args) == v:t_list
+      if len(a:args) == 1 && type(a:args[0]) == v:t_list
+        let [l:args] = a:args
       else
-        let l:args = [a:args]
+        let l:args = a:args
       endif
-    elseif a:0 > 0
-      let l:args = extend([a:args], a:000)
+    else
+      let l:args = [a:args]
     endif
-    return a:funcref(l:args)
-  endfunction
-  return funcref("s:list_vararg_wrapper")
+  elseif a:0 > 0
+    let l:args = extend([a:args], a:000)
+  endif
+  return a:funcref(l:args)
+endfunction
+function! func#wrap#list_vararg(funcref)
+  return funcref("s:list_vararg_wrapper", [a:funcref])
 endfunction
