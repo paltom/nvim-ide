@@ -2,17 +2,73 @@ if !exists("g:cmdmenu")
   let g:cmdmenu = []
 endif
 
+function! s:key_filter(key)
+  return list#filter({_, co -> has_key(co, a:key)})
+endfunction
+
 function! s:menu_cmds(menu)
   const l:key = "cmd"
   return func#compose(
-        \ func#filter({_,co -> has_key(co, l:key)}),
-        \ func#map({_,co -> co[l:key]})
+        \ s:key_filter(l:key),
+        \ list#map({_,co -> co[l:key]})
         \)
         \(a:menu)
 endfunction
 
 function! s:menu_cmd_obj(menu, cmd)
-  return get(list#filter({_, co -> co["cmd"] ==# a:cmd})(a:menu), 0, {})
+  const l:key = "cmd"
+  const l:cmd_objs = func#compose(
+        \ s:key_filter(l:key),
+        \ list#filter({_, co -> co[l:key] ==# a:cmd}),
+        \)
+        \(a:menu)
+  return get(l:cmd_objs, 0, {})
+endfunction
+
+function! s:_prefix_single_match(prefix, cmds)
+  if empty(a:prefix)
+    return ""
+  endif
+  const l:all_cmds_matching_prefix = func#compose(
+        \ list#filter({_, c -> c =~# '\v^'.a:prefix}),
+        \)
+        \(a:cmds)
+  if !empty(l:all_cmds_matching_prefix)
+    if len(l:all_cmds_matching_prefix) == 1
+      return l:all_cmds_matching_prefix[0]
+    endif
+    const l:exact_match = list#filter(
+          \ {_, m -> m ==# a:prefix},
+          \)
+          \(l:all_cmds_matching_prefix)
+    if !empty(l:exact_match)
+      return l:exact_match[0]
+    endif
+  endif
+  return ""
+endfunction
+function! s:prefix_single_match(prefix)
+  return funcref("s:_prefix_single_match", [a:prefix])
+endfunction
+
+function! s:cmd_obj_by_path(menu, path)
+  if empty(a:path)
+    return [{}, []]
+  endif
+  let l:menu = copy(a:menu)
+  let l:path = a:path
+  let l:cmd_obj = {}
+  while !empty(l:path)
+    let [l:next_cmd; l:next_path] = l:path
+    let l:cmd = s:prefix_single_match(l:next_cmd)(s:menu_cmds(l:menu))
+    if empty(l:cmd)
+      break
+    endif
+    let l:cmd_obj = s:menu_cmd_obj(l:menu, l:cmd)
+    let l:menu = get(l:cmd_obj, "menu", [])
+    let l:path = l:next_path
+  endwhile
+  return [l:cmd_obj, l:path]
 endfunction
 
 function! cmdmenu#update_commands()
@@ -57,7 +113,7 @@ endfunction
 
 function! s:complete_cmd(arglead, cmdline, curpos)
   let [l:command, l:args] = s:parse_cmdline(a:cmdline) " XXX
-  let l:command = s:prefix_single_match(l:command)(s:menu_cmds(g:cmdmenu)) " XXX
+  let l:command = s:prefix_single_match(l:command)(s:menu_cmds(g:cmdmenu))
   let l:cmd_menu_path = split(l:args)
   if !empty(a:arglead)
     let l:cmd_menu_path = l:cmd_menu_path[:-2]
@@ -73,24 +129,4 @@ function! s:complete_cmd(arglead, cmdline, curpos)
     let l:completion_candidates = s:menu_cmds(l:submenu)
   endif
   return join(l:completion_candidates, "\n")
-endfunction
-
-function! s:cmd_obj_by_path(menu, path)
-  if empty(a:path)
-    return [{}, []]
-  endif
-  let l:menu = copy(a:menu)
-  let l:path = a:path
-  let l:cmd_obj = {}
-  while !empty(l:path)
-    let [l:next_cmd; l:next_path] = l:path
-    let l:cmd = s:prefix_single_match(l:next_cmd)(s:menu_cmds(l:menu))
-    if empty(l:cmd)
-      break
-    endif
-    let l:cmd_obj = s:menu_cmd_obj(l:menu, l:cmd)
-    let l:menu = get(l:cmd_obj, "menu", [])
-    let l:path = l:next_path
-  endwhile
-  return [l:cmd_obj, l:path]
 endfunction
