@@ -30,8 +30,10 @@ function! config#statusline#parts#type()
     return "[Quickfix List]"
   elseif l:wininfo["loclist"]
     return "[Location List]"
-  else
+  elseif !empty(&filetype)
     return "[".&filetype."]"
+  else
+    return ""
   endif
 endfunction
 
@@ -41,9 +43,9 @@ let s:location_indicators_list = [
       \ ["\u2588", "\u2584", " "],
       \ ["\u2588", "\u2585", "\u2583", " "],
       \ ["\u2588", "\u2586", "\u2584", "\u2582", " "],
-      \ ["\u2588", "\u2586", "\u2585", "\u2583", "\u2582", " "],
-      \ ["\u2588", "\u2587", "\u2585", "\u2584", "\u2583", "\u2582", " "],
-      \ ["\u2588", "\u2587", "\u2586", "\u2585", "\u2583", "\u2582", "\u2581", " "],
+      \ ["\u2588", "\u2587", "\u2585", "\u2583", "\u2581", " "],
+      \ ["\u2588", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", " "],
+      \ ["\u2588", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", "\u2581", " "],
       \ ["\u2588", "\u2587", "\u2586", "\u2585", "\u2584", "\u2583", "\u2582", "\u2581", " "],
       \]
 " convert to float number
