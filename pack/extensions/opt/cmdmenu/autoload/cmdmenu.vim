@@ -2,15 +2,6 @@ if !exists("g:cmdmenu")
   let g:cmdmenu = []
 endif
 
-function! s:menu_cmds(menu)
-  const l:key = "cmd"
-  return func#compose(
-        \ list#filter({_, co -> has_key(co, l:key)}),
-        \ list#map({_,co -> co[l:key]})
-        \)
-        \(a:menu)
-endfunction
-
 function! cmdmenu#update_commands()
   for cmd in s:menu_cmds(g:cmdmenu)
     call s:update_command(cmd)
@@ -39,10 +30,9 @@ function! s:update_command(cmd)
 endfunction
 
 function! s:execute_cmd(flag, args, mods) range abort
-  let l:cmdline_state = s:state
+  let l:cmd_obj = s:cmd_obj
+  let l:cmd_args = s:cmd_args
   call s:reset_state()
-  let l:cmd_obj = l:cmdline_state["cmd_obj"]
-  let l:cmd_args = l:cmdline_state["cmd_args"]
   if !has_key(l:cmd_obj, "action")
     echohl WarningMsg
     echomsg "No action for this command"
@@ -53,10 +43,11 @@ function! s:execute_cmd(flag, args, mods) range abort
 endfunction
 
 function! s:complete_cmd(arglead, cmdline, curpos)
-  let l:cmd_obj = s:state["cmd_obj"]
-  let l:cmd_args = s:state["cmd_args"]
+  let l:cmd_obj = s:cmd_obj
+  let l:cmd_args = s:cmd_args
+  " trigger opening window with menu help
   let s:should_open_cmdmenu_win = v:true
-  call s:open_cmdmenu_window()
+  call s:open_cmdmenu_help_window()
   " invoke custom completion function only if there is no possibility to go
   " deeper into submenus, otherwise there is unambiguity in completions
   " provider
@@ -105,6 +96,15 @@ function! s:prefix_single_match(prefix)
   return funcref("s:_prefix_single_match", [a:prefix])
 endfunction
 
+function! s:menu_cmds(menu)
+  const l:key = "cmd"
+  return func#compose(
+        \ list#filter({_, co -> has_key(co, l:key)}),
+        \ list#map({_,co -> co[l:key]})
+        \)
+        \(a:menu)
+endfunction
+
 function! s:menu_cmd_obj(menu, cmd)
   const l:key = "cmd"
   const l:cmd_objs = func#compose(
@@ -136,10 +136,9 @@ function! s:cmd_obj_by_path(menu, path)
 endfunction
 
 function! s:reset_state()
-  let s:state = {
-        \ "cmd_obj": {},
-        \ "cmd_args": [],
-        \}
+  let s:cmd_obj = {}
+  let s:cmd_args = []
+  let s:should_open_cmdmenu_win = v:false
 endfunction
 
 function! s:single_cmdmenu_command(command)
@@ -152,10 +151,23 @@ function! s:single_cmdmenu_command(command)
   endif
 endfunction
 
-function! s:set_state(cmd_path)
+function! s:set_cmd(cmd_path)
   let [l:cmd_obj, l:cmd_args] = s:cmd_obj_by_path(get(g:, "cmdmenu", []), a:cmd_path)
-  let s:state["cmd_obj"] = l:cmd_obj
-  let s:state["cmd_args"] = l:cmd_args
+  let s:cmd_obj = l:cmd_obj
+  let s:cmd_args = l:cmd_args
+endfunction
+
+function! s:arg_is_being_entered(cmdline)
+  return a:cmdline =~# '\v\S$'
+endfunction
+
+function! s:make_cmd_path(cmdline, command, args, execute)
+  let l:cmd_path = split(a:args)
+  if !a:execute && s:arg_is_being_entered(a:cmdline)
+    let l:cmd_path = l:cmd_path[:-2]
+  endif
+  let l:cmd_path = extend([a:command], l:cmd_path)
+  return l:cmd_path
 endfunction
 
 function! s:update_state(cmdline, execute)
@@ -164,74 +176,109 @@ function! s:update_state(cmdline, execute)
   if empty(l:command)
     call s:reset_state()
   else
-    let l:cmd_path = split(l:args)
-    if !a:execute && a:cmdline =~# '\v\S$'
-      let l:cmd_path = l:cmd_path[:-2]
-    endif
-    let l:cmd_path = extend([l:command], l:cmd_path)
-    call s:set_state(l:cmd_path)
+    let l:cmd_path = s:make_cmd_path(a:cmdline, l:command, l:args, a:execute)
+    call s:set_cmd(l:cmd_path)
   endif
+endfunction
+
+function! s:store_user_cmaps()
+  if !exists("s:user_global_cmaps")
+    let s:user_global_cmaps = nvim_get_keymap("c")
+  endif
+  if !exists("s:user_buffer_cmaps")
+    let s:user_buffer_cmaps = nvim_buf_get_keymap(0, "c")
+  endif
+endfunction
+
+function! s:restore_user_cmaps()
+  if exists("s:user_global_cmaps")
+    for keymap in s:user_global_cmaps
+      " FIXME <script> mappings are not supported ('noremap': 2)
+      let l:opts = {}
+      for opt in ['nowait', 'silent', 'expr', 'unique', 'noremap']
+        if has_key(keymap, opt)
+          let l:opts[opt] = v:true
+        endif
+      endfor
+      call nvim_set_keymap("c", keymap["lhs"], keymap["rhs"], l:opts)
+    endfor
+    unlet s:user_global_cmaps
+  endif
+  " TODO 2 restore buffer cmaps
+endfunction
+
+function! s:cmap_menu()
+  " TODO 2
+endfunction
+
+function! s:cunmap_menu()
+  " TODO 2
+endfunction
+
+function! s:update_cmaps()
+  call s:store_user_cmaps()
+  call s:cmap_menu()
+endfunction
+
+function! s:restore_cmaps()
+  call s:cunmap_menu()
+  call s:restore_user_cmaps()
+endfunction
+
+function! s:modify_user_settings()
+  " avoid storing modified state
+  if !exists("s:user_wildmenu")
+    let s:user_wildmenu = &wildmenu
+  endif
+  set nowildmenu
+endfunction
+
+function! s:restore_user_settings()
+  if exists("s:user_wildmenu")
+    let &wildmenu = s:user_wildmenu
+    unlet s:user_wildmenu
+  endif
+endfunction
+
+function! s:open_win()
+  " TODO 1
+endfunction
+
+function! s:open_cmdmenu_help_window()
+  if get(s:, "should_open_cmdmenu_win", v:false)
+    call s:modify_user_settings()
+    call s:open_win()
+  endif
+endfunction
+
+function! s:close_win()
+  " TODO 1
+endfunction
+
+function! s:close_cmdmenu_help_window()
+  call s:restore_user_settings()
+  call s:close_win()
 endfunction
 
 function! s:on_enter()
   call s:reset_state()
 endfunction
 
-function! s:store_user_settings()
-  "echomsg printf("storing settings: %s", &wildmenu)
-  let s:user_wildmenu = &wildmenu
-  set nowildmenu
-endfunction
-
-function! s:restore_user_settings()
-  if exists("s:user_wildmenu")
-    "echomsg printf("restoring settings: %s", s:user_wildmenu)
-    let &wildmenu = s:user_wildmenu
-    unlet s:user_wildmenu
-  endif
-endfunction
-
-function! s:open_cmdmenu_win()
-  echomsg printf("open new cmdmenu window")
-endfunction
-
-function! s:open_cmdmenu_window()
-  if get(s:, "should_open_cmdmenu_win", v:false)
-    call s:store_user_settings()
-    call s:open_cmdmenu_win()
-  endif
-endfunction
-
-function! s:close_cmdmenu_win()
-  "echomsg printf("close cmdmenu window, if any")
-endfunction
-
-function! s:close_cmdmenu_window()
-  call s:restore_user_settings()
-  call s:close_cmdmenu_win()
-endfunction
-
 function! s:on_change()
-  let l:cmdline = getcmdline()
-  echomsg printf("on change, cmdline: %s", l:cmdline)
-  call s:close_cmdmenu_window()
-  call s:update_state(l:cmdline, v:false)
-  echomsg printf("cmd obj: %s", s:state["cmd_obj"])
-  if empty(s:state["cmd_obj"])
-    let s:should_open_cmdmenu_win = v:false
-  endif
-  call s:open_cmdmenu_window()
+  call s:close_cmdmenu_help_window()
+  call s:restore_user_cmaps()
+  call s:update_state(getcmdline(), v:false)
+  call s:update_cmaps()
+  call s:open_cmdmenu_help_window()
 endfunction
 
 function! s:on_leave()
-  let l:cmdline = getcmdline()
-  echomsg printf("on leave, cmdline: %s", l:cmdline)
-  let s:should_open_cmdmenu_win = v:false
-  call s:close_cmdmenu_window()
-  if !v:event["abort"]
-    call s:update_state(l:cmdline, v:true)
-  else
+  call s:restore_user_cmaps()
+  call s:close_cmdmenu_help_window()
+  if v:event["abort"]
     call s:reset_state()
+  else
+    call s:update_state(getcmdline(), v:true)
   endif
 endfunction
 
