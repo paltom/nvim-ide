@@ -2,37 +2,21 @@ if !exists("g:cmdmenu")
   let g:cmdmenu = []
 endif
 
-function! cmdmenu#update_commands()
-  for cmd in s:menu_cmds(g:cmdmenu)
-    call s:update_command(cmd)
-  endfor
+function! s:menu_cmds(menu)
+  const l:key = "cmd"
+  return func#compose(
+        \ list#filter({_, co -> has_key(co, l:key)}),
+        \ list#map({_,co -> co[l:key]})
+        \)
+        \(a:menu)
 endfunction
 
-function! s:update_command(cmd)
-  let l:cmd_rhs_func_args = [
-        \ "<bang>0",
-        \ "split(<q-args>)",
-        \ "<q-mods>",
-        \]
-  let l:cmd_rhs_func_args = join(l:cmd_rhs_func_args, ", ")
-  let l:cmd_rhs_func_call = "<line1>,<line2>call s:execute_cmd(".l:cmd_rhs_func_args.")"
-  let l:cmd_def = [
-        \ "command!",
-        \ "-nargs=*",
-        \ "-range",
-        \ "-bang",
-        \ "-complete=custom,s:complete_cmd",
-        \ a:cmd,
-        \ l:cmd_rhs_func_call,
-        \]
-  let l:cmd_def = join(l:cmd_def, " ")
-  execute l:cmd_def
-endfunction
-
-function! s:execute_cmd(flag, args, mods) range abort
+function! s:execute_cmd(command, flag, args, mods) range abort
+  " FIXME
   let l:cmd_obj = s:cmd_obj
   let l:cmd_args = s:cmd_args
   call s:reset_state()
+  "
   if !has_key(l:cmd_obj, "action")
     echohl WarningMsg
     echomsg "No action for this command"
@@ -40,26 +24,6 @@ function! s:execute_cmd(flag, args, mods) range abort
     return
   endif
   execute a:firstline.",".a:lastline."call l:cmd_obj['action'](l:cmd_args, a:flag, a:mods)"
-endfunction
-
-function! s:complete_cmd(arglead, cmdline, curpos)
-  let l:cmd_obj = s:cmd_obj
-  let l:cmd_args = s:cmd_args
-  " trigger opening window with menu help
-  let s:should_open_cmdmenu_win = v:true
-  call s:open_cmdmenu_help_window()
-  " invoke custom completion function only if there is no possibility to go
-  " deeper into submenus, otherwise there is unambiguity in completions
-  " provider
-  if !has_key(l:cmd_obj, "menu") && has_key(l:cmd_obj, "complete")
-    let l:completion_candidates = l:cmd_obj["complete"](a:arglead, l:cmd_args)
-  elseif empty(l:cmd_args)
-    let l:submenu = get(l:cmd_obj, "menu", [])
-    let l:completion_candidates = s:menu_cmds(l:submenu)
-  else
-    let l:completion_candidates = []
-  endif
-  return join(l:completion_candidates, "\n")
 endfunction
 
 function! s:parse_cmdline(cmdline)
@@ -96,15 +60,6 @@ function! s:prefix_single_match(prefix)
   return funcref("s:_prefix_single_match", [a:prefix])
 endfunction
 
-function! s:menu_cmds(menu)
-  const l:key = "cmd"
-  return func#compose(
-        \ list#filter({_, co -> has_key(co, l:key)}),
-        \ list#map({_,co -> co[l:key]})
-        \)
-        \(a:menu)
-endfunction
-
 function! s:menu_cmd_obj(menu, cmd)
   const l:key = "cmd"
   const l:cmd_objs = func#compose(
@@ -135,6 +90,69 @@ function! s:cmd_obj_by_path(menu, path)
   return [l:cmd_obj, l:path]
 endfunction
 
+function! s:get_cmd_obj_and_args(arglead, cmdline)
+  let l:cmdmenu = get(g:, "cmdmenu", [])
+  let [l:command, l:args] = s:parse_cmdline(a:cmdline)
+  let l:command = s:prefix_single_match(l:command)(s:menu_cmds(l:cmdmenu))
+  let l:cmd_path = split(l:args)
+  if !empty(a:arglead)
+    let l:cmd_path = l:cmd_path[:-2]
+  endif
+  let l:cmd_path = extend([l:command], l:cmd_path)
+  return s:cmd_obj_by_path(l:cmdmenu, l:cmd_path)
+endfunction
+
+function! s:complete_cmd(arglead, cmdline, curpos)
+  let [l:cmd_obj, l:cmd_args] = s:get_cmd_obj_and_args(a:arglead, a:cmdline)
+  " trigger opening window with menu help
+  "call s:open_completion_window()
+  " 1. disable wildmenu storing user setting
+  " 2. autocmd: close window & wipe buffer on <c-c>, <esc>, <cr>, <space>
+  " (completion done); restore user wildmenu setting (useful for custom
+  " completions); highlight on completion selection
+  " invoke custom completion function only if there is no possibility to go
+  " deeper into submenus, otherwise there is unambiguity in completions
+  " provider
+  if !has_key(l:cmd_obj, "menu") && has_key(l:cmd_obj, "complete")
+    let l:completion_candidates = l:cmd_obj["complete"](a:arglead, l:cmd_args)
+  elseif empty(l:cmd_args)
+    let l:submenu = get(l:cmd_obj, "menu", [])
+    let l:completion_candidates = s:menu_cmds(l:submenu)
+  else
+    let l:completion_candidates = []
+  endif
+  return join(l:completion_candidates, "\n")
+endfunction
+
+function! s:update_command(cmd)
+  let l:cmd_rhs_func_args = [
+        \ "'".a:cmd."'",
+        \ "<bang>0",
+        \ "split(<q-args>)",
+        \ "<q-mods>",
+        \]
+  let l:cmd_rhs_func_args = join(l:cmd_rhs_func_args, ", ")
+  let l:cmd_rhs_func_call = "<line1>,<line2>call s:execute_cmd(".l:cmd_rhs_func_args.")"
+  let l:cmd_def = [
+        \ "command!",
+        \ "-nargs=*",
+        \ "-range",
+        \ "-bang",
+        \ "-complete=custom,s:complete_cmd",
+        \ a:cmd,
+        \ l:cmd_rhs_func_call,
+        \]
+  let l:cmd_def = join(l:cmd_def, " ")
+  execute l:cmd_def
+endfunction
+
+function! cmdmenu#update_commands()
+  for cmd in s:menu_cmds(g:cmdmenu)
+    call s:update_command(cmd)
+  endfor
+endfunction
+
+"===============================================================================
 function! s:reset_state()
   let s:cmd_obj = {}
   let s:cmd_args = []
@@ -193,7 +211,6 @@ endfunction
 function! s:restore_user_cmaps()
   if exists("s:user_global_cmaps")
     for keymap in s:user_global_cmaps
-      " FIXME <script> mappings are not supported ('noremap': 2)
       let l:opts = {}
       for opt in ['nowait', 'silent', 'expr', 'unique', 'noremap']
         if has_key(keymap, opt)
@@ -204,15 +221,12 @@ function! s:restore_user_cmaps()
     endfor
     unlet s:user_global_cmaps
   endif
-  " TODO 2 restore buffer cmaps
 endfunction
 
 function! s:cmap_menu()
-  " TODO 2
 endfunction
 
 function! s:cunmap_menu()
-  " TODO 2
 endfunction
 
 function! s:update_cmaps()
@@ -241,7 +255,6 @@ function! s:restore_user_settings()
 endfunction
 
 function! s:open_win()
-  " TODO 1
 endfunction
 
 function! s:open_cmdmenu_help_window()
@@ -252,7 +265,6 @@ function! s:open_cmdmenu_help_window()
 endfunction
 
 function! s:close_win()
-  " TODO 1
 endfunction
 
 function! s:close_cmdmenu_help_window()
@@ -284,7 +296,7 @@ endfunction
 
 augroup cmdmenu_monitoring
   autocmd!
-  autocmd CmdlineEnter : call <sid>on_enter()
-  autocmd CmdlineChanged : call <sid>on_change()
-  autocmd CmdlineLeave : call <sid>on_leave()
+  "autocmd CmdlineEnter : call <sid>on_enter()
+  "autocmd CmdlineChanged : call <sid>on_change()
+  "autocmd CmdlineLeave : call <sid>on_leave()
 augroup end
