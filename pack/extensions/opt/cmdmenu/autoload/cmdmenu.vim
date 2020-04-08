@@ -11,29 +11,6 @@ function! s:menu_cmds(menu)
         \(a:menu)
 endfunction
 
-function! s:execute_cmd(command, flag, args, mods) range abort
-  " FIXME
-  let l:cmd_obj = s:cmd_obj
-  let l:cmd_args = s:cmd_args
-  call s:reset_state()
-  "
-  if !has_key(l:cmd_obj, "action")
-    echohl WarningMsg
-    echomsg "No action for this command"
-    echohl None
-    return
-  endif
-  execute a:firstline.",".a:lastline."call l:cmd_obj['action'](l:cmd_args, a:flag, a:mods)"
-endfunction
-
-function! s:parse_cmdline(cmdline)
-  let l:parsed = matchlist(a:cmdline, '\v^\U*(\u\a*)!?\s*(.*)$')[1:2]
-  if len(l:parsed) != 2
-    return ["", ""]
-  endif
-  return l:parsed
-endfunction
-
 function! s:_prefix_single_match(prefix, cmds)
   if empty(a:prefix)
     return ""
@@ -90,7 +67,28 @@ function! s:cmd_obj_by_path(menu, path)
   return [l:cmd_obj, l:path]
 endfunction
 
-function! s:get_cmd_obj_and_args(arglead, cmdline)
+function! s:execute_cmd(command, flag, args, mods) range abort
+  let l:cmdmenu = get(g:, "cmdmenu", [])
+  let l:cmd_path = extend([a:command], a:args)
+  let [l:cmd_obj, l:cmd_args] = s:cmd_obj_by_path(l:cmdmenu, l:cmd_path)
+  if !has_key(l:cmd_obj, "action")
+    echohl WarningMsg
+    echomsg "No action for this command"
+    echohl None
+    return
+  endif
+  execute a:firstline.",".a:lastline."call l:cmd_obj['action'](l:cmd_args, a:flag, a:mods)"
+endfunction
+
+function! s:parse_cmdline(cmdline)
+  let l:parsed = matchlist(a:cmdline, '\v^\U*(\u\a*)!?\s*(.*)$')[1:2]
+  if len(l:parsed) != 2
+    return ["", ""]
+  endif
+  return l:parsed
+endfunction
+
+function! s:get_cmd_obj_and_args_for_complete(arglead, cmdline)
   let l:cmdmenu = get(g:, "cmdmenu", [])
   let [l:command, l:args] = s:parse_cmdline(a:cmdline)
   let l:command = s:prefix_single_match(l:command)(s:menu_cmds(l:cmdmenu))
@@ -103,15 +101,15 @@ function! s:get_cmd_obj_and_args(arglead, cmdline)
 endfunction
 
 function! s:complete_cmd(arglead, cmdline, curpos)
-  let [l:cmd_obj, l:cmd_args] = s:get_cmd_obj_and_args(a:arglead, a:cmdline)
-  " trigger opening window with menu help
+  let [l:cmd_obj, l:cmd_args] = s:get_cmd_obj_and_args_for_complete(a:arglead, a:cmdline)
+  " TODO
   "call s:open_completion_window()
   " 1. disable wildmenu storing user setting
   " 2. autocmd: close window & wipe buffer on <c-c>, <esc>, <cr>, <space>
   " (completion done); restore user wildmenu setting (useful for custom
   " completions); highlight on completion selection
   " invoke custom completion function only if there is no possibility to go
-  " deeper into submenus, otherwise there is unambiguity in completions
+  " deeper into submenus, otherwise there is ambiguity in completions
   " provider
   if !has_key(l:cmd_obj, "menu") && has_key(l:cmd_obj, "complete")
     let l:completion_candidates = l:cmd_obj["complete"](a:arglead, l:cmd_args)
