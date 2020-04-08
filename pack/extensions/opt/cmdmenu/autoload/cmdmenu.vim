@@ -100,10 +100,51 @@ function! s:get_cmd_obj_and_args_for_complete(arglead, cmdline)
   return s:cmd_obj_by_path(l:cmdmenu, l:cmd_path)
 endfunction
 
+function! s:completion_window_settings()
+  let l:user_options = {}
+  for option in ["wildmenu"]
+    let l:user_options[option] = nvim_get_option(option)
+  endfor
+  set nowildmenu
+  return l:user_options
+endfunction
+
+function! s:restore_options_completion_done(options)
+  for option in keys(a:options)
+    call nvim_set_option(option, a:options[option])
+  endfor
+endfunction
+
+function! s:open_completion_window(arglead, curpos)
+  let l:user_options = {}
+  try
+    let l:user_options = s:completion_window_settings()
+    let l:completion_buffer = nvim_create_buf(v:false, v:true)
+    "call nvim_buf_set_option(l:completion_buffer, "bufhidden", "wipe")
+    "call nvim_command("autocmd CmdlineChanged * ++once if getcmdline() =~# '\v\s$'|silent! bwipeout! ".l:completion_buffer."|endif")
+    "call nvim_command("autocmd CmdlineLeave * ++once silent! bwipeout! ".l:completion_buffer)
+    call nvim_buf_set_lines(l:completion_buffer, 0, -1, v:false, ["completion buffer: ".&wildmenu])
+    call nvim_open_win(l:completion_buffer, v:false,
+          \ {
+          \   "relative": "editor",
+          \   "anchor": "SW",
+          \   "width": max(map(nvim_buf_get_lines(l:completion_buffer, 0, -1, v:false), {_,l->len(l)})),
+          \   "height": len(nvim_buf_get_lines(l:completion_buffer, 0, -1, v:false)),
+          \   "row": &lines - &cmdheight,
+          \   "col": a:curpos - len(a:arglead),
+          \   "focusable": v:false,
+          \   "style": "minimal",
+          \ }
+          \)
+  finally
+    call s:restore_options_completion_done(l:user_options)
+  endtry
+endfunction
+
 function! s:complete_cmd(arglead, cmdline, curpos)
   let [l:cmd_obj, l:cmd_args] = s:get_cmd_obj_and_args_for_complete(a:arglead, a:cmdline)
   " TODO
-  "call s:open_completion_window()
+  call s:open_completion_window(a:arglead, a:curpos)
   " 1. disable wildmenu storing user setting
   " 2. autocmd: close window & wipe buffer on <c-c>, <esc>, <cr>, <space>
   " (completion done); restore user wildmenu setting (useful for custom
