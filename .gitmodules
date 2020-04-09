@@ -1,3 +1,21 @@
 [submodule "ext_plugins/vim-one"]
 	path = ext_plugins/vim-one
 	url = https://github.com/rakr/vim-one
+[submodule "ext_plugins/vim-surround"]
+	path = ext_plugins/vim-surround
+	url = https://github.com/tpope/vim-surround
+[submodule "ext_plugins/vim-polyglot"]
+	path = ext_plugins/vim-polyglot
+	url = https://github.com/sheerun/vim-polyglot
+[submodule "ext_plugins/pear-tree"]
+	path = ext_plugins/pear-tree
+	url = https://github.com/tmsvg/pear-tree
+[submodule "ext_plugins/vim-easy-align"]
+	path = ext_plugins/vim-easy-align
+	url = https://github.com/junegunn/vim-easy-align
+[submodule "ext_plugins/vim-sneak"]
+	path = ext_plugins/vim-sneak
+	url = https://github.com/justinmk/vim-sneak
+[submodule "ext_plugins/vim-commentary"]
+	path = ext_plugins/vim-commentary
+	url = https://github.com/tpope/vim-commentary
