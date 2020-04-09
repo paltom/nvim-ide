@@ -19,3 +19,9 @@
 [submodule "ext_plugins/vim-commentary"]
 	path = ext_plugins/vim-commentary
 	url = https://github.com/tpope/vim-commentary
+[submodule "ext_plugins/vim-fugitive"]
+	path = ext_plugins/vim-fugitive
+	url = https://github.com/tpope/vim-fugitive
+[submodule "ext_plugins/vim-gitgutter"]
+	path = ext_plugins/vim-gitgutter
+	url = https://github.com/airblade/vim-gitgutter
