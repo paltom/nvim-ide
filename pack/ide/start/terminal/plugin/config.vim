@@ -13,7 +13,7 @@ augroup ide_terminal_autoinsertmode
   autocmd BufLeave term://* stopinsert
 augroup end
 
-let s:term_cmd = {"cmd": "Terminal"}
+let s:term_cmd = {"cmd": "Terminal", "action": {a,f,m -> ide#terminal#show()}}
 let s:term_menu = []
 let s:term_cmd["menu"] = s:term_menu
 let g:cmd_tree = add(get(g:, "cmd_tree", []), s:term_cmd)

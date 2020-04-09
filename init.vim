@@ -183,6 +183,7 @@ vnoremap g/ /
 " }}}
 
 " Various theme & visuals settings {{{
+set noequalalways
 " Enable rich colors
 set termguicolors
 " Background should be dark (it is possible to switch it to light)
