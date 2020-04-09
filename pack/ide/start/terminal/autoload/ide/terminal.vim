@@ -2,17 +2,42 @@ let ide#terminal#plugins = [
       \ "neoterm",
       \]
 
-let s:tabpage_terminals = []
-function! s:get_term_ids(term_ids)
+" TODO refactor
+function! s:tabpage_term_ids(term_ids)
+  let l:term_bufs = gettabvar(tabpagenr(), "ide_term_bufs", [])
+  let l:tabpage_term_ids = []
+  for bufnr in l:tabpage_term_bufs
+    " translate bufnr into neoterm_id
+    let l:tabpage_term_ids = list#unique_append(l:tabpage_term_ids, getbufvar(bufnr, "neoterm_id"))
+  endfor
+  let l:tabpage_term_ids = sort(l:tabpage_term_ids)
   if empty(a:term_ids)
-    return s:tabpage_terminals[tabpagenr() - 1][0:0]
+    return l:tabpage_term_ids[0:0]
   else
-    return list#filter({_, term_id -> list#contains(s:tabpage_terminals, term_id)})(a:term_ids)
+    return list#filter({_, term_id -> list#contains(l:tabpage_term_ids, term_id)})(a:term_ids)
   endif
 endfunction
+function! s:register_term_buf(term_bufnr)
+  let l:term_bufs = gettabvar(tabpagenr(), "ide_term_bufs", [])
+  let l:term_bufs = list#unique_append(l:term_bufs, str2nr(a:term_bufnr))
+  call settabvar(tabpagenr(), "ide_term_bufs", l:term_bufs)
+endfunction
+function! s:remove_term_buf(term_bufnr)
+  let l:term_bufs = gettabvar(tabpagenr(), "ide_term_bufs", [])
+  let l:term_buf_idx = index(l:term_bufs, str2nr(a:term_bufnr))
+  if l:term_buf_idx >= 0
+    unlet l:term_bufs[l:term_buf_idx]
+  endif
+  call settabvar(tabpagenr(), "ide_term_bufs", l:term_bufs)
+endfunction
+augroup ide_terminal_tabpage_term_id
+  autocmd!
+  autocmd TermOpen * call s:register_term_buf(expand("<abuf>"))
+  autocmd TermClose * call s:remove_term_buf(expand("<abuf>"))
+augroup end
 
 function! s:terminal_show(term_ids)
-  let l:term_ids = s:get_term_ids(a:term_ids)
+  let l:term_ids = s:tabpage_term_ids(a:term_ids)
   if empty(l:term_ids)
     call ide#terminal#new()
   else
@@ -26,7 +51,7 @@ function! ide#terminal#show(...)
 endfunction
 
 function! s:terminal_hide(term_ids)
-  let l:term_ids = s:get_term_ids(a:term_ids)
+  let l:term_ids = s:tabpage_term_ids(a:term_ids)
   for term_id in l:term_ids
     call neoterm#close({"target": term_id, "force": v:false})
   endfor
@@ -56,7 +81,7 @@ function! s:shell_eol()
 endfunction
 
 function! s:terminal_exit(term_ids)
-  let l:term_ids = s:get_term_ids(a:term_ids)
+  let l:term_ids = s:tabpage_term_ids(a:term_ids)
   let l:exit_cmd = s:clear_line_keys()."exit".s:shell_eol()
   for term_id in l:term_ids
     call neoterm#do({"target": term_id, "cmd": l:exit_cmd})
@@ -102,7 +127,6 @@ function! ide#terminal#new()
   " cd to working directory
   let l:cd_cmd = "cd ".l:working_directory.s:shell_eol()
   call neoterm#do({"target": l:term_id, "cmd": l:cd_cmd})
-  " TODO
-  " add terminal id to tabpage's terminals
+  " TODO user-defined commands (e.g. activating python virtual environment)
   call neoterm#clear({"target": l:term_id, "force_clear": v:false})
 endfunction
