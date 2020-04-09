@@ -40,6 +40,40 @@ let s:git_hunk["menu"] = [
       \ s:git_hunk_revert,
       \ s:git_hunk_focus,
       \]
+function! s:complete_git_branch(arglead, args)
+  " if there are already args, just leave
+  if len(a:args) > 1
+    return []
+  endif
+  let l:branch_names = func#compose(
+        \ list#filter({_, branch -> branch !~# '\v^\s*\*\s+'}),
+        \ list#map({_, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$')}),
+        \)
+        \(ide#git#branches_all())
+  return l:branch_names
+endfunction
+let s:git_checkout = {
+      \ "cmd": "checkout",
+      \ "action": {a,f,m -> ide#git#checkout(a[0])},
+      \ "complete": funcref("s:complete_git_branch")
+      \}
+function! s:git_branches()
+  echo join(ide#git#branches_all(), "\n")
+endfunction
+let s:git_branch = {"cmd": "branch", "action": {a,f,m -> s:git_branches()}}
+function! s:git_new_branch(args)
+  if empty(a:args)
+    let l:branch_name = input("New branch name: ")
+  else
+    let l:branch_name = a:args[0]
+  endif
+  silent execute "normal! <c-u>"
+  call ide#git#branch_new(l:branch_name)
+endfunction
+let s:git_branch_new = {"cmd": "new", "action": {a,f,m -> s:git_new_branch(a)}}
+let s:git_branch["menu"] = [
+      \ s:git_branch_new,
+      \]
 let s:git_cmd["menu"] = [
       \ s:git_status,
       \ s:git_head,
@@ -51,6 +85,8 @@ let s:git_cmd["menu"] = [
       \ s:git_log,
       \ s:git_working_copy,
       \ s:git_hunk,
+      \ s:git_checkout,
+      \ s:git_branch,
       \]
 let g:cmd_tree = add(get(g:, "cmd_tree", []), s:git_cmd)
 call cmd_tree#update_commands()
