@@ -109,7 +109,7 @@ function! s:complete_cmd(arglead, cmdline, curpos)
     let l:completion_candidates = l:cmd_obj["complete"](l:arglead, l:cmd_args)
   elseif empty(l:cmd_args)
     let l:submenu = get(l:cmd_obj, "menu", [])
-    let l:completion_candidates = s:menu_cmds(l:submenu)
+    let l:completion_candidates = sort(s:menu_cmds(l:submenu))
   else
     let l:completion_candidates = []
   endif
