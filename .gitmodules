@@ -25,3 +25,6 @@
 [submodule "ext_plugins/vim-gitgutter"]
 	path = ext_plugins/vim-gitgutter
 	url = https://github.com/airblade/vim-gitgutter
+[submodule "ext_plugins/neoterm"]
+	path = ext_plugins/neoterm
+	url = https://github.com/kassio/neoterm

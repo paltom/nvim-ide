@@ -1,4 +1,7 @@
-let config#ext_plugins#directory = path#join(config#vim_home, "ext_plugins")
+let config#ext_plugins#directory = fnamemodify(
+      \ path#join(config#vim_home, "ext_plugins"),
+      \ ":p",
+      \)
 
 function! s:update_rtp(plugin)
   let l:rtpaths = split(&runtimepath, ",")
