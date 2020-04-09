@@ -36,5 +36,18 @@ function! s:terminal_filename(bufname)
   return join(l:filename_tokens, ":")
 endfunction
 call config#statusline#custom_filename_handler(funcref("s:terminal_filename"))
+function! s:terminal_tabline_name(bufname)
+  let l:bufname = path#full(a:bufname)
+  if l:bufname !~# '\v^term:'
+    return v:null
+  endif
+  let l:term_uri = split(l:bufname)[0]
+  let l:filename_tokens = matchlist(
+        \ l:term_uri,
+        \ '\v^(.{-}):.*/\d+:(.*)$',
+        \)[1:2]
+  return join(l:filename_tokens, ":")
+endfunction
+call config#tabline#custom_filename_handler(funcref("s:terminal_tabline_name"))
 
 call config#ext_plugins#load(ide#terminal#plugins)
