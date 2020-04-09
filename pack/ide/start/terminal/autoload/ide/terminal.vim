@@ -66,8 +66,36 @@ function! ide#terminal#exit(...)
   return func#wrap#list_vararg(funcref("s:terminal_exit"))(a:000)
 endfunction
 
+function! s:get_root_dir(func_name)
+  if exists("*".a:func_name)
+    let l:root_dir = call(a:func_name, [])
+    if !empty(l:root_dir)
+      return l:root_dir
+    endif
+  endif
+  return v:null
+endfunction
+function! s:current_file_basedir()
+  let l:basedir = path#basedir(bufname())
+  if !empty(l:basedir)
+    return l:basedir
+  endif
+  return v:null
+endfunction
+let s:working_directory_funcs = [
+      \ "ide#project#root_dir",
+      \ "ide#git#root_dir",
+      \ "s:current_file_basedir",
+      \ "getcwd",
+      \]
 function! ide#terminal#new()
-  let l:working_directory = path#full(func#until_result([{ -> getcwd()}])())
+  let l:working_directory = path#full(
+        \ func#until_result(
+        \   list#map(
+        \     {_, func_name -> funcref("s:get_root_dir", [func_name])}
+        \   )(s:working_directory_funcs)
+        \ )()
+        \)
   let l:term_id = neoterm#new({})["id"]
   " wait for shell initialization
   sleep 200m
@@ -76,4 +104,5 @@ function! ide#terminal#new()
   call neoterm#do({"target": l:term_id, "cmd": l:cd_cmd})
   " TODO
   " add terminal id to tabpage's terminals
+  call neoterm#clear({"target": l:term_id, "force_clear": v:false})
 endfunction
