@@ -1,39 +1,36 @@
-[submodule "ext/plugins/vim-one"]
-    path = ext/plugins/vim-one
-    url = https://github.com/rakr/vim-one
-[submodule "ext/plugins/vim-instant-markdown"]
-	path = ext/plugins/vim-instant-markdown
-	url = https://github.com/suan/vim-instant-markdown
-[submodule "ext/plugins/vim-fugitive"]
-	path = ext/plugins/vim-fugitive
-	url = https://github.com/tpope/vim-fugitive
-[submodule "ext/plugins/vim-gitgutter"]
-	path = ext/plugins/vim-gitgutter
-	url = https://github.com/airblade/vim-gitgutter
-[submodule "ext/plugins/fzf"]
-	path = ext/plugins/fzf
-	url = https://github.com/junegunn/fzf
-[submodule "ext/plugins/fzf.vim"]
-	path = ext/plugins/fzf.vim
-	url = https://github.com/junegunn/fzf.vim
-[submodule "ext/plugins/neoterm"]
-	path = ext/plugins/neoterm
-	url = https://github.com/kassio/neoterm
-[submodule "ext/plugins/vim-surround"]
-	path = ext/plugins/vim-surround
+[submodule "ext_plugins/vim-one"]
+	path = ext_plugins/vim-one
+	url = https://github.com/rakr/vim-one
+[submodule "ext_plugins/vim-surround"]
+	path = ext_plugins/vim-surround
 	url = https://github.com/tpope/vim-surround
-[submodule "ext/plugins/vim-polyglot"]
-	path = ext/plugins/vim-polyglot
+[submodule "ext_plugins/vim-polyglot"]
+	path = ext_plugins/vim-polyglot
 	url = https://github.com/sheerun/vim-polyglot
-[submodule "ext/plugins/pear-tree"]
-	path = ext/plugins/pear-tree
+[submodule "ext_plugins/pear-tree"]
+	path = ext_plugins/pear-tree
 	url = https://github.com/tmsvg/pear-tree
-[submodule "ext/plugins/vim-easy-align"]
-	path = ext/plugins/vim-easy-align
+[submodule "ext_plugins/vim-easy-align"]
+	path = ext_plugins/vim-easy-align
 	url = https://github.com/junegunn/vim-easy-align
-[submodule "ext/plugins/vim-sneak"]
-	path = ext/plugins/vim-sneak
+[submodule "ext_plugins/vim-sneak"]
+	path = ext_plugins/vim-sneak
 	url = https://github.com/justinmk/vim-sneak
-[submodule "ext/plugins/vim-commentary"]
-	path = ext/plugins/vim-commentary
+[submodule "ext_plugins/vim-commentary"]
+	path = ext_plugins/vim-commentary
 	url = https://github.com/tpope/vim-commentary
+[submodule "ext_plugins/vim-fugitive"]
+	path = ext_plugins/vim-fugitive
+	url = https://github.com/tpope/vim-fugitive
+[submodule "ext_plugins/vim-gitgutter"]
+	path = ext_plugins/vim-gitgutter
+	url = https://github.com/airblade/vim-gitgutter
+[submodule "ext_plugins/neoterm"]
+	path = ext_plugins/neoterm
+	url = https://github.com/kassio/neoterm
+[submodule "ext_plugins/fzf"]
+	path = ext_plugins/fzf
+	url = https://github.com/junegunn/fzf
+[submodule "ext_plugins/fzf.vim"]
+	path = ext_plugins/fzf.vim
+	url = https://github.com/junegunn/fzf.vim

@@ -1,121 +1,81 @@
-if exists("g:loaded_ide_terminal")
+let s:guard = "g:loaded_ide_terminal"
+if exists(s:guard)
   finish
 endif
-let g:loaded_ide_terminal = v:true
+let {s:guard} = v:true
 
 let g:neoterm_default_mod = "botright"
 let g:neoterm_autoscroll = v:true
 let g:neoterm_autoinsert = v:true
-augroup ide_terminal_autoinsert
+augroup ide_terminal_autoinsertmode
   autocmd!
   autocmd BufEnter term://* startinsert
   autocmd BufLeave term://* stopinsert
 augroup end
 
-function! s:tabpage_term_ids_complete(arg_lead, args)
-  " complete only if there are no arguments already given
-  if len(a:args) > 1
-    return []
-  endif
-  let l:term_ids = copy(ide#terminal#get_tabpage_term_ids(tabpagenr()))
-  echomsg string(l:term_ids)
-  if empty(l:term_ids)
-    return []
-  endif
-  let l:term_ids = add(l:term_ids, "all")
-  return l:term_ids
+let s:term_cmd = {"cmd": "Terminal", "action": {a,f,m -> ide#terminal#show()}}
+let s:term_new = {"cmd": "new", "action": {a,f,m -> ide#terminal#new()}}
+function! s:complete_tabpage_term_ids(arglead, args)
+  let l:tabpage_term_ids = ide#terminal#tabpage_term_ids()
+  let l:args = list#map({_, a -> str2nr(a)})(a:args)
+  let l:tabpage_term_ids = list#filter({_, term_id -> !list#contains(l:args, term_id)})
+        \(l:tabpage_term_ids)
+  return l:tabpage_term_ids
 endfunction
-
-if !exists("g:custom_menu")
-  let g:custom_menu = {}
-endif
-let g:custom_menu["Ide"] = add(
-      \ get(g:custom_menu, "Ide", []),
-      \ {
-      \   "cmd": "terminal",
-      \   "menu": [
-      \     {
-      \       "cmd": "new",
-      \       "action": function("ide#terminal#new")
-      \     },
-      \     {
-      \       "cmd": "open",
-      \       "action": function("ide#terminal#open"),
-      \       "complete": function("s:tabpage_term_ids_complete")
-      \     },
-      \     {
-      \       "cmd": "close",
-      \       "action": function("ide#terminal#close"),
-      \       "complete": function("s:tabpage_term_ids_complete")
-      \     },
-      \     {
-      \       "cmd": "exit",
-      \       "action": function("ide#terminal#exit"),
-      \       "complete": function("s:tabpage_term_ids_complete")
-      \     }
-      \   ]
-      \ }
-      \)
+let s:term_show = {
+      \ "cmd": "show",
+      \ "action": {a,f,m -> ide#terminal#show(a)},
+      \ "complete": funcref("s:complete_tabpage_term_ids"),
+      \}
+let s:term_hide = {
+      \ "cmd": "hide",
+      \ "action": {a,f,m -> ide#terminal#hide(a)},
+      \ "complete": funcref("s:complete_tabpage_term_ids"),
+      \}
+let s:term_exit = {
+      \ "cmd": "exit",
+      \ "action": {a,f,m -> ide#terminal#exit(a)},
+      \ "complete": funcref("s:complete_tabpage_term_ids"),
+      \}
+" TODO repl submenu
+let s:term_cmd["menu"] = [
+      \ s:term_new,
+      \ s:term_show,
+      \ s:term_hide,
+      \ s:term_exit,
+      \]
+let g:cmd_tree = add(get(g:, "cmd_tree", []), s:term_cmd)
+call cmd_tree#update_commands()
 
 function! s:terminal_filename(bufname)
-  let l:bufname = fnamemodify(a:bufname, ":p")
-  " term://.//15871:/bin/bash ;#neoterm
-  " get rid of ' ;#neoterm' part
+  let l:bufname = path#full(a:bufname)
+  if l:bufname !~# '\v^term:'
+    return v:null
+  endif
   let l:term_uri = split(l:bufname)[0]
-  let l:filename_elems = matchlist(
+  let l:filename_tokens = matchlist(
         \ l:term_uri,
-        \ '\v^(.{-}):.*/([0-9]+):(.*)$'
+        \ '\v^(.{-}):.*/(\d+):(.*)$',
         \)[1:3]
-  let l:buffer_term_id = getbufvar(a:bufname, "neoterm_id")
-  if !empty(l:buffer_term_id)
-    let l:filename_elems = add(l:filename_elems, "#".l:buffer_term_id)
+  let l:buf_term_id = getbufvar(a:bufname, "neoterm_id")
+  if !empty(l:buf_term_id)
+    let l:filename_tokens = add(l:filename_tokens, "#".l:buf_term_id)
   endif
-  return join(l:filename_elems, ":")
+  return join(l:filename_tokens, ":")
 endfunction
-
-let config#statusline_filename_special_name_patterns = add(
-      \ config#statusline_filename_special_name_patterns,
-      \ {
-      \   "if": { c -> fnamemodify(c["bufname"], ":p") =~# '\v^term:' },
-      \   "call": { c -> s:terminal_filename(c["bufname"]) }
-      \ }
-      \)
-
-function! s:tab_terminals_info()
-  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
-  let l:terminals_info = []
-  if has("unix")
-    for term_id in l:tabpage_term_ids
-      let l:buffer_id = ide#terminal#get_buf_id_with_term(term_id)
-      let l:shell_id = getbufvar(l:buffer_id, "terminal_job_pid", 0)
-      let l:child_proc = split(system("ps --ppid ".l:shell_id." -o pid= -o command="))
-      if !empty(l:child_proc)
-        let l:child_info = ": (".l:child_proc[0].") ".l:child_proc[1]
-      else
-        let l:child_info = ""
-      endif
-      let l:terminals_info = add(
-            \ l:terminals_info,
-            \ term_id.l:child_info
-            \)
-    endfor
-  else
-    let l:terminals_info = l:tabpage_term_ids
+call config#statusline#custom_filename_handler(funcref("s:terminal_filename"))
+function! s:terminal_tabline_name(bufname)
+  let l:bufname = path#full(a:bufname)
+  if l:bufname !~# '\v^term:'
+    return v:null
   endif
-  return l:terminals_info
+  let l:term_uri = split(l:bufname)[0]
+  let l:filename_tokens = matchlist(
+        \ l:term_uri,
+        \ '\v^(.{-}):.*/\d+:(.*)$',
+        \)[1:2]
+  return join(l:filename_tokens, ":")
 endfunction
+call config#tabline#custom_filename_handler(funcref("s:terminal_tabline_name"))
 
-if !exists("g:info_sections")
-  let g:info_sections = {}
-endif
-let g:info_sections["terminal"] = {
-      \ "name": "Terminal",
-      \ "subsections": [
-      \   {
-      \     "name": "Terminals in tabpage",
-      \     "function": function("s:tab_terminals_info")
-      \   }
-      \ ]
-      \}
-
-call ext#plugins#load(ide#terminal#plugins)
+call config#ext_plugins#load(ide#terminal#plugins)

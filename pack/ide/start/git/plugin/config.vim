@@ -1,237 +1,139 @@
-if exists("g:loaded_ide_git")
+let s:guard = "g:loaded_ide_git"
+if exists(s:guard)
   finish
 endif
-let g:loaded_ide_git = v:true
+let {s:guard} = v:true
 
 set updatetime=100
 set signcolumn=yes
 let g:gitgutter_diff_args = "--ignore-space-at-eol"
 
-function! s:branches_complete(arg_lead, args)
-  " only one argument should be completed, if there are already some args
-  " fully entered, there is nothing to complete
+let s:git_cmd = {"cmd": "Git", "action": {a,f,m -> ide#git#status()}}
+let s:git_status = {"cmd": "status", "action": {a,f,m -> ide#git#status()}}
+function! s:git_head()
+  echo ide#git#head()
+endfunction
+let s:git_head = {"cmd": "head", "action": {a,f,m -> s:git_head()}}
+let s:git_commit = {"cmd": "commit", "action": {a,f,m -> ide#git#commit()}}
+let s:git_push = {"cmd": "push", "action": {a,f,m -> ide#git#push()}}
+let s:git_pull = {"cmd": "pull", "action": {a,f,m -> ide#git#pull()}}
+let s:git_fetch = {"cmd": "fetch", "action": {a,f,m -> ide#git#fetch()}}
+let s:git_diff = {"cmd": "diff", "action": {a,f,m -> ide#git#file_diff()}}
+let s:git_log = {"cmd": "log"}
+let s:git_log_file = {"cmd": "file", "action": {a,f,m -> ide#git#file_log(bufname())}}
+let s:git_log["menu"] = [
+      \ s:git_log_file,
+      \]
+let s:git_working_copy = {"cmd": "working", "action": {a,f,m -> ide#git#file_edit_working()}}
+let s:git_hunk = {"cmd": "hunk"}
+let s:git_hunk_next = {"cmd": "next", "action": {a,f,m -> ide#git#hunk_next()}}
+let s:git_hunk_prev = {"cmd": "previous", "action": {a,f,m -> ide#git#hunk_prev()}}
+let s:git_hunk_view = {"cmd": "view", "action": {a,f,m -> ide#git#hunk_view()}}
+let s:git_hunk_add = {"cmd": "add", "action": {a,f,m -> ide#git#hunk_add()}}
+let s:git_hunk_revert = {"cmd": "revert", "action": {a,f,m -> ide#git#hunk_revert()}}
+let s:git_hunk_focus = {"cmd": "focus", "action": {a,f,m -> ide#git#hunk_focus()}}
+let s:git_hunk["menu"] = [
+      \ s:git_hunk_next,
+      \ s:git_hunk_prev,
+      \ s:git_hunk_view,
+      \ s:git_hunk_add,
+      \ s:git_hunk_revert,
+      \ s:git_hunk_focus,
+      \]
+function! s:complete_git_branch(arglead, args)
+  " if there are already args, just leave
   if len(a:args) > 1
     return []
   endif
-  let l:other_branches = filter(ide#git#list_branches(),
-        \ { _, branch -> branch !~# '\v^\s*\*\s+' }
+  let l:branch_names = func#compose(
+        \ list#filter({_, branch -> branch !~# '\v^\s*\*\s+'}),
+        \ list#map({_, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$')}),
         \)
-  let l:other_branches_remote_removed = map(
-        \ l:other_branches,
-        \ { _, branch -> matchstr(branch, '\v^(\s*remotes/)?\zs.*\ze$') }
-        \)
-  return sort(l:other_branches_remote_removed)
+        \(ide#git#branches_all())
+  return l:branch_names
 endfunction
-
-function! s:git_add_complete(arg_lead, args)
+let s:git_checkout = {
+      \ "cmd": "checkout",
+      \ "action": {a,f,m -> ide#git#checkout(a[0])},
+      \ "complete": funcref("s:complete_git_branch")
+      \}
+function! s:git_branches()
+  echo join(ide#git#branches_all(), "\n")
+endfunction
+let s:git_branch = {"cmd": "branch", "action": {a,f,m -> s:git_branches()}}
+function! s:git_new_branch(args)
+  if empty(a:args)
+    let l:branch_name = input("New branch name: ")
+  else
+    let l:branch_name = a:args[0]
+  endif
+  silent execute "normal! <c-u>"
+  call ide#git#branch_new(l:branch_name)
+endfunction
+let s:git_branch_new = {"cmd": "new", "action": {a,f,m -> s:git_new_branch(a)}}
+let s:git_branch["menu"] = [
+      \ s:git_branch_new,
+      \]
+function! s:complete_add_files(arglead, args)
   " multiple paths can be completed
-  let l:git_output = s:get_git_output(
+  let l:unstaged_files = ide#git#execute_command(
         \ "ls-files --modified --others --exclude-standard"
         \)
-  if empty(l:git_output)
-    return []
-  endif
-  " filter out already added paths
-  let l:paths = filter(l:git_output, { _, path -> index(a:args, path) < 0})
+  " remove files already listed in args
+  let l:paths = func#compose(
+        \ list#filter({_, f -> !empty(f)}),
+        \ list#filter({_, f -> !list#contains(a:args, f)}),
+        \)
+        \(l:unstaged_files)
   return sort(l:paths)
 endfunction
-
-if !exists("g:custom_menu")
-  let g:custom_menu = {}
-endif
-let g:custom_menu["Ide"] = add(
-      \ get(g:custom_menu, "Ide", []),
-      \ {
-      \   "cmd": "git",
-      \   "menu": [
-      \     {
-      \       "cmd": "status",
-      \       "action": function("ide#git#status")
-      \     },
-      \     {
-      \       "cmd": "branch",
-      \       "action": "echo join(ide#git#list_branches(), '\n')",
-      \       "menu": [
-      \         {
-      \           "cmd": "new",
-      \           "action": function("ide#git#new_branch")
-      \         },
-      \       ]
-      \     },
-      \     {
-      \       "cmd": "checkout",
-      \       "action": function("ide#git#checkout"),
-      \       "complete": function("s:branches_complete")
-      \     },
-      \     {
-      \       "cmd": "commit",
-      \       "action": function("ide#git#commit")
-      \     },
-      \     {
-      \       "cmd": "push",
-      \       "action": function("ide#git#push")
-      \     },
-      \     {
-      \       "cmd": "pull",
-      \       "action": function("ide#git#pull")
-      \     },
-      \     {
-      \       "cmd": "merge",
-      \       "action": function("ide#git#merge"),
-      \       "complete": function("s:branches_complete")
-      \     },
-      \     {
-      \       "cmd": "fetch",
-      \       "action": function("ide#git#fetch")
-      \     },
-      \     {
-      \       "cmd": "head",
-      \       "action": function("ide#git#head")
-      \     },
-      \     {
-      \       "cmd": "add",
-      \       "action": function("ide#git#add"),
-      \       "complete": function("s:git_add_complete")
-      \     },
-      \     {
-      \       "cmd": "diff",
-      \       "action": function("ide#git#diff"),
-      \     },
-      \     {
-      \       "cmd": "file",
-      \       "menu": [
-      \         {
-      \           "cmd": "history",
-      \           "action": { -> ide#git#file_log(bufname())},
-      \         },
-      \         {
-      \           "cmd": "edit",
-      \           "action": { -> ide#git#edit_working_file(bufname())},
-      \         },
-      \       ]
-      \     }
-      \   ]
-      \ }
-      \)
-
-function! s:get_git_output(git_cmd)
-  let l:git_cmd = "git --git-dir=%s --work-tree=%s %s"
-  let l:git_dir = ide#git#root_dir()
-  if empty(l:git_dir)
-    return []
-  endif
-  let l:git_cmd_formatted = printf(
-        \ l:git_cmd,
-        \ l:git_dir.expand("/.git"),
-        \ l:git_dir,
-        \ a:git_cmd
-        \)
-  let l:git_output = systemlist(l:git_cmd_formatted)
-  let l:git_output = map(l:git_output, { _, line -> trim(line)})
-  return l:git_output
-endfunction
-
-function! s:git_changes()
-  let l:git_output = s:get_git_output("diff --stat HEAD")
-  function! s:get_summary_values(output)
-    if empty(a:output)
-      let l:files = 0
-      let l:added = 0
-      let l:removed = 0
-    else
-      let l:summary = a:output[-1]
-      let [l:files, _, l:added, _, l:removed] = matchlist(
-            \ l:summary,
-            \ '\v((\d+) files? changed)'.
-            \   '(, (\d+) insertions?\(\+\))?'.
-            \   '(, (\d+) deletions?\(\-\))?'
-            \)[2:6]
-      let l:files = empty(l:files) ? 0 : l:files
-      let l:added = empty(l:added) ? 0 : l:added
-      let l:removed = empty(l:removed) ? 0 : l:removed
-    endif
-    return [l:files, l:added, l:removed]
-  endfunction
-  let [l:files, l:added, l:removed] = s:get_summary_values(l:git_output)
-  return printf("+%d -%d (in %d files)", l:added, l:removed, l:files)
-endfunction
-
-function! s:git_changed_files()
-  let l:git_output = s:get_git_output("ls-files --modified")
-  return l:git_output
-endfunction
-
-function! s:git_repo_path()
-  let l:repo_path = ide#git#root_dir()
-  if empty(l:repo_path)
-    return "Not in git repository"
-  endif
-  let l:repo_path = fnamemodify(l:repo_path, ":~")
-  return l:repo_path
-endfunction
-
-if !exists("g:info_sections")
-  let g:info_sections = {}
-endif
-let g:info_sections["git"] = {
-      \ "name": "Git",
-      \ "subsections": [
-      \   {
-      \     "name": "Repository path",
-      \     "function": function("s:git_repo_path")
-      \   },
-      \   {
-      \     "name": "Status",
-      \     "subsections": [
-      \       {
-      \         "name": "Current HEAD",
-      \         "function": function("ide#git#head")
-      \       },
-      \       {
-      \         "name": "Changes summary",
-      \         "function": function("s:git_changes")
-      \       },
-      \       {
-      \         "name": "Files changed",
-      \         "function": function("s:git_changed_files")
-      \       }
-      \     ]
-      \   }
-      \ ]
+let s:git_add = {
+      \ "cmd": "add",
+      \ "action": {a,f,m -> ide#git#add(a)},
+      \ "complete": funcref("s:complete_add_files"),
       \}
+let s:git_cmd["menu"] = [
+      \ s:git_status,
+      \ s:git_head,
+      \ s:git_commit,
+      \ s:git_push,
+      \ s:git_pull,
+      \ s:git_fetch,
+      \ s:git_diff,
+      \ s:git_log,
+      \ s:git_working_copy,
+      \ s:git_hunk,
+      \ s:git_checkout,
+      \ s:git_branch,
+      \ s:git_add,
+      \]
+let g:cmd_tree = add(get(g:, "cmd_tree", []), s:git_cmd)
+call cmd_tree#update_commands()
 
 function! s:git_buf_filename(bufname)
+  let l:bufname = path#full(a:bufname)
+  if l:bufname !~# '\v^'.path#join("fugitive:", "").'{2,}'
+    return v:null
+  endif
   let l:git_buf_type = matchstr(
-        \ fnamemodify(a:bufname, ":p"),
-        \ '\v\.git[/\\]{2}\zs\c[0-9a-f]+\ze'
+        \ path#full(a:bufname),
+        \ '\v'.escape(path#join(".git", ""), '\.').'{2}\zs\x+\ze',
         \)
   if empty(l:git_buf_type)
-    return a:bufname
+    return v:null
   endif
   if l:git_buf_type == "0"
-    let l:git_type = "index"
+    let l:git_type_name = "index"
   elseif l:git_buf_type == "2"
-    let l:git_type = "current"
+    let l:git_type_name = "current"
   elseif l:git_buf_type == "3"
-    let l:git_type = "incoming"
+    let l:git_type_name = "incoming"
   else
-    let l:git_type = "(".l:git_buf_type[:7].")"
+    let l:git_type_name = "(".l:git_buf_type[:7].")"
   endif
-  let l:git_diff_filename = fnamemodify(a:bufname, ":t")." @ ".l:git_type
-  return l:git_diff_filename
+  let l:git_filename = path#filename(a:bufname)." @ ".l:git_type_name
+  return l:git_filename
 endfunction
+call config#statusline#custom_filename_handler(funcref("s:git_buf_filename"))
 
-let config#statusline_filename_special_name_patterns = add(
-      \ config#statusline_filename_special_name_patterns,
-      \ {
-      \   "if": { c ->
-      \             fnamemodify(
-      \               c["bufname"],
-      \               ":p"
-      \             ) =~# '\v^fugitive:[/\\]{2,}'
-      \   },
-      \   "call": { c -> s:git_buf_filename(c["bufname"]) }
-      \ }
-      \)
-
-call ext#plugins#load(ide#git#plugins)
+call config#ext_plugins#load(ide#git#plugins)

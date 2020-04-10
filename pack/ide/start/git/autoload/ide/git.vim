@@ -3,85 +3,123 @@ let ide#git#plugins = [
       \ "vim-gitgutter",
       \]
 
-function! ide#git#status()
-  execute "tab Gstatus"
-endfunction
-
-function! ide#git#checkout(branch_name)
-  execute "!git checkout ".a:branch_name
-endfunction
-
-function! ide#git#new_branch()
-  let l:branch_name = input("New branch name: ")
-  execute "normal! <c-u>"
-  execute "!git checkout -b ".l:branch_name
-endfunction
-
-function! ide#git#list_branches()
-  let l:branch_list = split(execute("!git branch -a"), "\n")[1:]
-  let l:branch_list = map(l:branch_list, { _, line -> trim(line) })
-  " Remove empty lines
-  let l:branch_list = filter(l:branch_list, { _, line -> !empty(line) })
-  " Remove remote HEAD reference
-  let l:branch_list = filter(
-        \ l:branch_list,
-        \ { _, branch -> branch !~# '\v^\s*remotes/[^/]*/HEAD\s+-\>\s+'}
-        \)
-  return l:branch_list
-endfunction
-
 function! ide#git#root_dir()
-  let l:git_dir = FugitiveGitDir()
-  if empty(l:git_dir)
+  let l:git_root_dir = FugitiveGitDir()
+  if empty(l:git_root_dir)
     return ""
   endif
-  if fnamemodify(l:git_dir, ":t") =~# ".git"
-    let l:git_dir = fnamemodify(l:git_dir, ":h")
+  if path#filename(l:git_root_dir) =~# ".git"
+    let l:git_root_dir = path#basedir(l:git_root_dir)
   endif
-  return l:git_dir
+  return l:git_root_dir
+endfunction
+
+function! ide#git#status()
+  silent execute "tab Gstatus"
+endfunction
+
+function! ide#git#commit()
+  silent execute "Gcommit"
+endfunction
+
+function! ide#git#push()
+  silent execute "Gpush"
+endfunction
+
+function! ide#git#pull()
+  silent execute "Gpull"
+endfunction
+
+function! ide#git#fetch()
+  silent execute "Gfetch"
 endfunction
 
 function! ide#git#head()
   return FugitiveHead(8)
 endfunction
 
-function! ide#git#commit()
-  Gcommit
-endfunction
-
-function! ide#git#push()
-  Gpush
-endfunction
-
-function! ide#git#pull()
-  Gpull
-endfunction
-
-function! ide#git#merge(from_branch)
-  execute "Gmerge ".a:from_branch
-endfunction
-
-function! ide#git#fetch()
-  Gfetch
-endfunction
-
-function! ide#git#add(...)
-  if empty(a:000)
-    let l:files_to_add = ["%"]
-  else
-    let l:files_to_add = a:000
-  endif
-  execute "Git add ".join(l:files_to_add, " ")
-endfunction
-
-function! ide#git#diff()
-  execute "tab vertical Gdiffsplit"
+function! ide#git#file_diff()
+  silent execute "tab vertical Gdiffsplit"
 endfunction
 
 function! ide#git#file_log(filename)
-  execute "tabedit ".a:filename."|0Gllog"
+  silent execute "tabedit ".a:filename
+  silent execute "0Gllog"
 endfunction
 
-function! ide#git#edit_working_file(filename)
-  execute "Gedit :(top)".a:filename
+function! ide#git#file_edit_working()
+  silent execute "Gedit"
+endfunction
+
+function! ide#git#hunk_next()
+  silent execute "GitGutterNextHunk"
+endfunction
+
+function! ide#git#hunk_prev()
+  silent execute "GitGutterPrevHunk"
+endfunction
+
+function! ide#git#hunk_view()
+  silent execute "GitGutterPreviewHunk"
+endfunction
+
+function! ide#git#hunk_add()
+  silent execute "GitGutterStageHunk"
+endfunction
+
+function! ide#git#hunk_revert()
+  silent execute "GitGutterUndoHunk"
+endfunction
+
+function! ide#git#hunk_focus()
+  silent execute "GitGutterFold"
+endfunction
+
+let s:git_command = "git --git-dir=%s --work-tree=%s %s"
+function! ide#git#execute_command(command)
+  let l:git_root_dir = ide#git#root_dir()
+  if empty(l:git_root_dir)
+    return []
+  endif
+  let l:git_command = printf(
+        \ s:git_command,
+        \ path#join(l:git_root_dir, ".git"),
+        \ l:git_root_dir,
+        \ a:command,
+        \)
+  let l:output = split(execute("!".l:git_command), "\n")[1:]
+  let l:output = list#map({_, line -> trim(line)})(l:output)
+  return l:output
+endfunction
+
+function! ide#git#branches_all()
+  let l:branch_list = ide#git#execute_command("branch -a")
+  " remove empty lines and HEAD reference
+  let l:branch_list = func#compose(
+        \ list#filter({_, branch -> !empty(branch)}),
+        \ list#filter({_, branch -> branch !~# '\v^\s*remotes/.{-}/HEAD\s+-\>\s+'}),
+        \)
+        \(l:branch_list)
+  return l:branch_list
+endfunction
+
+function! ide#git#checkout(what)
+  call ide#git#execute_command("checkout ".a:what)
+endfunction
+
+function! ide#git#branch_new(branch_name)
+  call ide#git#execute_command("branch --track ".a:branch_name)
+endfunction
+
+function! s:git_add(files)
+  if empty(a:files)
+    let l:files_to_add = [expand("%")]
+  else
+    let l:files_to_add = a:files
+  endif
+  let l:files_to_add = list#map({_, p -> path#relative(getcwd())(p)})(l:files_to_add)
+  echo join(ide#git#execute_command("add ".join(l:files_to_add, " ")), "\n")
+endfunction
+function! ide#git#add(...)
+  return func#wrap#list_vararg(funcref("s:git_add"))(a:000)
 endfunction

@@ -1,35 +1,43 @@
-function! func#map(func)
-  function! s:map(func, list)
-    let l:list = copy(a:list)
-    let l:list = map(l:list, a:func)
-    return l:list
-  endfunction
-  return function("s:map", [a:func])
-endfunction
-
-function! func#filter(func)
-  function! s:filter(func, list)
-    let l:list = copy(a:list)
-    let l:list = filter(l:list, a:func)
-    return l:list
-  endfunction
-  return function("s:filter", [a:func])
-endfunction
-
-function! func#compose(funcs)
-  function! s:compose(funcs, arg)
-    let l:arg = copy(a:arg)
+function! s:compose(funcs) abort
+  function! s:_compose(arg) closure abort
+    let l:arg = a:arg
     for Func in a:funcs
-      let l:arg = Func(l:arg)
+      let l:arg = call(Func, [l:arg])
     endfor
     return l:arg
   endfunction
-  return function("s:compose", [a:funcs])
+  return funcref("s:_compose")
+endfunction
+function! func#compose(...) abort
+  return func#wrap#list_vararg(funcref("s:compose"))(a:000)
 endfunction
 
-function! func#contains(list)
-  function! s:contains(list, elem)
-    return index(a:list, a:elem) >= 0
+function! s:until_result(funcs)
+  function! s:_until_result(...) closure
+    for F in a:funcs
+      let l:result = call(F, a:000)
+      if l:result isnot# v:null
+        return l:result
+      endif
+    endfor
+    return v:null
   endfunction
-  return function("s:contains", [a:list])
+  return funcref("s:_until_result")
+endfunction
+function! func#until_result(...)
+  return func#wrap#list_vararg(funcref("s:until_result"))(a:000)
+endfunction
+
+function! s:all(funcs)
+  function! s:_all(...) closure
+    let l:results = []
+    for F in a:funcs
+      let l:results = add(l:results, call(F, a:000))
+    endfor
+    return l:results
+  endfunction
+  return funcref("s:_all")
+endfunction
+function! func#call_all(...)
+  return func#wrap#list_vararg(funcref("s:all"))(a:000)
 endfunction

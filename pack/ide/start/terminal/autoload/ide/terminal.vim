@@ -2,30 +2,81 @@ let ide#terminal#plugins = [
       \ "neoterm",
       \]
 
-function! s:root_dir_if_exists(ide_function, context)
-  if exists("*".matchstr(string(a:ide_function), '\vfunction\(''\zs.*\ze'''))
-    let l:root_dir = a:ide_function()
-    if !empty(l:root_dir)
-      call call#set_result(a:context, l:root_dir)
-    endif
+function! s:get_tabpage_term_bufs(tabpagenr)
+  return gettabvar(a:tabpagenr, "ide_term_bufs", [])
+endfunction
+function! s:set_tabpage_term_bufs(tabpagenr, term_bufs)
+  return settabvar(a:tabpagenr, "ide_term_bufs", a:term_bufs)
+endfunction
+function! s:add_term_buf(term_bufnr)
+  let l:tabpage_term_bufs = s:get_tabpage_term_bufs(tabpagenr())
+  let l:tabpage_term_bufs = list#unique_append(l:tabpage_term_bufs, str2nr(a:term_bufnr))
+  call s:set_tabpage_term_bufs(tabpagenr(), l:tabpage_term_bufs)
+endfunction
+function! s:remove_term_buf(term_bufnr)
+  let l:tabpage_term_bufs = s:get_tabpage_term_bufs(tabpagenr())
+  let l:term_buf_idx = index(l:tabpage_term_bufs, str2nr(a:term_bufnr))
+  if l:term_buf_idx >= 0
+    unlet l:tabpage_term_bufs[l:term_buf_idx]
   endif
+  call s:set_tabpage_term_bufs(tabpagenr(), l:tabpage_term_bufs)
+endfunction
+augroup ide_terminal_tabpage_term_id
+  autocmd!
+  autocmd TermOpen * call s:add_term_buf(expand("<abuf>"))
+  autocmd TermClose * call s:remove_term_buf(expand("<abuf>"))
+augroup end
+
+function! ide#terminal#tabpage_term_ids()
+  let l:tabpage_term_bufs = s:get_tabpage_term_bufs(tabpagenr())
+  let l:tabpage_term_ids = []
+  for bufnr in l:tabpage_term_bufs
+    " translate bufnr into neoterm_id
+    let l:tabpage_term_ids = list#map(
+          \ {_, bufnr -> getbufvar(bufnr, "neoterm_id")}
+          \)
+          \(l:tabpage_term_bufs)
+  endfor
+  let l:tabpage_term_ids = sort(l:tabpage_term_ids)
+  return l:tabpage_term_ids
+endfunction
+function! s:get_only_tabpage_term_ids(term_ids)
+  let l:tabpage_term_ids = ide#terminal#tabpage_term_ids()
+  return func#compose(
+        \ list#map({_, term_id -> str2nr(term_id)}),
+        \ list#filter({_, term_id -> list#contains(l:tabpage_term_ids, term_id)}),
+        \)
+        \(a:term_ids)
 endfunction
 
-function! s:file_dir_if_not_empty(context)
-  " only if file exists
-  let l:directory = glob(expand("%:p:h"))
-  if !empty(l:directory)
-    call call#set_result(a:context, l:directory)
-  endif
-endfunction
-
-function! s:shell_eol()
-  if has("win32")
-    return "\u000d"
+function! s:terminal_show(term_ids)
+  let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
+  if empty(l:term_ids)
+    call ide#terminal#new()
   else
-    return ""
+    for term_id in l:term_ids
+      call neoterm#open({"target": term_id})
+    endfor
   endif
 endfunction
+function! ide#terminal#show(...)
+  return func#wrap#list_vararg(funcref("s:terminal_show"))(a:000)
+endfunction
+
+function! s:terminal_hide(term_ids)
+  let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
+  if empty(l:term_ids)
+    " close all if no terminal specified
+    let l:term_ids = ide#terminal#tabpage_term_ids()
+  endif
+  for term_id in l:term_ids
+    call neoterm#close({"target": term_id, "force": v:false})
+  endfor
+endfunction
+function! ide#terminal#hide(...)
+  return func#wrap#list_vararg(funcref("s:terminal_hide"))(a:000)
+endfunction
+
 function! s:clear_line_keys()
   if &shell =~# "bash"
     return "\u0005\u0015" " Ctrl-e Ctrl-u
@@ -33,137 +84,66 @@ function! s:clear_line_keys()
     return "\u001b" " Esc
   else
     echohl WarningMsg
-    echomsg "Clearing command line in ".&shell." shell is not supported."
+    echomsg "Shell ".&shell." not supported"
     echohl None
     return ""
   endif
 endfunction
+function! s:shell_eol()
+  if has("win32")
+    return "\u000d"
+  else
+    return ""
+  endif
+endfunction
 
-let s:terminal_work_dir_functions = [
-      \ function("s:root_dir_if_exists", [function("ide#project#root_dir")]),
-      \ function("s:root_dir_if_exists", [function("ide#git#root_dir")]),
-      \ function("s:file_dir_if_not_empty"),
-      \ { c -> call#set_result(c, expand(getcwd())) },
+function! s:terminal_exit(term_ids)
+  let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
+  let l:exit_cmd = s:clear_line_keys()."exit".s:shell_eol()
+  for term_id in l:term_ids
+    call neoterm#do({"target": term_id, "cmd": l:exit_cmd})
+  endfor
+endfunction
+function! ide#terminal#exit(...)
+  return func#wrap#list_vararg(funcref("s:terminal_exit"))(a:000)
+endfunction
+
+function! s:get_root_dir(func_name)
+  if exists("*".a:func_name)
+    let l:root_dir = call(a:func_name, [])
+    if !empty(l:root_dir)
+      return l:root_dir
+    endif
+  endif
+  return v:null
+endfunction
+function! s:current_file_basedir()
+  let l:basedir = path#basedir(bufname())
+  if !empty(l:basedir)
+    return l:basedir
+  endif
+  return v:null
+endfunction
+let s:working_directory_funcs = [
+      \ "ide#project#root_dir",
+      \ "ide#git#root_dir",
+      \ "s:current_file_basedir",
+      \ "getcwd",
       \]
 function! ide#terminal#new()
-  " go through working directories functions
-  " terminal pack handles which functions are called
-  let l:working_directory = call#until_result(
-        \ s:terminal_work_dir_functions,
-        \ {}
+  let l:working_directory = path#full(
+        \ func#until_result(
+        \   list#map(
+        \     {_, func_name -> funcref("s:get_root_dir", [func_name])}
+        \   )(s:working_directory_funcs)
+        \ )()
         \)
   let l:term_id = neoterm#new({})["id"]
-  " wait for shell to initialize
+  " wait for shell initialization
   sleep 200m
-  " go to working directory
+  " cd to working directory
   let l:cd_cmd = "cd ".l:working_directory.s:shell_eol()
-  call neoterm#do({"cmd": l:cd_cmd, "target": l:term_id})
-  " add terminal id to list of tabpage's terminals
-  call s:add_tabpage_terminal(l:term_id)
-  " TODO call command
+  call neoterm#do({"target": l:term_id, "cmd": l:cd_cmd})
+  " TODO user-defined commands (e.g. activating python virtual environment)
+  call neoterm#clear({"target": l:term_id, "force_clear": v:false})
 endfunction
-
-let s:tabpage_term_ids_var_name = "ide_terminal_ids"
-
-function! ide#terminal#get_tabpage_term_ids(tabpagenr)
-  return gettabvar(
-        \ a:tabpagenr,
-        \ s:tabpage_term_ids_var_name,
-        \ []
-        \)
-endfunction
-
-function! s:set_tabpage_term_ids(tabpagenr, term_ids)
-  call settabvar(
-        \ a:tabpagenr,
-        \ s:tabpage_term_ids_var_name,
-        \ a:term_ids
-        \)
-endfunction
-
-function! ide#terminal#get_buf_id_with_term(term_id)
-  " Find a buffer id associated with term_id
-  " Return 0 if buffer not found
-  let l:loaded_bufs = filter(
-        \ nvim_list_bufs(),
-        \ { _, b -> nvim_buf_is_loaded(b) }
-        \)
-  let l:buf_with_term_id = get(
-        \ filter(
-        \   l:loaded_bufs,
-        \   { _, b -> getbufvar(b, "neoterm_id", 0) == a:term_id}
-        \ ),
-        \ 0,
-        \)
-  return l:buf_with_term_id
-endfunction
-
-function! s:add_tabpage_terminal(term_id)
-  let l:tabpagenr = tabpagenr()
-  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(l:tabpagenr)
-  let l:tabpage_term_ids = add(
-        \ l:tabpage_term_ids,
-        \ a:term_id
-        \)
-  call s:set_tabpage_term_ids(l:tabpagenr, l:tabpage_term_ids)
-  " set autocmd for when terminal is exited
-
-  function! s:remove_tabpage_terminal(term_id)
-    let l:tabpagenr = tabpagenr()
-    let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(l:tabpagenr)
-    let l:term_id_idx = index(l:tabpage_term_ids, a:term_id)
-    if l:term_id_idx > -1
-      call remove(l:tabpage_term_ids, l:term_id_idx)
-    endif
-    call s:set_tabpage_term_ids(l:tabpagenr, l:tabpage_term_ids)
-  endfunction
-
-  let l:buf_id = ide#terminal#get_buf_id_with_term(a:term_id)
-  if l:buf_id
-    execute "autocmd BufDelete <buffer=".l:buf_id."> ".
-          \   "call s:remove_tabpage_terminal(".a:term_id.")"
-  endif
-endfunction
-
-function! ide#terminal#open(...)
-  let Open = { term_id -> neoterm#open({"target": term_id}) }
-  if empty(a:000) && empty(ide#terminal#get_tabpage_term_ids(tabpagenr()))
-    " if no terminals were open in tabpage yet and no explicit terminal id to
-    " open was passed, create a new terminal
-    call ide#terminal#new()
-  endif
-  call s:call_handling_arguments(a:000, Open)
-endfunction
-
-function! ide#terminal#close(...)
-  let Close = { term_id -> neoterm#close({"force": v:false, "target": term_id}) }
-  call s:call_handling_arguments(a:000, Close)
-endfunction
-
-function! ide#terminal#exit(...)
-  let l:exit_cmd = s:clear_line_keys()."exit".s:shell_eol()
-  let Exit = { term_id -> neoterm#do({"cmd": l:exit_cmd, "target": term_id}) }
-  call s:call_handling_arguments(a:000, Exit)
-endfunction
-
-function! s:call_handling_arguments(args, handler_func)
-  let l:tabpage_term_ids = ide#terminal#get_tabpage_term_ids(tabpagenr())
-  if empty(a:args)
-    if !empty(l:tabpage_term_ids)
-      call a:handler_func(l:tabpage_term_ids[0])
-    endif
-  else
-    let l:first_arg = a:args[0]
-    if l:first_arg ==? "all"
-      for term_id in l:tabpage_term_ids
-        call a:handler_func(term_id)
-      endfor
-    else
-      let l:term_id = str2nr(l:first_arg)
-      if index(l:tabpage_term_ids, l:term_id) > -1
-        call a:handler_func(l:term_id)
-      endif
-    endif
-  endif
-endfunction
-

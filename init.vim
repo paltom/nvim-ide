@@ -17,7 +17,7 @@ nnoremap gop o<esc>"+p
 nnoremap gOp O<esc>"+p
 " Paste from clipboard in insert mode moving cursor after pasted text and stay
 " in insert mode
-inoremap <expr> <c-v> col('.') == 1 ? "\<esc>\"+gPa" : "\<esc>\"+gpa"
+inoremap <expr> <c-v> col(".") is# 1 ? "\<esc>\"+gPa" : "\<esc>\"+gpa"
 " Preserve a way to insert special characters (restore mapping)
 inoremap <c-g><c-v> <c-v>
 " Yank/paste into/from clipboard in visual mode
@@ -49,24 +49,21 @@ augroup config_remove_trailing_whitespaces
         \ endif
 augroup end
 
-function! s:add_empty_lines(direction, count) range
-  " direction = 0 means above current line
-  " direction = 1 means below current line
+function! s:add_empty_lines(above, count) range
   let l:current_position = getcurpos()
   let l:new_position = [l:current_position[1], l:current_position[4]]
-  if a:direction
-    let l:where_to_insert = l:new_position[0]
-  else
-    let l:where_to_insert = l:new_position[0] - 1
+  let l:line_to_insert = l:new_position[0]
+  if a:above
+    let l:line_to_insert = l:new_position[0] - 1
     let l:new_position[0] = l:new_position[0] + a:count
   endif
-  call append(l:where_to_insert, repeat([""], a:count))
+  call append(l:line_to_insert, repeat([""], a:count))
   call cursor(l:new_position)
 endfunction
 " add empty line(s) above/below current line preserving cursor position in
 " current line
-nnoremap <silent> [<space> :<c-u>call <sid>add_empty_lines(0, v:count1)<cr>
-nnoremap <silent> ]<space> :<c-u>call <sid>add_empty_lines(1, v:count1)<cr>
+nnoremap <silent> [<space> :<c-u>call <sid>add_empty_lines(v:true, v:count1)<cr>
+nnoremap <silent> ]<space> :<c-u>call <sid>add_empty_lines(v:false, v:count1)<cr>
 " }}}
 
 " Easy various movements {{{
@@ -110,13 +107,13 @@ function! s:search_forward()
   if len(getloclist(0)) > 0
     try
       lnext
-    catch /E553/
+    catch /E553:/
       lfirst
     endtry
   elseif len(getqflist()) > 0
     try
       cnext
-    catch /E553/
+    catch /E553:/
       cfirst
     endtry
   else
@@ -127,21 +124,21 @@ function! s:search_backward()
   if len(getloclist(0)) > 0
     try
       lprevious
-    catch /E553/
+    catch /E553:/
       llast
     endtry
   elseif len(getqflist()) > 0
     try
       cprevious
-    catch /E553/
+    catch /E553:/
       clast
     endtry
   else
     execute "normal! N"
   endif
 endfunction
-nnoremap <silent> ]s :call <sid>search_forward()<cr>
-nnoremap <silent> [s :call <sid>search_backward()<cr>
+nnoremap <silent> ]s :<c-u>call <sid>search_forward()<cr>
+nnoremap <silent> [s :<c-u>call <sid>search_backward()<cr>
 
 " More convenient selecting of popupmenu items
 inoremap <c-j> <c-n>
@@ -186,19 +183,16 @@ vnoremap g/ /
 " }}}
 
 " Various theme & visuals settings {{{
-" Allow italics to be displayed (e.g. comments)
-let g:one_allow_italics = 1
+set noequalalways
 " Enable rich colors
 set termguicolors
 " Background should be dark (it is possible to switch it to light)
-set background=dark
+set background=light
 " Clear vertical borders between splits
 let &fillchars = "vert: "
 
-" Map colorscheme plugin directory to colorscheme name as visible by Vim
-let s:colorscheme_plugins = ["vim-one"]
 " Load all colorscheme plugins listed above by plugin directory name
-call ext#plugins#load(s:colorscheme_plugins)
+call config#ext_plugins#load("vim-one")
 
 augroup config_colorscheme_update
   autocmd!
@@ -208,6 +202,8 @@ augroup config_colorscheme_update
   autocmd ColorScheme * highlight! link VertSplit StatusLineNC
 augroup end
 " Select colorscheme
+" Allow italics to be displayed (e.g. comments)
+let g:one_allow_italics = 1
 colorscheme one
 
 " Don't wrap long lines
@@ -258,20 +254,27 @@ augroup end
 set number relativenumber numberwidth=5
 
 " Statusline settings
-execute "setlocal statusline=%!config#statusline(".winnr().")"
+setlocal statusline=%!config#statusline#active()
 augroup config_statusline_update
   autocmd!
-  " Set correct statusline functions for all windows in tabpage when changing
-  " windows
-  autocmd WinEnter,BufWinEnter * call config#statusline_update_all_windows()
+  autocmd WinEnter,BufWinEnter * setlocal statusline=%!config#statusline#active()
+  autocmd WinLeave * setlocal statusline=%!config#statusline#inactive()
 augroup end
+
+function! s:ft_help_filename(bufname)
+  if getbufvar(a:bufname, "&filetype") ==# "help"
+    return g:config#statusline#parts#filename#simple(a:bufname)
+  endif
+  return v:null
+endfunction
+call config#statusline#custom_filename_handler(funcref("s:ft_help_filename"))
 
 " Tabline settings
 " Display tabline when there are at least two tabpages
 set showtabline=1
 " Do not use GUI external tabline
 set guioptions-=e
-set tabline=%!config#tabline()
+set tabline=%!config#tabline#tabline()
 " }}}
 
 " vim:foldmethod=marker
