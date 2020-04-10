@@ -18,6 +18,9 @@ function! s:session_name()
   echo xolox#session#find_current_session()
 endfunction
 let s:session_cmd = {"cmd": "Session", "action": {a,f,m -> s:session_name()}}
+function! s:session_action(command, flag, args)
+  execute a:command.(a:flag ? "!" : "")." ".join(a:args, " ")
+endfunction
 function! s:complete_session(arglead, args)
   if len(a:args) > 1
     return []
@@ -26,23 +29,23 @@ function! s:complete_session(arglead, args)
 endfunction
 let s:session_open = {
       \ "cmd": "open",
-      \ "action": {a,f,m -> execute("OpenSession".(f ? "!" : ""))},
+      \ "action": {a,f,m -> s:session_action("OpenSession", f, a)},
       \ "complete": funcref("s:complete_session"),
       \}
 let s:session_close = {
       \ "cmd": "close",
-      \ "action": {a,f,m -> execute("CloseSession".(f ? "!" : ""))},
+      \ "action": {a,f,m -> s:session_action("CloseSession", f, a)},
       \ "complete": funcref("s:complete_session"),
       \}
 let s:session_delete = {
       \ "cmd": "delete",
-      \ "action": {a,f,m -> execute("DeleteSession".(f ? "!" : ""))},
+      \ "action": {a,f,m -> s:session_action("DeleteSession", f, a)},
       \ "complete": funcref("s:complete_session"),
       \}
 let s:session_current = {"cmd": "current", "action": {a,f,m -> s:session_name()}}
 let s:session_save = {
       \ "cmd": "save",
-      \ "action": {a,f,m -> execute("SaveSession".(f ? "!" : "")." ".join(a, " "))},
+      \ "action": {a,f,m -> s:session_action("SaveSession", f, a)},
       \ "complete": funcref("s:complete_session"),
       \}
 let s:session_cmd["menu"] = [
