@@ -28,3 +28,9 @@
 [submodule "ext_plugins/neoterm"]
 	path = ext_plugins/neoterm
 	url = https://github.com/kassio/neoterm
+[submodule "ext_plugins/fzf"]
+	path = ext_plugins/fzf
+	url = https://github.com/junegunn/fzf
+[submodule "ext_plugins/fzf.vim"]
+	path = ext_plugins/fzf.vim
+	url = https://github.com/junegunn/fzf.vim
