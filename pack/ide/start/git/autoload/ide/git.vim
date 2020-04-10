@@ -76,7 +76,7 @@ function! ide#git#hunk_focus()
 endfunction
 
 let s:git_command = "git --git-dir=%s --work-tree=%s %s"
-function! s:git_command(command)
+function! ide#git#execute_command(command)
   let l:git_root_dir = ide#git#root_dir()
   if empty(l:git_root_dir)
     return []
@@ -93,7 +93,7 @@ function! s:git_command(command)
 endfunction
 
 function! ide#git#branches_all()
-  let l:branch_list = s:git_command("branch -a")
+  let l:branch_list = ide#git#execute_command("branch -a")
   " remove empty lines and HEAD reference
   let l:branch_list = func#compose(
         \ list#filter({_, branch -> !empty(branch)}),
@@ -104,9 +104,22 @@ function! ide#git#branches_all()
 endfunction
 
 function! ide#git#checkout(what)
-  call s:git_command("checkout ".a:what)
+  call ide#git#execute_command("checkout ".a:what)
 endfunction
 
 function! ide#git#branch_new(branch_name)
-  call s:git_command("branch --track ".a:branch_name)
+  call ide#git#execute_command("branch --track ".a:branch_name)
+endfunction
+
+function! s:git_add(files)
+  if empty(a:files)
+    let l:files_to_add = [expand("%")]
+  else
+    let l:files_to_add = a:files
+  endif
+  let l:files_to_add = list#map({_, p -> path#relative(getcwd())(p)})(l:files_to_add)
+  echo join(ide#git#execute_command("add ".join(l:files_to_add, " ")), "\n")
+endfunction
+function! ide#git#add(...)
+  return func#wrap#list_vararg(funcref("s:git_add"))(a:000)
 endfunction

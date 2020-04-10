@@ -74,6 +74,23 @@ let s:git_branch_new = {"cmd": "new", "action": {a,f,m -> s:git_new_branch(a)}}
 let s:git_branch["menu"] = [
       \ s:git_branch_new,
       \]
+function! s:complete_add_files(arglead, args)
+  " multiple paths can be completed
+  let l:unstaged_files = ide#git#execute_command(
+        \ "ls-files --modified --others --exclude-standard"
+        \)
+  if empty(l:unstaged_files)
+    return []
+  endif
+  " remove files already listed in args
+  let l:paths = list#filter({_, f -> list#contains(a:args, f)})(l:unstaged_files)
+  return sort(l:paths)
+endfunction
+let s:git_add = {
+      \ "cmd": "add",
+      \ "action": {a,f,m -> ide#git#add(a)},
+      \ "complete": funcref("s:complete_add_files"),
+      \}
 let s:git_cmd["menu"] = [
       \ s:git_status,
       \ s:git_head,
@@ -87,6 +104,7 @@ let s:git_cmd["menu"] = [
       \ s:git_hunk,
       \ s:git_checkout,
       \ s:git_branch,
+      \ s:git_add,
       \]
 let g:cmd_tree = add(get(g:, "cmd_tree", []), s:git_cmd)
 call cmd_tree#update_commands()
