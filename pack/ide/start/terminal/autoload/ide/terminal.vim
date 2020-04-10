@@ -27,7 +27,7 @@ augroup ide_terminal_tabpage_term_id
   autocmd TermClose * call s:remove_term_buf(expand("<abuf>"))
 augroup end
 
-function! s:tabpage_term_ids(term_ids)
+function! ide#terminal#tabpage_term_ids()
   let l:tabpage_term_bufs = s:get_tabpage_term_bufs(tabpagenr())
   let l:tabpage_term_ids = []
   for bufnr in l:tabpage_term_bufs
@@ -38,6 +38,10 @@ function! s:tabpage_term_ids(term_ids)
           \(l:tabpage_term_bufs)
   endfor
   let l:tabpage_term_ids = sort(l:tabpage_term_ids)
+  return l:tabpage_term_ids
+endfunction
+function! s:get_only_tabpage_term_ids(term_ids)
+  let l:tabpage_term_ids = ide#terminal#tabpage_term_ids()
   if empty(a:term_ids)
     return l:tabpage_term_ids[0:0]
   else
@@ -49,7 +53,7 @@ function! s:tabpage_term_ids(term_ids)
 endfunction
 
 function! s:terminal_show(term_ids)
-  let l:term_ids = s:tabpage_term_ids(a:term_ids)
+  let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
   if empty(l:term_ids)
     call ide#terminal#new()
   else
@@ -63,7 +67,7 @@ function! ide#terminal#show(...)
 endfunction
 
 function! s:terminal_hide(term_ids)
-  let l:term_ids = s:tabpage_term_ids(a:term_ids)
+  let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
   for term_id in l:term_ids
     call neoterm#close({"target": term_id, "force": v:false})
   endfor
@@ -93,7 +97,7 @@ function! s:shell_eol()
 endfunction
 
 function! s:terminal_exit(term_ids)
-  let l:term_ids = s:tabpage_term_ids(a:term_ids)
+  let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
   let l:exit_cmd = s:clear_line_keys()."exit".s:shell_eol()
   for term_id in l:term_ids
     call neoterm#do({"target": term_id, "cmd": l:exit_cmd})

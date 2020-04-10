@@ -14,8 +14,35 @@ augroup ide_terminal_autoinsertmode
 augroup end
 
 let s:term_cmd = {"cmd": "Terminal", "action": {a,f,m -> ide#terminal#show()}}
-let s:term_menu = []
-let s:term_cmd["menu"] = s:term_menu
+let s:term_new = {"cmd": "new", "action": {a,f,m -> ide#terminal#new()}}
+function! s:complete_tabpage_term_ids(arglead, args)
+  let l:tabpage_term_ids = ide#terminal#tabpage_term_ids()
+  let l:tabpage_term_ids = list#filter({_, term_id -> !list#contains(a:args, term_id)})
+        \(l:tabpage_term_ids)
+  return l:tabpage_term_ids
+endfunction
+let s:term_show = {
+      \ "cmd": "show",
+      \ "action": {a,f,m -> ide#terminal#show(a)},
+      \ "complete": funcref("s:complete_tabpage_term_ids"),
+      \}
+let s:term_hide = {
+      \ "cmd": "hide",
+      \ "action": {a,f,m -> ide#terminal#hide(a)},
+      \ "complete": funcref("s:complete_tabpage_term_ids"),
+      \}
+let s:term_exit = {
+      \ "cmd": "exit",
+      \ "action": {a,f,m -> ide#terminal#exit(a)}
+      \ "complete": funcref("s:complete_tabpage_term_ids"),
+      \}
+" TODO repl submenu
+let s:term_cmd["menu"] = [
+      \ s:term_new,
+      \ s:term_show,
+      \ s:term_hide,
+      \ s:term_exit,
+      \]
 let g:cmd_tree = add(get(g:, "cmd_tree", []), s:term_cmd)
 call cmd_tree#update_commands()
 

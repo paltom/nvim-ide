@@ -79,9 +79,6 @@ function! s:complete_add_files(arglead, args)
   let l:unstaged_files = ide#git#execute_command(
         \ "ls-files --modified --others --exclude-standard"
         \)
-  if empty(l:unstaged_files)
-    return []
-  endif
   " remove files already listed in args
   let l:paths = list#filter({_, f -> list#contains(a:args, f)})(l:unstaged_files)
   return sort(l:paths)
