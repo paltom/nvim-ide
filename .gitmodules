@@ -40,3 +40,6 @@
 [submodule "ext_plugins/vim-session"]
 	path = ext_plugins/vim-session
 	url = https://github.com/xolox/vim-session
+[submodule "ext_plugins/vim-dirvish"]
+	path = ext_plugins/vim-dirvish
+	url = https://github.com/justinmk/vim-dirvish

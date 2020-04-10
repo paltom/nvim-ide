@@ -5,8 +5,8 @@ endfunction
 
 function! config#tabline#parts#filename#funcs()
   return [
-      \ "config#statusline#parts#filename#empty",
       \ s:eval_adder.evaluator,
+      \ "config#statusline#parts#filename#empty",
       \ "config#statusline#parts#filename#simple",
       \]
 endfunction

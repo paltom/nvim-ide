@@ -32,8 +32,8 @@ endfunction
 
 function! config#statusline#parts#filename#funcs()
   return [
-      \ "config#statusline#parts#filename#empty",
       \ s:eval_adder.evaluator,
+      \ "config#statusline#parts#filename#empty",
       \ "config#statusline#parts#filename#shorten_rel_path",
       \]
 endfunction
