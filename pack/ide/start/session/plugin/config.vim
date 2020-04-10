@@ -48,12 +48,20 @@ let s:session_save = {
       \ "action": {a,f,m -> s:session_action("SaveSession", f, a)},
       \ "complete": funcref("s:complete_session"),
       \}
+function! s:session_list()
+  echo join(xolox#session#get_names(v:false), "\n")
+endfunction
+let s:session_list = {
+      \ "cmd": "list",
+      \ "action": {a,f,m -> s:session_list()},
+      \}
 let s:session_cmd["menu"] = [
       \ s:session_open,
       \ s:session_close,
       \ s:session_delete,
       \ s:session_current,
       \ s:session_save,
+      \ s:session_list,
       \]
 let g:cmd_tree = add(get(g:, "cmd_tree", []), s:session_cmd)
 call cmd_tree#update_commands()
