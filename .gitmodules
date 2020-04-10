@@ -34,3 +34,9 @@
 [submodule "ext_plugins/fzf.vim"]
 	path = ext_plugins/fzf.vim
 	url = https://github.com/junegunn/fzf.vim
+[submodule "ext_plugins/vim-misc"]
+	path = ext_plugins/vim-misc
+	url = https://github.com/xolox/vim-misc
+[submodule "ext_plugins/vim-session"]
+	path = ext_plugins/vim-session
+	url = https://github.com/xolox/vim-session
