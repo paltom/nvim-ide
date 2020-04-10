@@ -4,6 +4,14 @@ if exists(s:guard)
 endif
 let {s:guard} = v:true
 
+" turn off terminal mode more easily
+tnoremap <esc> <c-\><c-n>
+augroup ide_terminal_sidescroll
+  autocmd!
+  autocmd TermEnter * let s:user_siso = &sidescrolloff|setlocal sidescrolloff=0
+  autocmd TermLeave * execute "setlocal sidescrolloff=".s:user_siso
+augroup end
+
 let g:neoterm_default_mod = "botright"
 let g:neoterm_autoscroll = v:true
 let g:neoterm_autoinsert = v:true

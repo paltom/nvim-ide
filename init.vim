@@ -84,8 +84,6 @@ tnoremap <a-h> <c-\><c-n><c-w>h
 tnoremap <a-j> <c-\><c-n><c-w>j
 tnoremap <a-k> <c-\><c-n><c-w>k
 tnoremap <a-l> <c-\><c-n><c-w>l
-" Turn off terminal mode more easily
-tnoremap <c-w> <c-\><c-n>
 
 " Move to beginning/end of line
 noremap H ^
