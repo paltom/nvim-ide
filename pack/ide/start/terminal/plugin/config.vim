@@ -17,7 +17,8 @@ let s:term_cmd = {"cmd": "Terminal", "action": {a,f,m -> ide#terminal#show()}}
 let s:term_new = {"cmd": "new", "action": {a,f,m -> ide#terminal#new()}}
 function! s:complete_tabpage_term_ids(arglead, args)
   let l:tabpage_term_ids = ide#terminal#tabpage_term_ids()
-  let l:tabpage_term_ids = list#filter({_, term_id -> !list#contains(a:args, term_id)})
+  let l:args = list#map({_, a -> str2nr(a)})(a:args)
+  let l:tabpage_term_ids = list#filter({_, term_id -> !list#contains(l:args, term_id)})
         \(l:tabpage_term_ids)
   return l:tabpage_term_ids
 endfunction
@@ -33,7 +34,7 @@ let s:term_hide = {
       \}
 let s:term_exit = {
       \ "cmd": "exit",
-      \ "action": {a,f,m -> ide#terminal#exit(a)}
+      \ "action": {a,f,m -> ide#terminal#exit(a)},
       \ "complete": funcref("s:complete_tabpage_term_ids"),
       \}
 " TODO repl submenu

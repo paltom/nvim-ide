@@ -80,7 +80,11 @@ function! s:complete_add_files(arglead, args)
         \ "ls-files --modified --others --exclude-standard"
         \)
   " remove files already listed in args
-  let l:paths = list#filter({_, f -> list#contains(a:args, f)})(l:unstaged_files)
+  let l:paths = func#compose(
+        \ list#filter({_, f -> !empty(f)}),
+        \ list#filter({_, f -> !list#contains(a:args, f)}),
+        \)
+        \(l:unstaged_files)
   return sort(l:paths)
 endfunction
 let s:git_add = {

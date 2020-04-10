@@ -42,14 +42,11 @@ function! ide#terminal#tabpage_term_ids()
 endfunction
 function! s:get_only_tabpage_term_ids(term_ids)
   let l:tabpage_term_ids = ide#terminal#tabpage_term_ids()
-  if empty(a:term_ids)
-    return l:tabpage_term_ids[0:0]
-  else
-    return list#filter(
-          \ {_, term_id -> list#contains(l:tabpage_term_ids, term_id)}
-          \)
-          \(a:term_ids)
-  endif
+  return func#compose(
+        \ list#map({_, term_id -> str2nr(term_id)}),
+        \ list#filter({_, term_id -> list#contains(l:tabpage_term_ids, term_id)}),
+        \)
+        \(a:term_ids)
 endfunction
 
 function! s:terminal_show(term_ids)
@@ -68,6 +65,10 @@ endfunction
 
 function! s:terminal_hide(term_ids)
   let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
+  if empty(l:term_ids)
+    " close all if no terminal specified
+    let l:term_ids = ide#terminal#tabpage_term_ids()
+  endif
   for term_id in l:term_ids
     call neoterm#close({"target": term_id, "force": v:false})
   endfor
