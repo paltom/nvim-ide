@@ -10,6 +10,28 @@ augroup ide_explorer_settings
   autocmd FileType dirvish setlocal nonumber norelativenumber
 augroup end
 
+let s:explorer_cmd = {"cmd": "Explore", "action": {a,f,m -> execute("Dirvish")}}
+let s:explorer_path = {
+      \ "cmd": "path",
+      \ "action": {a,f,m -> execute("Dirvish ".a[0])},
+      \ "complete": {al,as -> getcompletion(al, "file")},
+      \}
+function! s:rename(pattern)
+  execute "Shdo mv {} ".a:pattern
+  normal Z!
+endfunction
+let s:explorer_rename = {
+      \ "cmd": "rename",
+      \ "action": {a,f,m -> s:rename(a[0])},
+      \ "condition": { -> &filetype ==# "dirvish"},
+      \}
+let s:explorer_cmd["menu"] = [
+      \ s:explorer_path,
+      \ s:explorer_rename,
+      \]
+let g:cmd_tree = add(get(g:, "cmd_tree", []), s:explorer_cmd)
+call cmd_tree#update_commands()
+
 function! s:explorer_buf_filename(bufname)
   if &filetype ==# "dirvish"
     return path#full(a:bufname)
