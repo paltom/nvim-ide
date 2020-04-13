@@ -43,3 +43,6 @@
 [submodule "ext_plugins/vim-dirvish"]
 	path = ext_plugins/vim-dirvish
 	url = https://github.com/justinmk/vim-dirvish
+[submodule "ext_plugins/nvim-lsp"]
+	path = ext_plugins/nvim-lsp
+	url = https://github.com/neovim/nvim-lsp
