@@ -22,6 +22,7 @@ endfunction
 function! ide#lsp#references()
   call winrestview(b:winview)
   lua vim.lsp.buf.references()
+  copen
 endfunction
 
 function! ide#lsp#server_status()
