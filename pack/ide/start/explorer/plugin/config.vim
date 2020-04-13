@@ -18,7 +18,7 @@ let s:explorer_path = {
       \}
 function! s:rename(pattern)
   execute "Shdo mv {} ".a:pattern
-  normal Z!
+  silent normal Z!
 endfunction
 let s:explorer_rename = {
       \ "cmd": "rename",
