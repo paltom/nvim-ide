@@ -5,18 +5,22 @@ let ide#lsp#plugins = [
       \]
 
 function! ide#lsp#hover()
+  call winrestview(b:winview)
   lua vim.lsp.buf.hover()
 endfunction
 
 function! ide#lsp#definition()
+  call winrestview(b:winview)
   lua vim.lsp.buf.definition()
 endfunction
 
 function! ide#lsp#signature_help()
+  call winrestview(b:winview)
   lua vim.lsp.buf.signature_help()
 endfunction
 
 function! ide#lsp#references()
+  call winrestview(b:winview)
   lua vim.lsp.buf.references()
 endfunction
 

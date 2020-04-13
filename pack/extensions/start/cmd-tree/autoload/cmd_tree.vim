@@ -150,7 +150,10 @@ function! s:update_command(cmd)
         \ "-bang",
         \ "-complete=custom,s:complete_cmd",
         \ a:cmd,
+        \ "let b:winview = winsaveview() | keepjumps",
         \ l:cmd_rhs_func_call,
+        \ "| if exists('b:winview')|call winrestview(b:winview)|endif",
+        \ "| unlet! b:winview",
         \]
   let l:cmd_def = join(l:cmd_def, " ")
   execute l:cmd_def
