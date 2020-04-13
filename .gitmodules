@@ -46,3 +46,9 @@
 [submodule "ext_plugins/nvim-lsp"]
 	path = ext_plugins/nvim-lsp
 	url = https://github.com/neovim/nvim-lsp
+[submodule "ext_plugins/asyncomplete.vim"]
+	path = ext_plugins/asyncomplete.vim
+	url = https://github.com/prabirshrestha/asyncomplete.vim
+[submodule "ext_plugins/asyncomplete-omni.vim"]
+	path = ext_plugins/asyncomplete-omni.vim
+	url = https://github.com/yami-beta/asyncomplete-omni.vim
