@@ -138,3 +138,11 @@ function! ide#terminal#new(mods)
   " TODO user-defined commands (e.g. activating python virtual environment)
   call neoterm#clear({"target": l:term_id, "force_clear": v:false})
 endfunction
+
+function! ide#terminal#repl_send(all) range
+  if a:all
+    call neoterm#repl#line(1, line("$"))
+  else
+    call neoterm#repl#line(a:firstline, a:lastline)
+  endif
+endfunction

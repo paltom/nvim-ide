@@ -46,11 +46,13 @@ let s:term_exit = {
       \ "complete": funcref("s:complete_tabpage_term_ids"),
       \}
 " TODO repl submenu
+let s:term_repl = {"cmd": "repl", "action": {a,f,m -> ide#terminal#repl_send(f)}}
 let s:term_cmd["menu"] = [
       \ s:term_new,
       \ s:term_show,
       \ s:term_hide,
       \ s:term_exit,
+      \ s:term_repl,
       \]
 let g:cmd_tree = add(get(g:, "cmd_tree", []), s:term_cmd)
 call cmd_tree#update_commands()
