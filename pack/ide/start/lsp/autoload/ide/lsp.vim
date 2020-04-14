@@ -3,6 +3,7 @@ let ide#lsp#plugins = [
       \ "asyncomplete.vim",
       \ "asyncomplete-omni.vim",
       \ "rainbow_parentheses.vim",
+      \ "vista.vim",
       \]
 
 function! ide#lsp#hover()
@@ -28,4 +29,16 @@ endfunction
 
 function! ide#lsp#server_status()
   lua print(vim.lsp.buf.server_ready())
+endfunction
+
+function! ide#lsp#outline_toggle()
+  silent execute "Vista!!"
+endfunction
+
+function! ide#lsp#outline_open()
+  silent execute "Vista"
+endfunction
+
+function! ide#lsp#outline_close()
+  silent execute "Vista!"
 endfunction
