@@ -10,6 +10,13 @@ let g:fzf_action = {
       \ "ctrl-s": "split",
       \ "ctrl-v": "vsplit",
       \}
+let g:fzf_colors = {
+      \ "fg+": ["fg", "CursorLine", "Normal"],
+      \ "bg+": ["bg", "CursorLine"],
+      \ "hl+": ["fg", "String"],
+      \ "hl": ["fg", "String"],
+      \ "gutter": ["bg", "Normal"],
+      \}
 
 function! s:search_git_branches()
   let l:dict = {"source": ide#git#branches_all()}
