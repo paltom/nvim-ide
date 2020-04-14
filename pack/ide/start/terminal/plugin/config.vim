@@ -21,8 +21,8 @@ augroup ide_terminal_autoinsertmode
   autocmd BufLeave term://* stopinsert
 augroup end
 
-let s:term_cmd = {"cmd": "Terminal", "action": {a,f,m -> ide#terminal#show()}}
-let s:term_new = {"cmd": "new", "action": {a,f,m -> ide#terminal#new()}}
+let s:term_cmd = {"cmd": "Terminal", "action": {a,f,m -> ide#terminal#show([], m)}}
+let s:term_new = {"cmd": "new", "action": {a,f,m -> ide#terminal#new(m)}}
 function! s:complete_tabpage_term_ids(arglead, args)
   let l:tabpage_term_ids = ide#terminal#tabpage_term_ids()
   let l:args = list#map({_, a -> str2nr(a)})(a:args)
@@ -32,7 +32,7 @@ function! s:complete_tabpage_term_ids(arglead, args)
 endfunction
 let s:term_show = {
       \ "cmd": "show",
-      \ "action": {a,f,m -> ide#terminal#show(a)},
+      \ "action": {a,f,m -> ide#terminal#show(a, m)},
       \ "complete": funcref("s:complete_tabpage_term_ids"),
       \}
 let s:term_hide = {

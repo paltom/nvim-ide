@@ -49,21 +49,18 @@ function! s:get_only_tabpage_term_ids(term_ids)
         \(a:term_ids)
 endfunction
 
-function! s:terminal_show(term_ids)
+function! ide#terminal#show(term_ids, mods)
   let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
   if empty(l:term_ids)
-    call ide#terminal#new()
+    call ide#terminal#new(a:mods)
   else
     for term_id in l:term_ids
-      call neoterm#open({"target": term_id})
+      call neoterm#open({"target": term_id, "mod": a:mods})
     endfor
   endif
 endfunction
-function! ide#terminal#show(...)
-  return func#wrap#list_vararg(funcref("s:terminal_show"))(a:000)
-endfunction
 
-function! s:terminal_hide(term_ids)
+function! ide#terminal#hide(term_ids)
   let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
   if empty(l:term_ids)
     " close all if no terminal specified
@@ -72,9 +69,6 @@ function! s:terminal_hide(term_ids)
   for term_id in l:term_ids
     call neoterm#close({"target": term_id, "force": v:false})
   endfor
-endfunction
-function! ide#terminal#hide(...)
-  return func#wrap#list_vararg(funcref("s:terminal_hide"))(a:000)
 endfunction
 
 function! s:clear_line_keys()
@@ -97,15 +91,12 @@ function! s:shell_eol()
   endif
 endfunction
 
-function! s:terminal_exit(term_ids)
+function! ide#terminal#exit(term_ids)
   let l:term_ids = s:get_only_tabpage_term_ids(a:term_ids)
   let l:exit_cmd = s:clear_line_keys()."exit".s:shell_eol()
   for term_id in l:term_ids
     call neoterm#do({"target": term_id, "cmd": l:exit_cmd})
   endfor
-endfunction
-function! ide#terminal#exit(...)
-  return func#wrap#list_vararg(funcref("s:terminal_exit"))(a:000)
 endfunction
 
 function! s:get_root_dir(func_name)
@@ -130,7 +121,7 @@ let s:working_directory_funcs = [
       \ "s:current_file_basedir",
       \ "getcwd",
       \]
-function! ide#terminal#new()
+function! ide#terminal#new(mods)
   let l:working_directory = path#full(
         \ func#until_result(
         \   list#map(
@@ -138,7 +129,7 @@ function! ide#terminal#new()
         \   )(s:working_directory_funcs)
         \ )()
         \)
-  let l:term_id = neoterm#new({})["id"]
+  let l:term_id = neoterm#new({"mod": a:mods})["id"]
   " wait for shell initialization
   sleep 200m
   " cd to working directory
