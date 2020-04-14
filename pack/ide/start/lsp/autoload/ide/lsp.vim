@@ -2,6 +2,7 @@ let ide#lsp#plugins = [
       \ "nvim-lsp",
       \ "asyncomplete.vim",
       \ "asyncomplete-omni.vim",
+      \ "rainbow_parentheses.vim",
       \]
 
 function! ide#lsp#hover()

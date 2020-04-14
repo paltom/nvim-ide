@@ -22,6 +22,11 @@ let s:lsp_cmd["menu"] = [
 let g:cmd_tree = add(get(g:, "cmd_tree", []), s:lsp_cmd)
 call cmd_tree#update_commands()
 
+augroup ide_lsp_rainbowparens
+  autocmd!
+  autocmd FileType clojure RainbowParentheses
+augroup end
+
 call config#ext_plugins#load(ide#lsp#plugins)
 
 call asyncomplete#register_source(asyncomplete#sources#omni#get_source_options({

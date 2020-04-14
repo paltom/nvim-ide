@@ -52,3 +52,6 @@
 [submodule "ext_plugins/asyncomplete-omni.vim"]
 	path = ext_plugins/asyncomplete-omni.vim
 	url = https://github.com/yami-beta/asyncomplete-omni.vim
+[submodule "ext_plugins/rainbow_parentheses.vim"]
+	path = ext_plugins/rainbow_parentheses.vim
+	url = https://github.com/junegunn/rainbow_parentheses.vim
