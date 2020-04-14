@@ -26,7 +26,7 @@ endfunction
 let s:search_cmd = {"cmd": "Search"}
 let s:search_git = {"cmd": "git"}
 let s:search_git_files = {"cmd": "files", "action": {a,f,m -> execute("GitFiles")}}
-let s:search_git_branches = {"cmd": "branches", "action": {a,f,m -> funcref("s:search_git_branches")}}
+let s:search_git_branches = {"cmd": "branches", "action": {a,f,m -> s:search_git_branches()}}
 let s:search_git_commits = {"cmd": "commits", "action": {a,f,m -> execute("Commits")}}
 let s:search_git_commits_file = {"cmd": "file", "action": {a,f,m -> execute("BCommits")}}
 let s:search_git_commits["menu"] = [
@@ -46,5 +46,7 @@ let s:search_cmd["menu"] = [
       \ s:search_buffers,
       \ s:search_windows,
       \]
+let g:cmd_tree = add(get(g:, "cmd_tree", []), s:search_cmd)
+call cmd_tree#update_commands()
 
 call config#ext_plugins#load(ide#fuzzy_search#plugins)
