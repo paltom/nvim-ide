@@ -58,3 +58,9 @@
 [submodule "ext_plugins/vista.vim"]
 	path = ext_plugins/vista.vim
 	url = https://github.com/liuchengxu/vista.vim
+[submodule "ext_plugins/vim-sexp"]
+	path = ext_plugins/vim-sexp
+	url = https://github.com/guns/vim-sexp
+[submodule "ext_plugins/vim-sexp-mappings-for-regular-people"]
+	path = ext_plugins/vim-sexp-mappings-for-regular-people
+	url = https://github.com/tpope/vim-sexp-mappings-for-regular-people
