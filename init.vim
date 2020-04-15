@@ -1,5 +1,7 @@
 filetype plugin indent on
 syntax on
+let mapleader = " "
+let maplocalleader = " "
 
 " System clipboard {{{
 " Clipboard tool must be installed (:help clipboard-tool)
