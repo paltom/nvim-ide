@@ -1,66 +1,67 @@
 [submodule "ext_plugins/vim-one"]
-	path = ext_plugins/vim-one
-	url = https://github.com/rakr/vim-one
+    path = ext_plugins/vim-one
+    url = https://github.com/rakr/vim-one
 [submodule "ext_plugins/vim-surround"]
-	path = ext_plugins/vim-surround
-	url = https://github.com/tpope/vim-surround
+    path = ext_plugins/vim-surround
+    url = https://github.com/tpope/vim-surround
 [submodule "ext_plugins/vim-polyglot"]
-	path = ext_plugins/vim-polyglot
-	url = https://github.com/sheerun/vim-polyglot
+    path = ext_plugins/vim-polyglot
+    url = https://github.com/sheerun/vim-polyglot
 [submodule "ext_plugins/pear-tree"]
-	path = ext_plugins/pear-tree
-	url = https://github.com/tmsvg/pear-tree
+    path = ext_plugins/pear-tree
+    url = https://github.com/tmsvg/pear-tree
 [submodule "ext_plugins/vim-easy-align"]
-	path = ext_plugins/vim-easy-align
-	url = https://github.com/junegunn/vim-easy-align
+    path = ext_plugins/vim-easy-align
+    url = https://github.com/junegunn/vim-easy-align
 [submodule "ext_plugins/vim-sneak"]
-	path = ext_plugins/vim-sneak
-	url = https://github.com/justinmk/vim-sneak
+    path = ext_plugins/vim-sneak
+    url = https://github.com/justinmk/vim-sneak
 [submodule "ext_plugins/vim-commentary"]
-	path = ext_plugins/vim-commentary
-	url = https://github.com/tpope/vim-commentary
+    path = ext_plugins/vim-commentary
+    url = https://github.com/tpope/vim-commentary
 [submodule "ext_plugins/vim-fugitive"]
-	path = ext_plugins/vim-fugitive
-	url = https://github.com/tpope/vim-fugitive
+    path = ext_plugins/vim-fugitive
+    url = https://github.com/tpope/vim-fugitive
 [submodule "ext_plugins/vim-gitgutter"]
-	path = ext_plugins/vim-gitgutter
-	url = https://github.com/airblade/vim-gitgutter
+    path = ext_plugins/vim-gitgutter
+    url = https://github.com/airblade/vim-gitgutter
 [submodule "ext_plugins/neoterm"]
-	path = ext_plugins/neoterm
-	url = https://github.com/kassio/neoterm
+    path = ext_plugins/neoterm
+    url = https://github.com/kassio/neoterm
 [submodule "ext_plugins/fzf"]
-	path = ext_plugins/fzf
-	url = https://github.com/junegunn/fzf
+    path = ext_plugins/fzf
+    url = https://github.com/junegunn/fzf
 [submodule "ext_plugins/fzf.vim"]
-	path = ext_plugins/fzf.vim
-	url = https://github.com/junegunn/fzf.vim
+    path = ext_plugins/fzf.vim
+    url = https://github.com/junegunn/fzf.vim
 [submodule "ext_plugins/vim-misc"]
-	path = ext_plugins/vim-misc
-	url = https://github.com/xolox/vim-misc
+    path = ext_plugins/vim-misc
+    url = https://github.com/xolox/vim-misc
 [submodule "ext_plugins/vim-session"]
-	path = ext_plugins/vim-session
-	url = https://github.com/xolox/vim-session
+    path = ext_plugins/vim-session
+    url = https://github.com/xolox/vim-session
 [submodule "ext_plugins/vim-dirvish"]
-	path = ext_plugins/vim-dirvish
-	url = https://github.com/justinmk/vim-dirvish
+    path = ext_plugins/vim-dirvish
+    url = https://github.com/justinmk/vim-dirvish
 [submodule "ext_plugins/nvim-lsp"]
-	path = ext_plugins/nvim-lsp
-	url = https://github.com/neovim/nvim-lsp
+    path = ext_plugins/nvim-lsp
+    url = https://github.com/neovim/nvim-lsp
 [submodule "ext_plugins/asyncomplete.vim"]
-	path = ext_plugins/asyncomplete.vim
-	url = https://github.com/prabirshrestha/asyncomplete.vim
+    path = ext_plugins/asyncomplete.vim
+    url = https://github.com/prabirshrestha/asyncomplete.vim
 [submodule "ext_plugins/asyncomplete-omni.vim"]
-	path = ext_plugins/asyncomplete-omni.vim
-	url = https://github.com/yami-beta/asyncomplete-omni.vim
+    path = ext_plugins/asyncomplete-omni.vim
+    url = https://github.com/yami-beta/asyncomplete-omni.vim
 [submodule "ext_plugins/rainbow_parentheses.vim"]
-	path = ext_plugins/rainbow_parentheses.vim
-	url = https://github.com/junegunn/rainbow_parentheses.vim
+    path = ext_plugins/rainbow_parentheses.vim
+    url = https://github.com/junegunn/rainbow_parentheses.vim
 [submodule "ext_plugins/vista.vim"]
-	path = ext_plugins/vista.vim
-	url = https://github.com/liuchengxu/vista.vim
+    path = ext_plugins/vista.vim
+    url = https://github.com/liuchengxu/vista.vim
 [submodule "ext_plugins/vim-sexp"]
-	path = ext_plugins/vim-sexp
-	url = https://github.com/guns/vim-sexp
+    path = ext_plugins/vim-sexp
+    url = https://github.com/guns/vim-sexp
+    ignore = dirty
 [submodule "ext_plugins/vim-sexp-mappings-for-regular-people"]
-	path = ext_plugins/vim-sexp-mappings-for-regular-people
-	url = https://github.com/tpope/vim-sexp-mappings-for-regular-people
+    path = ext_plugins/vim-sexp-mappings-for-regular-people
+    url = https://github.com/tpope/vim-sexp-mappings-for-regular-people
