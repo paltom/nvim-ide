@@ -51,13 +51,11 @@ let g:vista_sidebar_position = "vertical rightbelow"
 " LSPs configurations
 lua << EOF
 require("nvim_lsp").clojure_lsp.setup{
-  settings = {
-    initializationOptions = {
-      ["project-specs"] = {
-        {
-          ["project-path"] = "project.clj",
-          ["classpath-cmd"] = {"lein", "classpath"}
-        }
+  init_options = {
+    ["project-specs"] = {
+      {
+        ["project-path"] = "project.clj",
+        ["classpath-cmd"] = {"lein", "classpath"}
       }
     }
   }
