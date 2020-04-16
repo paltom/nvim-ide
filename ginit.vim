@@ -8,7 +8,7 @@ if exists("g:GuiLoaded")
   nnoremap <F12> <cmd>call GuiWindowFullScreen(!g:GuiWindowFullScreen)<cr>
 
   if has("unix")
-    GuiFont Hack:10
+    GuiFont Hack:h12
   endif
 endif
 
